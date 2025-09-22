@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
+import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
 import {EcdsaLib} from "../util/EcdsaLib.sol";
 import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
 import "account-abstraction/core/Helpers.sol";
@@ -56,7 +56,7 @@ library SimpleValidatorLib {
             return SIG_VALIDATION_FAILED;
         }
 
-        if (!MerkleProof.verify(proof, superTxHash, leaf)) {
+        if (!MerkleProofLib.verify(proof, superTxHash, leaf)) {
             return SIG_VALIDATION_FAILED;
         }
 
@@ -94,7 +94,7 @@ library SimpleValidatorLib {
             return false;
         }
 
-        if (!MerkleProof.verify(proof, superTxHash, dataHash)) {
+        if (!MerkleProofLib.verify(proof, superTxHash, dataHash)) {
             return false;
         }
 

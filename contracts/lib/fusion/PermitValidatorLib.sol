@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
+import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
 import {EcdsaLib} from "../util/EcdsaLib.sol";
 import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
 import {IERC20Permit} from "openzeppelin/token/ERC20/extensions/IERC20Permit.sol";
@@ -103,7 +103,7 @@ library PermitValidatorLib {
             return SIG_VALIDATION_FAILED;
         }
 
-        if (!MerkleProof.verify(decodedSig.proof, decodedSig.superTxHash, meeUserOpHash)) {
+        if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, meeUserOpHash)) {
             return SIG_VALIDATION_FAILED;
         }
 
@@ -148,7 +148,7 @@ library PermitValidatorLib {
             return false;
         }
 
-        if (!MerkleProof.verify(decodedSig.proof, decodedSig.superTxHash, dataHash)) {
+        if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, dataHash)) {
             return false;
         }
 

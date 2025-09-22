@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
+import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
 import {RLPReader as RLPDecoder} from "rlp-reader/RLPReader.sol";
 import {RLPEncoder} from "../rlp/RLPEncoder.sol";
 import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
@@ -117,7 +117,7 @@ library TxValidatorLib {
             return SIG_VALIDATION_FAILED;
         }
 
-        if (!MerkleProof.verify(decodedTx.proof, decodedTx.superTxHash, meeUserOpHash)) {
+        if (!MerkleProofLib.verify(decodedTx.proof, decodedTx.superTxHash, meeUserOpHash)) {
             return SIG_VALIDATION_FAILED;
         }
 
@@ -145,7 +145,7 @@ library TxValidatorLib {
             return false;
         }
 
-        if (!MerkleProof.verify(decodedTx.proof, decodedTx.superTxHash, dataHash)) {
+        if (!MerkleProofLib.verify(decodedTx.proof, decodedTx.superTxHash, dataHash)) {
             return false;
         }
         return true;
