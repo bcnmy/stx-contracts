@@ -22,10 +22,12 @@ library MEEUserOpHashLib {
         pure
         returns (bytes32)
     {
-        // used to be double hashing to avoid second preimage attack:
+        // using double hashing to avoid second preimage attack:
         // https://flawed.net.nz/2018/02/21/attacking-merkle-trees-with-a-second-preimage-attack/
         // https://www.npmjs.com/package/@openzeppelin/merkle-tree#fn-1
+        return EfficientHashLib.hash(EfficientHashLib.hash(uint256(userOpHash), lowerBoundTimestamp, upperBoundTimestamp));
+        
         // but since we are moving away from Merkle trees in future commits, we can just hash the userOpHash directly
-        return EfficientHashLib.hash(uint256(userOpHash), lowerBoundTimestamp, upperBoundTimestamp);
+        // return EfficientHashLib.hash(uint256(userOpHash), lowerBoundTimestamp, upperBoundTimestamp);
     }
 }
