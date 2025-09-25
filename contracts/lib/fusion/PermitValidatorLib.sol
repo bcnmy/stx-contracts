@@ -5,7 +5,8 @@ import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
 import {EcdsaLib} from "../util/EcdsaLib.sol";
 import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
 import {ERC20} from "solady/tokens/ERC20.sol";
-import "account-abstraction/core/Helpers.sol";
+import {EfficientHashLib} from "solady/utils/EfficientHashLib.sol";
+import {SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS, _packValidationData} from "account-abstraction/core/Helpers.sol";
 
 /**
  * @dev Library to validate the signature for MEE ERC-2612 Permit mode
@@ -24,8 +25,9 @@ import "account-abstraction/core/Helpers.sol";
  *           phishing attempt (injecting super txn hash as the deadline) and the user should not sign the permit.
  *           This is going to be mitigated in the future by making superTx hash a EIP-712 hash.
  */
-bytes32 constant PERMIT_TYPEHASH =
-    keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+
+//keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+bytes32 constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
 
 struct DecodedErc20PermitSig {
     ERC20 token;
@@ -180,14 +182,7 @@ library PermitValidatorLib {
         pure
         returns (bytes32)
     {
-        uint256 deadline = uint256(decodedSig.superTxHash);
-
-        bytes32 structHash = keccak256(
-            abi.encode(
-                PERMIT_TYPEHASH, expectedSigner, decodedSig.spender, decodedSig.amount, decodedSig.nonce, deadline
-            )
-        );
-        return _hashTypedData(structHash, decodedSig.domainSeparator);
+        return _hashTypedData(_hashPermitDataStruct(expectedSigner, decodedSig.spender, decodedSig.amount, decodedSig.nonce, decodedSig.superTxHash), decodedSig.domainSeparator);
     }
 
     function _getSignedDataHash(address expectedSigner, DecodedErc20PermitSigShort memory decodedSig)
@@ -195,14 +190,21 @@ library PermitValidatorLib {
         pure
         returns (bytes32)
     {
-        uint256 deadline = uint256(decodedSig.superTxHash);
+        return _hashTypedData(_hashPermitDataStruct(expectedSigner, decodedSig.spender, decodedSig.amount, decodedSig.nonce, decodedSig.superTxHash), decodedSig.domainSeparator);
+    }
 
-        bytes32 structHash = keccak256(
-            abi.encode(
-                PERMIT_TYPEHASH, expectedSigner, decodedSig.spender, decodedSig.amount, decodedSig.nonce, deadline
-            )
-        );
-        return _hashTypedData(structHash, decodedSig.domainSeparator);
+    function _hashPermitDataStruct(
+        address expectedSigner, 
+        address spender, 
+        uint256 amount, 
+        uint256 nonce, 
+        bytes32 superTxHash
+    )
+        private
+        pure
+        returns (bytes32)
+    {
+        return EfficientHashLib.hash(uint256(PERMIT_TYPEHASH), uint256(uint160(expectedSigner)), uint256(uint160(spender)), amount, nonce, uint256(superTxHash));
     }
 
     function _hashTypedData(bytes32 structHash, bytes32 domainSeparator) private pure returns (bytes32) {

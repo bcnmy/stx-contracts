@@ -7,7 +7,8 @@ import {RLPEncoder} from "../rlp/RLPEncoder.sol";
 import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
 import {EcdsaLib} from "../util/EcdsaLib.sol";
 import {BytesLib} from "byteslib/BytesLib.sol";
-import "account-abstraction/core/Helpers.sol";
+import {SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS, _packValidationData} from "account-abstraction/core/Helpers.sol";
+import {EfficientHashLib} from "solady/utils/EfficientHashLib.sol";
 
 /**
  * @dev Library to validate the signature for MEE on-chain Txn mode
@@ -270,10 +271,10 @@ library TxValidatorLib {
         bytes memory rlpEncodedTxNoSigAndPrefix =
             rlpEncodedTx.slice(totalPrefixSize, rlpEncodedTx.length - totalSignatureSize - totalPrefixSize);
         if (txType == EIP1559_TX_TYPE) {
-            return keccak256(abi.encodePacked(txType, prependRlpContentSize(rlpEncodedTxNoSigAndPrefix, "")));
+            return EfficientHashLib.hash(abi.encodePacked(txType, prependRlpContentSize(rlpEncodedTxNoSigAndPrefix, "")));
         } else if (txType == LEGACY_TX_TYPE) {
             if (v >= EIP_155_MIN_V_VALUE) {
-                return keccak256(
+                return EfficientHashLib.hash(
                     prependRlpContentSize(
                         rlpEncodedTxNoSigAndPrefix,
                         abi.encodePacked(
@@ -284,7 +285,7 @@ library TxValidatorLib {
                     )
                 );
             } else {
-                return keccak256(prependRlpContentSize(rlpEncodedTxNoSigAndPrefix, ""));
+                return EfficientHashLib.hash(prependRlpContentSize(rlpEncodedTxNoSigAndPrefix, ""));
             }
         } else {
             revert("TxValidatorLib:: unsupported tx type");
