@@ -76,12 +76,12 @@ contract BaseTest is Test {
         MEE_NODE = createAndFundWallet("MEE_NODE", 1_000 ether);
         MEE_NODE_ADDRESS = MEE_NODE.addr;
         
-        deployNodePaymaster(ENTRYPOINT, MEE_NODE_ADDRESS);
+        deployNodePaymaster();
         mockTarget = new MockTarget();
         k1MeeValidator = new K1MeeValidator();
     }
 
-    function deployNodePaymaster(IEntryPoint ep, address meeNodeAddress) internal {
+    function deployNodePaymaster() internal {
         vm.prank(nodePmDeployer);
 
         address[] memory workerEOAs = new address[](1);
@@ -181,13 +181,11 @@ contract BaseTest is Test {
         PackedUserOperation memory userOp,
         uint128 pmValidationGasLimit,
         uint128 pmPostOpGasLimit,
-        uint256 impliedCostPercentageOfMaxGasCost,
         Vm.Wallet memory wallet,
         bytes4 sigType
     ) internal view returns (PackedUserOperation memory) {
         uint256 maxGasLimit = userOp.preVerificationGas + unpackVerificationGasLimitMemory(userOp)
             + unpackCallGasLimitMemory(userOp) + pmValidationGasLimit + pmPostOpGasLimit;
-        uint256 maxGasCost = maxGasLimit * unpackMaxFeePerGasMemory(userOp);
         
         // refund mode = user
         // premium mode = percentage premium

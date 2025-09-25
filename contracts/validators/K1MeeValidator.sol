@@ -22,6 +22,7 @@ import {TxValidatorLib} from "../lib/fusion/TxValidatorLib.sol";
 import {SimpleValidatorLib} from "../lib/fusion/SimpleValidatorLib.sol";
 import {NoMeeFlowLib} from "../lib/fusion/NoMeeFlowLib.sol";
 import {EcdsaLib} from "../lib/util/EcdsaLib.sol";
+import {EfficientHashLib} from "solady/utils/EfficientHashLib.sol";
 
 /**
  * @title K1MeeValidator
@@ -209,15 +210,23 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
         returns (bytes4 sigValidationResult)
     {
         if (bytes3(signature[0:3]) != SIG_TYPE_MEE_FLOW) {
-            // Non MEE 7739 flow
+            // Non MEE flow => uses 7739
             // goes to ERC7739Validator to apply 7739 magic and then returns back
             // to this contract's _erc1271IsValidSignatureNowCalldata() method.
             return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
         } else {
             // non-7739 flow
             // hash the SA into the `hash` to protect against two SA's with same owner vector
+            bytes32 hashWithAccountAddress;
+            // keccak256(abi.encodePacked(hash, msg.sender))
+            assembly {
+                let ptr := mload(0x40)
+                mstore(ptr, hash)
+                mstore(add(ptr, 0x20), shl(96, caller()))
+                hashWithAccountAddress := keccak256(ptr, 0x34)
+            }
             return _validateSignatureForOwner(
-                getOwner(msg.sender), keccak256(abi.encodePacked(hash, msg.sender)), _erc1271UnwrapSignature(signature)
+                getOwner(msg.sender), hashWithAccountAddress, _erc1271UnwrapSignature(signature)
             ) ? EIP1271_SUCCESS : EIP1271_FAILED;
         }
     }

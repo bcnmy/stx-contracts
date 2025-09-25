@@ -82,6 +82,7 @@ contract MockAccount is  IAccount {
             revert(string(result));
         }
         emit MockAccountFallback(callData, msg.value);
+        return result;
     }
 
     function eip712Domain()
