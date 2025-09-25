@@ -5,8 +5,6 @@ import {Test, Vm, console2} from "forge-std/Test.sol";
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
 import {PackedUserOperation, UserOperationLib} from "account-abstraction/core/UserOperationLib.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {MockAccount, ENTRY_POINT_V07} from "./mock/MockAccount.sol";
 import {MockTarget} from "./mock/MockTarget.sol";
 import {BaseNodePaymaster} from "../contracts/BaseNodePaymaster.sol";
@@ -14,14 +12,12 @@ import {NodePaymaster} from "../contracts/NodePaymaster.sol";
 import {EmittingNodePaymaster} from "./mock/EmittingNodePaymaster.sol";
 import {MockNodePaymaster} from "./mock/MockNodePaymaster.sol";
 import {K1MeeValidator} from "../contracts/validators/K1MeeValidator.sol";
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
 import {MEEUserOpHashLib} from "../contracts/lib/util/MEEUserOpHashLib.sol";
 import {Merkle} from "murky-trees/Merkle.sol";
 import {CopyUserOpLib} from "./util/CopyUserOpLib.sol";
 import "contracts/types/Constants.sol";
 import {LibZip} from "solady/utils/LibZip.sol";
-import {ERC20Permit} from "openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
-import {IERC20Permit} from "openzeppelin/token/ERC20/extensions/IERC20Permit.sol";
+import {ERC20} from "solady/tokens/ERC20.sol";
 import {
     PERMIT_TYPEHASH,
     DecodedErc20PermitSig,
@@ -29,6 +25,8 @@ import {
     PermitValidatorLib
 } from "contracts/lib/fusion/PermitValidatorLib.sol";
 import {LibRLP} from "solady/utils/LibRLP.sol";
+import {ECDSA} from "solady/utils/ECDSA.sol";
+import {EcdsaLib} from "contracts/lib/util/EcdsaLib.sol";
 
 address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
@@ -168,7 +166,7 @@ contract BaseTest is Test {
     }
 
     function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal view returns (bytes memory) {
-        bytes32 opHash = MessageHashUtils.toEthSignedMessageHash(_getUserOpHash(userOp));
+        bytes32 opHash = ECDSA.toEthSignedMessageHash(_getUserOpHash(userOp));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, opHash);
         return abi.encodePacked(r, s, v);
     }
@@ -313,7 +311,7 @@ contract BaseTest is Test {
 
     function makePermitSuperTx(
         PackedUserOperation[] memory userOps,
-        IERC20Permit token,
+        ERC20 token,
         Vm.Wallet memory signer,
         address spender,
         uint256 amount
@@ -338,7 +336,7 @@ contract BaseTest is Test {
             )
         );
 
-        bytes32 dataHashToSign = MessageHashUtils.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
+        bytes32 dataHashToSign = EcdsaLib.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, dataHashToSign);
 
@@ -375,7 +373,7 @@ contract BaseTest is Test {
     function makePermitSuperTxSignatures(
         bytes32 baseHash,
         uint256 total,
-        IERC20Permit token,
+        ERC20 token,
         Vm.Wallet memory signer,
         address spender,
         uint256 amount
@@ -407,7 +405,7 @@ contract BaseTest is Test {
             )
         );
 
-        bytes32 dataHashToSign = MessageHashUtils.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
+        bytes32 dataHashToSign = EcdsaLib.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, dataHashToSign);
 

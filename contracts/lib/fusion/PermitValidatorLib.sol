@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
 import {EcdsaLib} from "../util/EcdsaLib.sol";
 import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
-import {IERC20Permit} from "openzeppelin/token/ERC20/extensions/IERC20Permit.sol";
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import {ERC20} from "solady/tokens/ERC20.sol";
 import "account-abstraction/core/Helpers.sol";
 
 /**
@@ -30,7 +28,7 @@ bytes32 constant PERMIT_TYPEHASH =
     keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
 struct DecodedErc20PermitSig {
-    IERC20Permit token;
+    ERC20 token;
     address spender;
     bytes32 domainSeparator;
     uint256 amount;
@@ -62,7 +60,7 @@ library PermitValidatorLib {
 
     uint8 constant EIP_155_MIN_V_VALUE = 37;
 
-    using MessageHashUtils for bytes32;
+    using EcdsaLib for bytes32;
 
     /**
      * This function parses the given userOpSignature into a DecodedErc20PermitSig data structure.
@@ -120,7 +118,7 @@ library PermitValidatorLib {
                 // all good
             } catch {
                 // check if by some reason this permit was already successfully used (and not spent yet)
-                if (IERC20(address(decodedSig.token)).allowance(expectedSigner, decodedSig.spender) < decodedSig.amount)
+                if (ERC20(address(decodedSig.token)).allowance(expectedSigner, decodedSig.spender) < decodedSig.amount)
                 {
                     // if the above expectationis not true, revert
                     revert PermitFailed();
@@ -208,6 +206,6 @@ library PermitValidatorLib {
     }
 
     function _hashTypedData(bytes32 structHash, bytes32 domainSeparator) private pure returns (bytes32) {
-        return MessageHashUtils.toTypedDataHash(domainSeparator, structHash);
+        return EcdsaLib.toTypedDataHash(domainSeparator, structHash);
     }
 }
