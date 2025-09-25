@@ -39,4 +39,19 @@
 
 [lint]
   lint_on_build = true
-  ignore = ["**.t.sol"]
+  ignore = [
+    # Test files
+    "test/*/*.t.sol",
+    "test/*.t.sol", 
+    "test/**/*.t.sol",
+    
+    # Mock contracts
+    "test/mock/*.sol",
+    "contracts/mock/*.sol",
+    "**/mock/*.sol",
+    
+    # Specific file patterns that are often problematic
+    "**/*Mock*.sol",
+    "**/*Test*.sol",
+  ]
+  severity = ["high", "med", "gas"]

@@ -22,7 +22,6 @@ import {TxValidatorLib} from "../lib/fusion/TxValidatorLib.sol";
 import {SimpleValidatorLib} from "../lib/fusion/SimpleValidatorLib.sol";
 import {NoMeeFlowLib} from "../lib/fusion/NoMeeFlowLib.sol";
 import {EcdsaLib} from "../lib/util/EcdsaLib.sol";
-import {EfficientHashLib} from "solady/utils/EfficientHashLib.sol";
 
 /**
  * @title K1MeeValidator
@@ -67,7 +66,7 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     error ModuleAlreadyInitialized();
 
     /// @notice Error to indicate that the new owner cannot be a contract address
-    error NewOwnerIsNotEOA();
+    error NewOwnerIsNotEoa();
 
     /// @notice Error to indicate that the owner cannot be the zero address
     error OwnerCannotBeZeroAddress();
@@ -92,8 +91,8 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
         require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
         address newOwner = address(bytes20(data[:20]));
         require(newOwner != address(0), OwnerCannotBeZeroAddress());
-        if (_isNotEOA(newOwner)) {
-            revert NewOwnerIsNotEOA();
+        if (_isNotEoa(newOwner)) {
+            revert NewOwnerIsNotEoa();
         }
         smartAccountOwners[msg.sender] = newOwner;
         if (data.length > 20) {
@@ -113,8 +112,8 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     /// @param newOwner The address of the new owner
     function transferOwnership(address newOwner) external {
         require(newOwner != address(0), ZeroAddressNotAllowed());
-        if (_isNotEOA(newOwner)) {
-            revert NewOwnerIsNotEOA();
+        if (_isNotEoa(newOwner)) {
+            revert NewOwnerIsNotEoa();
         }
         smartAccountOwners[msg.sender] = newOwner;
     }
@@ -325,7 +324,7 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     /// @notice Checks if the address is a contract
     /// @param account The address to check
     /// @return True if the address is a contract, false otherwise
-    function _isNotEOA(address account) private view returns (bool) {
+    function _isNotEoa(address account) private view returns (bool) {
         uint256 size;
         assembly {
             size := extcodesize(account)

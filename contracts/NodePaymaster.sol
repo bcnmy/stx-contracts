@@ -2,10 +2,8 @@
 pragma solidity ^0.8.27;
 
 import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
-
 import {PackedUserOperation} from "account-abstraction/core/UserOperationLib.sol";
 import {BaseNodePaymaster} from "./BaseNodePaymaster.sol";
-import {EcdsaLib} from "./lib/util/EcdsaLib.sol";
 
 /**
  * @title Node Paymaster

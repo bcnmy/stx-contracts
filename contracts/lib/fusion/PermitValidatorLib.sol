@@ -6,7 +6,7 @@ import {EcdsaLib} from "../util/EcdsaLib.sol";
 import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
 import {ERC20} from "solady/tokens/ERC20.sol";
 import {EfficientHashLib} from "solady/utils/EfficientHashLib.sol";
-import {SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS, _packValidationData} from "account-abstraction/core/Helpers.sol";
+import {SIG_VALIDATION_FAILED, _packValidationData} from "account-abstraction/core/Helpers.sol";
 
 /**
  * @dev Library to validate the signature for MEE ERC-2612 Permit mode

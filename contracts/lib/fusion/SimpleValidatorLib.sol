@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
 import {EcdsaLib} from "../util/EcdsaLib.sol";
 import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
-import "account-abstraction/core/Helpers.sol";
+import {SIG_VALIDATION_FAILED, _packValidationData} from "account-abstraction/core/Helpers.sol";
 
 /**
  * @dev Library to validate the signature for MEE Simple mode
