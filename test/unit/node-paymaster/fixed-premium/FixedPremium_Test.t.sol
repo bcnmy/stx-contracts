@@ -56,7 +56,6 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         userOps[0] = userOp;
 
         uint256 nodePMDepositBefore = getDeposit(address(EMITTING_NODE_PAYMASTER));
-        uint256 refundReceiverBalanceBefore = userOps[0].sender.balance;
 
         vm.recordLogs();
 
@@ -134,7 +133,6 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         uint256 preVerificationGasLimit,
         uint128 verificationGasLimit,
         uint128 callGasLimit,
-        uint256 premiumPercentage,
         uint128 pmValidationGasLimit,
         uint128 pmPostOpGasLimit
     ) public {
@@ -204,21 +202,14 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         uint256 maxGasLimit,
         uint256 maxFeePerGas,
         uint256 gasSpentByExecutorEOA
-    ) public returns (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 actualRefund) {
+    ) public view returns (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 actualRefund) {
         // parse UserOperationEvent
         (,, uint256 actualGasCostFromEP, uint256 actualGasUsedFromEP) =
             abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
         
-        // parse postOpGasEvent
-        (uint256 gasCostPrePostOp, uint256 gasSpentInPostOp) =
-            abi.decode(entries[entries.length - 2].data, (uint256, uint256));
-        
         uint256 actualGasPrice = actualGasCostFromEP / actualGasUsedFromEP;
         
         uint256 maxGasCost = maxGasLimit * maxFeePerGas;
-
-        // nodePM does not charge for the penalty however because it still goes to the node EOA
-        uint256 actualGasCost = gasCostPrePostOp + gasSpentInPostOp * actualGasPrice;
         
         // NodePm doesn't charge for the penalty
         expectedNodeEarnings = _premium;
@@ -240,7 +231,7 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         uint256 maxFeePerGas,
         uint256 gasSpentByExecutorEOA,
         uint256 maxDiffPercentage
-    ) public returns (uint256) {
+    ) public view returns (uint256) {
         (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 refund) =
             assertFinancialStuff(entries, nodePMDepositBefore, maxGasLimit, maxFeePerGas, gasSpentByExecutorEOA);
 

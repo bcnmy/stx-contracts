@@ -32,7 +32,6 @@ contract KeepMode_Paymaster_Test is BaseTest {
 
     function test_keep_mode_single() public {
         valueToSet = MEE_NODE_HEX;
-        uint256 maxDiffPercentage = 0.10e18; // 10% difference
         
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.setValue.selector, valueToSet);
         bytes memory callData =

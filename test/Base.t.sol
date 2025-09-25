@@ -184,9 +184,6 @@ contract BaseTest is Test {
         Vm.Wallet memory wallet,
         bytes4 sigType
     ) internal view returns (PackedUserOperation memory) {
-        uint256 maxGasLimit = userOp.preVerificationGas + unpackVerificationGasLimitMemory(userOp)
-            + unpackCallGasLimitMemory(userOp) + pmValidationGasLimit + pmPostOpGasLimit;
-        
         // refund mode = user
         // premium mode = percentage premium
         userOp.paymasterAndData = abi.encodePacked(

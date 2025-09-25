@@ -18,7 +18,7 @@ struct PackedUserOperation {
 */
 
 library CopyUserOpLib {
-    function deepCopy(PackedUserOperation memory userOp) internal view returns (PackedUserOperation memory newUserOp) {
+    function deepCopy(PackedUserOperation memory userOp) internal pure returns (PackedUserOperation memory newUserOp) {
         // copy every field of packedUserOp
         newUserOp.sender = userOp.sender;
         newUserOp.nonce = userOp.nonce;

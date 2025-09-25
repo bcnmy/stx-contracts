@@ -243,7 +243,7 @@ contract K1MEEValidatorTest is BaseTest {
         assertEq(mockTarget.counter(), counterBefore + 1);
     }
 
-    function test_nonMEEFlow_validateSignatureWithData_success() public {
+    function test_nonMEEFlow_validateSignatureWithData_success() public view {
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
             callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
@@ -254,7 +254,7 @@ contract K1MEEValidatorTest is BaseTest {
         assertTrue(mockAccount.validateSignatureWithData(userOpHash, userOp.signature, abi.encodePacked(wallet.addr)));
     }
 
-    function test_nonMEEFlow_isValidSignature_7739_success() public {
+    function test_nonMEEFlow_isValidSignature_7739_success() public view {
         TestTemps memory t;
         t.contents = keccak256("0x1234");
         bytes32 dataToSign = toERC1271Hash(t.contents, address(mockAccount));
@@ -269,7 +269,7 @@ contract K1MEEValidatorTest is BaseTest {
     // ================================
 
     function buildBasicMEEUserOpWithCalldata(bytes memory callData, address account, Vm.Wallet memory userOpSigner)
-        public
+        public view
         returns (PackedUserOperation memory)
     {
         PackedUserOperation memory userOp = buildUserOpWithCalldata({

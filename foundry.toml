@@ -38,4 +38,4 @@
   wrap_comments = true
 
 [lint]
-  lint_on_build = true
+  lint_on_build = false

@@ -80,7 +80,6 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         userOps[0] = userOp;
 
         uint256 nodePMDepositBefore = getDeposit(address(EMITTING_NODE_PAYMASTER));
-        uint256 refundReceiverBalanceBefore = userOps[0].sender.balance;
 
         vm.recordLogs();
 
@@ -222,7 +221,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         }); 
     }
 
-    function test_premium_supports_fractions(uint256 meeNodePremium, uint256 approxGasCost) public {
+    function test_premium_supports_fractions(uint256 meeNodePremium, uint256 approxGasCost) public pure {
         meeNodePremium = bound(meeNodePremium, 1e3, 200e5);
         approxGasCost = bound(approxGasCost, 50_000, 5e6);
         uint256 approxGasCostWithPremium =
@@ -239,7 +238,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         uint256 maxGasLimit,
         uint256 maxFeePerGas,
         uint256 gasSpentByExecutorEOA
-    ) public returns (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 actualRefund) {
+    ) public view returns (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 actualRefund) {
         // parse UserOperationEvent
         (,, uint256 actualGasCostFromEP, uint256 actualGasUsedFromEP) =
             abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
@@ -278,7 +277,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         uint256 maxFeePerGas,
         uint256 gasSpentByExecutorEOA,
         uint256 maxDiffPercentage
-    ) public returns (uint256) {
+    ) public view returns (uint256) {
         (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 refund) =
             assertFinancialStuff(entries, meeNodePremiumPercentage, nodePMDepositBefore, maxGasLimit, maxFeePerGas, gasSpentByExecutorEOA);
 
