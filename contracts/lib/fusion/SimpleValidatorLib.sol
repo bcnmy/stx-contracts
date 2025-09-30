@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
-import {EcdsaLib} from "../util/EcdsaLib.sol";
-import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
-import {SIG_VALIDATION_FAILED, _packValidationData} from "account-abstraction/core/Helpers.sol";
+import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
+import { EcdsaLib } from "../util/EcdsaLib.sol";
+import { MEEUserOpHashLib } from "../util/MEEUserOpHashLib.sol";
+import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
 
 /**
  * @dev Library to validate the signature for MEE Simple mode
@@ -26,11 +26,7 @@ library SimpleValidatorLib {
      * @param signatureData Signature provided as the userOp.signature parameter (minus the prepended tx type byte).
      * @param expectedSigner Signer expected to be recovered when decoding the ERC20OPermit signature.
      */
-    function validateUserOp(bytes32 userOpHash, bytes calldata signatureData, address expectedSigner)
-        internal
-        view
-        returns (uint256)
-    {
+    function validateUserOp(bytes32 userOpHash, bytes calldata signatureData, address expectedSigner) internal view returns (uint256) {
         bytes32 superTxHash;
         uint48 lowerBoundTimestamp;
         uint48 upperBoundTimestamp;
@@ -69,11 +65,7 @@ library SimpleValidatorLib {
      * @param dataHash data hash being validated.
      * @param signatureData Signature
      */
-    function validateSignatureForOwner(address owner, bytes32 dataHash, bytes calldata signatureData)
-        internal
-        view
-        returns (bool)
-    {
+    function validateSignatureForOwner(address owner, bytes32 dataHash, bytes calldata signatureData) internal view returns (bool) {
         bytes32 superTxHash;
         bytes32[] calldata proof;
         bytes calldata secp256k1Signature;

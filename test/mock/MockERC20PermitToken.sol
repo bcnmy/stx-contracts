@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {ERC20} from "solady/tokens/ERC20.sol";
+import { ERC20 } from "solady/tokens/ERC20.sol";
 
 contract MockERC20PermitToken is ERC20 {
-
     string private _name;
     string private _symbol;
 

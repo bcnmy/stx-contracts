@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {MerkleProofLib} from "solady/utils/MerkleProofLib.sol";
-import {RLPReader as RLPDecoder} from "rlp-reader/RLPReader.sol";
-import {RLPEncoder} from "../rlp/RLPEncoder.sol";
-import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
-import {EcdsaLib} from "../util/EcdsaLib.sol";
-import {BytesLib} from "byteslib/BytesLib.sol";
-import {SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS, _packValidationData} from "account-abstraction/core/Helpers.sol";
-import {EfficientHashLib} from "solady/utils/EfficientHashLib.sol";
+import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
+import { RLPReader as RLPDecoder } from "rlp-reader/RLPReader.sol";
+import { RLPEncoder } from "../rlp/RLPEncoder.sol";
+import { MEEUserOpHashLib } from "../util/MEEUserOpHashLib.sol";
+import { EcdsaLib } from "../util/EcdsaLib.sol";
+import { BytesLib } from "byteslib/BytesLib.sol";
+import { SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS, _packValidationData } from "account-abstraction/core/Helpers.sol";
+import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 
 /**
  * @dev Library to validate the signature for MEE on-chain Txn mode
@@ -103,15 +103,10 @@ library TxValidatorLib {
      *                        already contains 0x02 prefix.
      * @param expectedSigner Expected EOA signer of the given EVM transaction => superTX.
      */
-    function validateUserOp(bytes32 userOpHash, bytes calldata parsedSignature, address expectedSigner)
-        internal
-        view
-        returns (uint256)
-    {
+    function validateUserOp(bytes32 userOpHash, bytes calldata parsedSignature, address expectedSigner) internal view returns (uint256) {
         TxData memory decodedTx = decodeTx(parsedSignature);
 
-        bytes32 meeUserOpHash =
-            MEEUserOpHashLib.getMEEUserOpHash(userOpHash, decodedTx.lowerBoundTimestamp, decodedTx.upperBoundTimestamp);
+        bytes32 meeUserOpHash = MEEUserOpHashLib.getMEEUserOpHash(userOpHash, decodedTx.lowerBoundTimestamp, decodedTx.upperBoundTimestamp);
 
         bytes memory signature = abi.encodePacked(decodedTx.r, decodedTx.s, decodedTx.v);
         if (!EcdsaLib.isValidSignature(expectedSigner, decodedTx.utxHash, signature)) {
@@ -133,11 +128,7 @@ library TxValidatorLib {
      * @param parsedSignature the signature to be validated
      * @return true if the signature is valid, false otherwise
      */
-    function validateSignatureForOwner(address expectedSigner, bytes32 dataHash, bytes calldata parsedSignature)
-        internal
-        view
-        returns (bool)
-    {
+    function validateSignatureForOwner(address expectedSigner, bytes32 dataHash, bytes calldata parsedSignature) internal view returns (bool) {
         TxDataShort memory decodedTx = decodeTxShort(parsedSignature);
 
         bytes memory signature = abi.encodePacked(decodedTx.r, decodedTx.s, decodedTx.v);
@@ -154,8 +145,7 @@ library TxValidatorLib {
 
     function decodeTx(bytes calldata self) internal pure returns (TxData memory) {
         uint8 txType = uint8(self[0]); //first byte is tx type
-        uint48 lowerBoundTimestamp =
-            uint48(bytes6((self[self.length - 2 * TIMESTAMP_BYTE_SIZE:self.length - TIMESTAMP_BYTE_SIZE])));
+        uint48 lowerBoundTimestamp = uint48(bytes6((self[self.length - 2 * TIMESTAMP_BYTE_SIZE:self.length - TIMESTAMP_BYTE_SIZE])));
         uint48 upperBoundTimestamp = uint48(bytes6(self[self.length - TIMESTAMP_BYTE_SIZE:]));
         uint8 proofItemsCount = uint8(self[self.length - 2 * TIMESTAMP_BYTE_SIZE - 1]);
         uint256 appendedDataLen = (uint256(proofItemsCount) * PROOF_ITEM_BYTE_SIZE + 1) + 2 * TIMESTAMP_BYTE_SIZE;
@@ -197,11 +187,7 @@ library TxValidatorLib {
         });
     }
 
-    function extractParams(uint8 txType, RLPDecoder.RLPItem[] memory items)
-        private
-        pure
-        returns (TxParams memory params)
-    {
+    function extractParams(uint8 txType, RLPDecoder.RLPItem[] memory items) private pure returns (TxParams memory params) {
         uint8 dataPos;
         uint8 vPos;
         uint8 rPos;
@@ -221,9 +207,7 @@ library TxValidatorLib {
             revert("TxValidatorLib:: unsupported evm tx type");
         }
 
-        return TxParams(
-            items[vPos].toUint(), bytes32(items[rPos].toUint()), bytes32(items[sPos].toUint()), items[dataPos].toBytes()
-        );
+        return TxParams(items[vPos].toUint(), bytes32(items[rPos].toUint()), bytes32(items[sPos].toUint()), items[dataPos].toBytes());
     }
 
     function extractAppendedHash(bytes memory callData) private pure returns (bytes32 iTxHash) {
@@ -231,11 +215,7 @@ library TxValidatorLib {
         iTxHash = bytes32(callData.slice(callData.length - ITX_HASH_BYTE_SIZE, ITX_HASH_BYTE_SIZE));
     }
 
-    function extractProof(bytes calldata signedTx, uint8 proofItemsCount)
-        private
-        pure
-        returns (bytes32[] memory proof)
-    {
+    function extractProof(bytes calldata signedTx, uint8 proofItemsCount) private pure returns (bytes32[] memory proof) {
         proof = new bytes32[](proofItemsCount);
         uint256 pos = signedTx.length - 2 * TIMESTAMP_BYTE_SIZE - 1;
         for (proofItemsCount; proofItemsCount > 0; proofItemsCount--) {
@@ -244,11 +224,7 @@ library TxValidatorLib {
         }
     }
 
-    function extractProofShort(bytes calldata signedTx, uint8 proofItemsCount)
-        private
-        pure
-        returns (bytes32[] memory proof)
-    {
+    function extractProofShort(bytes calldata signedTx, uint8 proofItemsCount) private pure returns (bytes32[] memory proof) {
         proof = new bytes32[](proofItemsCount);
         uint256 pos = signedTx.length - 1;
         for (proofItemsCount; proofItemsCount > 0; proofItemsCount--) {
@@ -264,12 +240,14 @@ library TxValidatorLib {
         uint256 v,
         bytes32 r,
         bytes32 s
-    ) private pure returns (bytes32 hash) {
-        uint256 totalSignatureSize =
-            uint256(r).encodeUint().length + uint256(s).encodeUint().length + v.encodeUint().length;
+    )
+        private
+        pure
+        returns (bytes32 hash)
+    {
+        uint256 totalSignatureSize = uint256(r).encodeUint().length + uint256(s).encodeUint().length + v.encodeUint().length;
         uint256 totalPrefixSize = rlpEncodedTx.length - rlpEncodedTxPayloadLen;
-        bytes memory rlpEncodedTxNoSigAndPrefix =
-            rlpEncodedTx.slice(totalPrefixSize, rlpEncodedTx.length - totalSignatureSize - totalPrefixSize);
+        bytes memory rlpEncodedTxNoSigAndPrefix = rlpEncodedTx.slice(totalPrefixSize, rlpEncodedTx.length - totalSignatureSize - totalPrefixSize);
         if (txType == EIP1559_TX_TYPE) {
             return EfficientHashLib.hash(abi.encodePacked(txType, prependRlpContentSize(rlpEncodedTxNoSigAndPrefix, "")));
         } else if (txType == LEGACY_TX_TYPE) {
@@ -277,11 +255,7 @@ library TxValidatorLib {
                 return EfficientHashLib.hash(
                     prependRlpContentSize(
                         rlpEncodedTxNoSigAndPrefix,
-                        abi.encodePacked(
-                            uint256(_extractChainIdFromV(v)).encodeUint(),
-                            uint256(0).encodeUint(),
-                            uint256(0).encodeUint()
-                        )
+                        abi.encodePacked(uint256(_extractChainIdFromV(v)).encodeUint(), uint256(0).encodeUint(), uint256(0).encodeUint())
                     )
                 );
             } else {

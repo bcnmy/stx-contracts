@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
-import {PackedUserOperation} from "account-abstraction/core/UserOperationLib.sol";
-import {BaseNodePaymaster} from "./BaseNodePaymaster.sol";
+import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
+import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
+import { BaseNodePaymaster } from "./BaseNodePaymaster.sol";
 
 /**
  * @title Node Paymaster
@@ -12,17 +12,9 @@ import {BaseNodePaymaster} from "./BaseNodePaymaster.sol";
  * It is used to sponsor userOps. Introduced for gas efficient MEE flow.
  */
 contract NodePaymaster is BaseNodePaymaster {
-
     mapping(address => bool) private _workerEOAs;
 
-    constructor(
-        IEntryPoint _entryPoint,
-        address _meeNodeMasterEOA,
-        address[] memory workerEOAs
-    ) 
-        payable 
-        BaseNodePaymaster(_entryPoint, _meeNodeMasterEOA)
-    {
+    constructor(IEntryPoint _entryPoint, address _meeNodeMasterEOA, address[] memory workerEOAs) payable BaseNodePaymaster(_entryPoint, _meeNodeMasterEOA) {
         for (uint256 i; i < workerEOAs.length; i++) {
             _workerEOAs[workerEOAs[i]] = true;
         }
@@ -33,7 +25,7 @@ contract NodePaymaster is BaseNodePaymaster {
      * Verifies that the handleOps is called by the MEE Node, so it sponsors only for superTxns by owner MEE Node
      * @dev The use of tx.origin makes the NodePaymaster incompatible with the general ERC4337 mempool.
      * This is intentional, and the NodePaymaster is restricted to the MEE node owner anyway.
-     * 
+     *
      * PaymasterAndData is encoded as follows:
      * 20 bytes: Paymaster address
      * 32 bytes: pm gas values
@@ -41,20 +33,24 @@ contract NodePaymaster is BaseNodePaymaster {
      * 4 bytes: premium mode
      * 24 bytes: financial data:: premiumPercentage or fixedPremium
      * 20 bytes: refundReceiver (only for DAPP mode)
-     * 
+     *
      * @param userOp the userOp to validate
      * @param userOpHash the hash of the userOp
      * @param maxCost the max cost of the userOp
      * @return context the context to be used in the postOp
      * @return validationData the validationData to be used in the postOp
      */
-    function _validatePaymasterUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash, uint256 maxCost)
+    function _validatePaymasterUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash,
+        uint256 maxCost
+    )
         internal
         virtual
         override
         returns (bytes memory, uint256)
-    {   
-        if( tx.origin == owner() || _workerEOAs[tx.origin]) {
+    {
+        if (tx.origin == owner() || _workerEOAs[tx.origin]) {
             return _validate(userOp, userOpHash, maxCost);
         }
         return ("", 1);

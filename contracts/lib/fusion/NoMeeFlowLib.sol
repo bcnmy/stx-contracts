@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS} from "account-abstraction/core/Helpers.sol";
-import {EcdsaLib} from "../util/EcdsaLib.sol";
+import { SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS } from "account-abstraction/core/Helpers.sol";
+import { EcdsaLib } from "../util/EcdsaLib.sol";
 
 library NoMeeFlowLib {
     /**
@@ -12,11 +12,7 @@ library NoMeeFlowLib {
      * @param parsedSignature Signature
      * @param expectedSigner Signer expected to be recovered
      */
-    function validateUserOp(bytes32 userOpHash, bytes memory parsedSignature, address expectedSigner)
-        internal
-        view
-        returns (uint256)
-    {
+    function validateUserOp(bytes32 userOpHash, bytes memory parsedSignature, address expectedSigner) internal view returns (uint256) {
         if (!EcdsaLib.isValidSignature(expectedSigner, userOpHash, parsedSignature)) {
             return SIG_VALIDATION_FAILED;
         }
@@ -29,11 +25,7 @@ library NoMeeFlowLib {
      * @param hash Hash of the userOp
      * @param parsedSignature Signature
      */
-    function validateSignatureForOwner(address expectedSigner, bytes32 hash, bytes memory parsedSignature)
-        internal
-        view
-        returns (bool)
-    {
+    function validateSignatureForOwner(address expectedSigner, bytes32 hash, bytes memory parsedSignature) internal view returns (bool) {
         return EcdsaLib.isValidSignature(expectedSigner, hash, parsedSignature);
     }
 }

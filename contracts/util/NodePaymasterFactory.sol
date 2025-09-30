@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {NodePaymaster} from "contracts/NodePaymaster.sol";
-import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
+import { NodePaymaster } from "contracts/NodePaymaster.sol";
+import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 
 contract NodePaymasterFactory {
-
     /// @notice The error thrown when the NodePaymaster deployment fails
     error NodePMDeployFailed();
 
@@ -16,29 +15,30 @@ contract NodePaymasterFactory {
     /// @return nodePaymaster The address of the deployed NodePaymaster
     /// @dev The NodePaymaster is deployed using create2 with a deterministic address
     /// @dev The NodePaymaster is funded with the msg.value
-    function deployAndFundNodePaymaster(address entryPoint, address owner, address[] calldata workerEoas, uint256 index) public payable returns (address nodePaymaster) {
+    function deployAndFundNodePaymaster(
+        address entryPoint,
+        address owner,
+        address[] calldata workerEoas,
+        uint256 index
+    )
+        public
+        payable
+        returns (address nodePaymaster)
+    {
         address expectedPm = _predictNodePaymasterAddress(entryPoint, owner, workerEoas, index);
 
-        bytes memory deploymentData = abi.encodePacked(
-            type(NodePaymaster).creationCode,
-            abi.encode(entryPoint, owner, workerEoas)
-        );
+        bytes memory deploymentData = abi.encodePacked(type(NodePaymaster).creationCode, abi.encode(entryPoint, owner, workerEoas));
 
         assembly {
-            nodePaymaster := create2(
-                0x0,
-                add(0x20, deploymentData),
-                mload(deploymentData),
-                index
-            )
+            nodePaymaster := create2(0x0, add(0x20, deploymentData), mload(deploymentData), index)
         }
-        
-        if(address(nodePaymaster) == address(0) || address(nodePaymaster) != expectedPm) {
+
+        if (address(nodePaymaster) == address(0) || address(nodePaymaster) != expectedPm) {
             revert NodePMDeployFailed();
         }
 
         // deposit the msg.value to the EP at the node paymaster's name
-        IEntryPoint(entryPoint).depositTo{value: msg.value}(nodePaymaster);
+        IEntryPoint(entryPoint).depositTo{ value: msg.value }(nodePaymaster);
     }
 
     /// @notice Get the counterfactual address of a NodePaymaster
@@ -68,5 +68,4 @@ contract NodePaymasterFactory {
         }
         return payable(address(uint160(predictedAddress)));
     }
-
 }
