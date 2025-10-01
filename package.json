@@ -10,12 +10,16 @@
   },
   "scripts": {
     "test": "forge test --isolate",
+    "lint:prod": "solhint 'contracts/**/*.sol'",
+    "lint:prod:strict": "solhint 'contracts/**/*.sol' --max-warnings 0",
     "lint:both": "forge lint --force contracts/ --severity high --severity gas --severity med && solhint 'contracts/**/*.sol' 'test/**/*.sol'",
     "lint": "solhint 'contracts/**/*.sol' 'test/**/*.sol'",
     "lint:fix": "solhint 'contracts/**/*.sol' 'test/**/*.sol' --fix",
     "lint:report": "solhint 'contracts/**/*.sol' 'test/**/*.sol' -f table > solhint-report.txt",
     "lint:strict": "solhint 'contracts/**/*.sol' --max-warnings 0",
     "lint:diff": "git diff --name-only HEAD~1 HEAD | grep '\\.sol$' | xargs solhint",
+    "lint:prod:revert": "solhint 'contracts/**/*.sol' --quiet",
+    "lint:revert": "solhint 'contracts/**/*.sol' 'test/**/*.sol' --quiet",
     "prepare": "husky"
   },
   "author": "Biconomy",

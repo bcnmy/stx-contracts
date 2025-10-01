@@ -82,6 +82,7 @@ contract KeepMode_Paymaster_Test is BaseTest {
 
     // ============ HELPERS ==============
 
+    /* solhint-disable foundry-test-functions */
     function getDeposit(address account) internal view returns (uint256) {
         return ENTRYPOINT.getDepositInfo(account).deposit;
     }

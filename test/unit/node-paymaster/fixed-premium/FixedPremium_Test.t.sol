@@ -198,6 +198,7 @@ contract FixedPremium_Paymaster_Test is BaseTest {
 
     // ============ HELPERS ==============
 
+    /* solhint-disable foundry-test-functions */
     function assertFinancialStuff(
         Vm.Log[] memory entries,
         uint256 nodePMDepositBefore,

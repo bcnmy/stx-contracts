@@ -6,7 +6,7 @@ import { BaseNodePaymaster } from "../../contracts/BaseNodePaymaster.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 
 contract EmittingNodePaymaster is BaseNodePaymaster {
-    event postOpGasEvent(uint256 gasCostPrePostOp, uint256 gasSpentInPostOp);
+    event PostOpGasEvent(uint256 gasCostPrePostOp, uint256 gasSpentInPostOp);
 
     constructor(IEntryPoint _entryPoint, address _meeNodeAddress) BaseNodePaymaster(_entryPoint, _meeNodeAddress) { }
 
@@ -37,6 +37,6 @@ contract EmittingNodePaymaster is BaseNodePaymaster {
         uint256 preGas = gasleft();
         super._postOp(mode, context, actualGasCost, gasPrice);
         // emit event
-        emit postOpGasEvent(actualGasCost, preGas - gasleft());
+        emit PostOpGasEvent(actualGasCost, preGas - gasleft());
     }
 }

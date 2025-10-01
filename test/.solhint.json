@@ -3,10 +3,10 @@
     "rules": {
         "no-console": "off",
         "foundry-test-functions": [
-            "warn",
-            [
-                "setUp"
-            ]
+            "error",
+                [
+                    "setUp"
+                ]
             ],
         "no-unused-import": "warn",
         "use-natspec": "off",
@@ -24,6 +24,9 @@
         "gas-length-in-loops": "off",
         "gas-named-return-values": "off",
         "gas-small-strings": "off",
-        "gas-struct-packing": "off"
+        "gas-struct-packing": "off",
+        "func-name-mixedcase": "off",
+        "contract-name-capwords": "off",
+        "var-name-mixedcase": "off"
     }
 }

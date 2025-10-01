@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+
+# Get list of staged files
+STAGED_FILES=$(git diff --cached --name-only)
+
+# Run formatter
+forge fmt
+
+# Run Solhint and only output Errors, not warnings via grep
+pnpm lint | grep "error"
+
+# If there are any errors, exit with a non-zero code
+if [ $? -ne 0 ]; then
+  echo "Solhint found errors, please fix them before committing"
+  exit 1
+fi
+
+# Re-stage only the files that were originally staged
+for file in $STAGED_FILES; do
+  if [ -f "$file" ]; then
+    git add "$file"
+  fi
+done

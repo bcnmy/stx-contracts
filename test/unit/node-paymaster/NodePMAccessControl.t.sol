@@ -91,6 +91,7 @@ contract NodePMAccessControlTest is BaseTest {
         assertEq(mockTargetValueBefore, mockTarget.value());
     }
 
+    /* solhint-disable foundry-test-functions */
     function _prepareUserOps() public returns (PackedUserOperation[] memory) {
         valueToSet = MEE_NODE_HEX;
         uint256 premiumPercentage = 1_700_000;

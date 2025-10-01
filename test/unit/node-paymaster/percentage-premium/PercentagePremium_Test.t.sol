@@ -233,6 +233,8 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
 
     // ============ HELPERS ==============
 
+    /* solhint-disable foundry-test-functions */
+
     function assertFinancialStuff(
         Vm.Log[] memory entries,
         uint256 meeNodePremiumPercentage,
@@ -249,7 +251,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         (,, uint256 actualGasCostFromEP, uint256 actualGasUsedFromEP) =
             abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
 
-        // parse postOpGasEvent
+        // parse PostOpGasEvent
         (uint256 gasCostPrePostOp, uint256 gasSpentInPostOp) =
             abi.decode(entries[entries.length - 2].data, (uint256, uint256));
 
