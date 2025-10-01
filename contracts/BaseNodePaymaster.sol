@@ -5,13 +5,7 @@ import { BasePaymaster } from "account-abstraction/core/BasePaymaster.sol";
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
-import { 
-    NODE_PM_MODE_USER,
-    NODE_PM_MODE_DAPP,
-    NODE_PM_MODE_KEEP,
-    NODE_PM_PREMIUM_PERCENT,
-    NODE_PM_PREMIUM_FIXED 
-} from "./types/Constants.sol";
+import { NODE_PM_MODE_USER, NODE_PM_MODE_DAPP, NODE_PM_MODE_KEEP, NODE_PM_PREMIUM_PERCENT, NODE_PM_PREMIUM_FIXED } from "./types/Constants.sol";
 
 /**
  * @title BaseNode Paymaster
@@ -115,7 +109,7 @@ abstract contract BaseNodePaymaster is BasePaymaster {
      *      postOpReverted - user op succeeded, but caused postOp (in mode=opSucceeded) to revert.
      *                       Now this is the 2nd call, after user's op was deliberately reverted.
      * @dev postOpGasLimit is very important parameter that Node SHOULD use to balance its economic interests
-     *         since penalty is not involved with refunds to sponsor here, 
+     *         since penalty is not involved with refunds to sponsor here,
      *         postOpGasLimit should account for gas that is spend by AA-EP after benchmarking actualGasSpent
      *         if it is too low (still enough for _postOp), nodePM will be underpaid
      *         if it is too high, nodePM will be overcharging the superTxn sponsor as refund is going to be lower

@@ -10,6 +10,7 @@
   },
   "scripts": {
     "test": "forge test --isolate",
+    "lint:both": "forge lint --force contracts/ --severity high --severity gas --severity med && solhint 'contracts/**/*.sol' 'test/**/*.sol'",
     "lint": "solhint 'contracts/**/*.sol' 'test/**/*.sol'",
     "lint:fix": "solhint 'contracts/**/*.sol' 'test/**/*.sol' --fix",
     "lint:report": "solhint 'contracts/**/*.sol' 'test/**/*.sol' -f table > solhint-report.txt",

@@ -27,7 +27,10 @@ contract NodePaymasterFactory {
     {
         address expectedPm = _predictNodePaymasterAddress(entryPoint, owner, workerEoas, index);
 
-        bytes memory deploymentData = abi.encodePacked(type(NodePaymaster).creationCode, abi.encode(entryPoint, owner, workerEoas));
+        bytes memory deploymentData = abi.encodePacked(
+            type(NodePaymaster).creationCode, 
+            abi.encode(entryPoint, owner, workerEoas)
+        );
 
         assembly {
             nodePaymaster := create2(0x0, add(0x20, deploymentData), mload(deploymentData), index)
@@ -45,15 +48,29 @@ contract NodePaymasterFactory {
     /// @param entryPoint The 4337 EntryPoint address expected to call the NodePaymaster
     /// @param owner The owner of the NodePaymaster
     /// @param index The deployment index of the NodePaymaster
-    /// @return nodePaymaster The counterfactual address of the NodePaymaster
-    function getNodePaymasterAddress(address entryPoint, address owner, address[] calldata workerEoas, uint256 index) public view returns (address) {
-        return _predictNodePaymasterAddress(entryPoint, owner, workerEoas, index);
+    /// @return nodePmAddress The counterfactual address of the NodePaymaster
+    function getNodePaymasterAddress(
+        address entryPoint,
+        address owner,
+        address[] calldata workerEoas,
+        uint256 index
+    ) public view returns (address nodePmAddress) {
+        nodePmAddress = _predictNodePaymasterAddress(entryPoint, owner, workerEoas, index);
     }
 
     // function to check if some EOA got PmContract deployed
-    function _predictNodePaymasterAddress(address entryPoint, address owner, address[] calldata workerEoas, uint256 index) internal view returns (address) {
-        /// forge-lint:disable-next-line(asm-keccak256)
-        bytes32 initCodeHash = keccak256(abi.encodePacked(type(NodePaymaster).creationCode, abi.encode(entryPoint, owner, workerEoas)));
+    function _predictNodePaymasterAddress(
+        address entryPoint,
+        address owner,
+        address[] calldata workerEoas,
+        uint256 index
+    ) internal view returns (address nodePmAddress) {
+        /// forge-lint:disable-start(asm-keccak256)
+        bytes32 initCodeHash = keccak256(
+            abi.encodePacked(type(NodePaymaster).creationCode, 
+            abi.encode(entryPoint, owner, workerEoas))
+        );
+        /// forge-lint:disable-end(asm-keccak256)
 
         // Return the predicted address
         uint256 predictedAddress;
