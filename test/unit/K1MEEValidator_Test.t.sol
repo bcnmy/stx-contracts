@@ -40,7 +40,10 @@ contract K1MEEValidatorTest is BaseTest {
     }
 
     // test simple mode
-    function test_superTxFlow_simple_mode_ValidateUserOp_success(uint256 numOfClones) public returns (PackedUserOperation[] memory) {
+    function test_superTxFlow_simple_mode_ValidateUserOp_success(uint256 numOfClones)
+        public
+        returns (PackedUserOperation[] memory)
+    {
         numOfClones = bound(numOfClones, 1, 25);
         uint256 counterBefore = mockTarget.counter();
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
@@ -66,14 +69,21 @@ contract K1MEEValidatorTest is BaseTest {
         numOfObjs = bound(numOfObjs, 2, 25);
         bytes[] memory meeSigs = new bytes[](numOfObjs);
         bytes32 baseHash = keccak256(abi.encode("test"));
-        meeSigs = makeSimpleSuperTxSignatures({ baseHash: baseHash, total: numOfObjs, superTxSigner: wallet, mockAccount: address(mockAccount) });
+        meeSigs = makeSimpleSuperTxSignatures({
+            baseHash: baseHash,
+            total: numOfObjs,
+            superTxSigner: wallet,
+            mockAccount: address(mockAccount)
+        });
 
         for (uint256 i = 0; i < numOfObjs; i++) {
             // pass the 'unsafe hash' here. however, the root is made with the 'safe' one
             // hash will rehashed in the K1MEEValidator.isValidSignatureWithSender by hashing the SA address into it
             bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
             if (i / 2 == 0) {
-                assertTrue(mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr)));
+                assertTrue(
+                    mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr))
+                );
             } else {
                 assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == EIP1271_SUCCESS);
             }
@@ -91,7 +101,8 @@ contract K1MEEValidatorTest is BaseTest {
 
         // userOps will transfer tokens from wallet, not from mockAccount
         // because of permit applies in the first userop validation
-        bytes memory innerCallData = abi.encodeWithSelector(erc20.transferFrom.selector, wallet.addr, bob, amountToTransfer);
+        bytes memory innerCallData =
+            abi.encodeWithSelector(erc20.transferFrom.selector, wallet.addr, bob, amountToTransfer);
 
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
             callData: abi.encodeWithSelector(mockAccount.execute.selector, address(erc20), uint256(0), innerCallData),
@@ -101,8 +112,13 @@ contract K1MEEValidatorTest is BaseTest {
 
         PackedUserOperation[] memory userOps = cloneUserOpToAnArray(userOp, wallet, numOfClones);
 
-        userOps =
-            makePermitSuperTx({ userOps: userOps, token: erc20, signer: wallet, spender: address(mockAccount), amount: amountToTransfer * userOps.length });
+        userOps = makePermitSuperTx({
+            userOps: userOps,
+            token: erc20,
+            signer: wallet,
+            spender: address(mockAccount),
+            amount: amountToTransfer * userOps.length
+        });
 
         vm.startPrank(MEE_NODE_EXECUTOR_EOA, MEE_NODE_EXECUTOR_EOA);
         ENTRYPOINT.handleOps(userOps, payable(MEE_NODE_ADDRESS));
@@ -117,13 +133,21 @@ contract K1MEEValidatorTest is BaseTest {
         bytes[] memory meeSigs = new bytes[](numOfObjs);
         bytes32 baseHash = keccak256(abi.encode("test"));
 
-        meeSigs =
-            makePermitSuperTxSignatures({ baseHash: baseHash, total: numOfObjs, token: erc20, signer: wallet, spender: address(mockAccount), amount: 1e18 });
+        meeSigs = makePermitSuperTxSignatures({
+            baseHash: baseHash,
+            total: numOfObjs,
+            token: erc20,
+            signer: wallet,
+            spender: address(mockAccount),
+            amount: 1e18
+        });
 
         for (uint256 i = 0; i < numOfObjs; i++) {
             bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
             if (i / 2 == 0) {
-                assertTrue(mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr)));
+                assertTrue(
+                    mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr))
+                );
             } else {
                 assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == EIP1271_SUCCESS);
             }
@@ -141,7 +165,8 @@ contract K1MEEValidatorTest is BaseTest {
         assertEq(erc20.balanceOf(address(mockAccount)), 0);
         uint256 amountToTransfer = 1 ether; // 1 token
 
-        bytes memory innerCallData = abi.encodeWithSelector(erc20.transfer.selector, bob, amountToTransfer); // mock Account transfers tokens to bob
+        bytes memory innerCallData = abi.encodeWithSelector(erc20.transfer.selector, bob, amountToTransfer); // mock
+            // Account transfers tokens to bob
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
             callData: abi.encodeWithSelector(mockAccount.execute.selector, address(erc20), uint256(0), innerCallData),
             account: address(mockAccount),
@@ -181,7 +206,9 @@ contract K1MEEValidatorTest is BaseTest {
         for (uint256 i = 0; i < numOfObjs; i++) {
             bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
             if (i / 2 == 0) {
-                assertTrue(mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr)));
+                assertTrue(
+                    mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr))
+                );
             } else {
                 assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == EIP1271_SUCCESS);
             }
@@ -231,7 +258,8 @@ contract K1MEEValidatorTest is BaseTest {
         bytes32 dataToSign = toERC1271Hash(t.contents, address(mockAccount));
         (t.v, t.r, t.s) = vm.sign(wallet.privateKey, dataToSign);
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature = abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+        bytes memory signature =
+            abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
         bytes4 ret = mockAccount.isValidSignature(toContentsHash(t.contents), signature);
         assertEq(ret, bytes4(EIP1271_SUCCESS));
     }
@@ -256,7 +284,13 @@ contract K1MEEValidatorTest is BaseTest {
             callGasLimit: 3e6
         });
 
-        userOp = makeMEEUserOp({ userOp: userOp, pmValidationGasLimit: 40_000, pmPostOpGasLimit: 50_000, wallet: userOpSigner, sigType: bytes4(0) });
+        userOp = makeMEEUserOp({
+            userOp: userOp,
+            pmValidationGasLimit: 40_000,
+            pmPostOpGasLimit: 50_000,
+            wallet: userOpSigner,
+            sigType: bytes4(0)
+        });
 
         return userOp;
     }
@@ -292,7 +326,8 @@ contract K1MEEValidatorTest is BaseTest {
     /// @return The encoded EIP-712 domain struct fields.
     function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        ( /*fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*extensions*/ ) = EIP712(account).eip712Domain();
+        ( /*fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*extensions*/ ) =
+            EIP712(account).eip712Domain();
 
         return abi.encode(
             keccak256(bytes(t.name)),

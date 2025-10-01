@@ -49,12 +49,20 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
     // that user/dapp will take into account when choosing a node for the superTxn. So the nodes with
     // non-reasonable gas fees will not be selected.
 
-    function _percentage_single_base(bytes memory pmAndData, uint256 pmValidationGasLimit, uint256 pmPostOpGasLimit) internal returns (uint256 refund) {
+    function _percentage_single_base(
+        bytes memory pmAndData,
+        uint256 pmValidationGasLimit,
+        uint256 pmPostOpGasLimit
+    )
+        internal
+        returns (uint256 refund)
+    {
         valueToSet = MEE_NODE_HEX;
         uint256 maxDiffPercentage = 0.1e18; // 10% difference
 
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.setValue.selector, valueToSet);
-        bytes memory callData = abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
+        bytes memory callData =
+            abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
 
         PackedUserOperation memory userOp = buildUserOpWithCalldata({
             account: address(mockAccount),
@@ -83,8 +91,8 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
 
         assertEq(mockTarget.value(), valueToSet);
 
-        uint256 maxGasLimit =
-            userOp.preVerificationGas + unpackVerificationGasLimitMemory(userOp) + unpackCallGasLimitMemory(userOp) + pmValidationGasLimit + pmPostOpGasLimit;
+        uint256 maxGasLimit = userOp.preVerificationGas + unpackVerificationGasLimitMemory(userOp)
+            + unpackCallGasLimitMemory(userOp) + pmValidationGasLimit + pmPostOpGasLimit;
 
         // When verification gas limits are tight, the difference is really small
         refund = assertFinancialStuffStrict({
@@ -166,7 +174,8 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         valueToSet = MEE_NODE_HEX;
 
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.setValue.selector, valueToSet);
-        bytes memory callData = abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
+        bytes memory callData =
+            abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
         PackedUserOperation memory userOp = buildUserOpWithCalldata({
             account: address(mockAccount),
             callData: callData,
@@ -176,12 +185,18 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
             callGasLimit: callGasLimit
         });
 
-        uint256 maxGasLimit = preVerificationGasLimit + verificationGasLimit + callGasLimit + pmValidationGasLimit + pmPostOpGasLimit;
+        uint256 maxGasLimit =
+            preVerificationGasLimit + verificationGasLimit + callGasLimit + pmValidationGasLimit + pmPostOpGasLimit;
 
         // refund mode = user
         // premium mode = percentage premium
         userOp.paymasterAndData = abi.encodePacked(
-            address(EMITTING_NODE_PAYMASTER), pmValidationGasLimit, pmPostOpGasLimit, NODE_PM_MODE_USER, NODE_PM_PREMIUM_PERCENT, uint192(premiumPercentage)
+            address(EMITTING_NODE_PAYMASTER),
+            pmValidationGasLimit,
+            pmPostOpGasLimit,
+            NODE_PM_MODE_USER,
+            NODE_PM_PREMIUM_PERCENT,
+            uint192(premiumPercentage)
         );
         userOps[0] = userOp;
 
@@ -211,7 +226,8 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
     function test_premium_supports_fractions(uint256 meeNodePremium, uint256 approxGasCost) public pure {
         meeNodePremium = bound(meeNodePremium, 1e3, 200e5);
         approxGasCost = bound(approxGasCost, 50_000, 5e6);
-        uint256 approxGasCostWithPremium = approxGasCost * (PREMIUM_CALCULATION_BASE + meeNodePremium) / PREMIUM_CALCULATION_BASE;
+        uint256 approxGasCostWithPremium =
+            approxGasCost * (PREMIUM_CALCULATION_BASE + meeNodePremium) / PREMIUM_CALCULATION_BASE;
         assertGt(approxGasCostWithPremium, approxGasCost, "premium should support fractions of %");
     }
 
@@ -230,10 +246,12 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         returns (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 actualRefund)
     {
         // parse UserOperationEvent
-        (,, uint256 actualGasCostFromEP, uint256 actualGasUsedFromEP) = abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
+        (,, uint256 actualGasCostFromEP, uint256 actualGasUsedFromEP) =
+            abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
 
         // parse postOpGasEvent
-        (uint256 gasCostPrePostOp, uint256 gasSpentInPostOp) = abi.decode(entries[entries.length - 2].data, (uint256, uint256));
+        (uint256 gasCostPrePostOp, uint256 gasSpentInPostOp) =
+            abi.decode(entries[entries.length - 2].data, (uint256, uint256));
 
         uint256 actualGasPrice = actualGasCostFromEP / actualGasUsedFromEP;
 
@@ -248,11 +266,15 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         // deposit decrease = refund to sponsor (if any) + gas cost refund to beneficiary (EXECUTOR_EOA) =>
         actualRefund = (nodePMDepositBefore - getDeposit(address(EMITTING_NODE_PAYMASTER))) - actualGasCostFromEP;
 
-        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by executor EOA)
-        meeNodeEarnings = applyPremium(maxGasCost, meeNodePremiumPercentage) - actualRefund - gasSpentByExecutorEOA * actualGasPrice;
+        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by executor
+        // EOA)
+        meeNodeEarnings =
+            applyPremium(maxGasCost, meeNodePremiumPercentage) - actualRefund - gasSpentByExecutorEOA * actualGasPrice;
 
         assertTrue(meeNodeEarnings > 0, "MEE_NODE should have earned something");
-        assertTrue(meeNodeEarnings >= expectedNodeEarnings, "MEE_NODE should have earned more or equal to expectedNodeEarnings");
+        assertTrue(
+            meeNodeEarnings >= expectedNodeEarnings, "MEE_NODE should have earned more or equal to expectedNodeEarnings"
+        );
     }
 
     function assertFinancialStuffStrict(
@@ -268,8 +290,9 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         view
         returns (uint256)
     {
-        (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 refund) =
-            assertFinancialStuff(entries, meeNodePremiumPercentage, nodePMDepositBefore, maxGasLimit, maxFeePerGas, gasSpentByExecutorEOA);
+        (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 refund) = assertFinancialStuff(
+            entries, meeNodePremiumPercentage, nodePMDepositBefore, maxGasLimit, maxFeePerGas, gasSpentByExecutorEOA
+        );
 
         // assert that MEE_NODE extra earnings are not too big
         assertApproxEqRel(expectedNodeEarnings, meeNodeEarnings, maxDiffPercentage, "MEE_NODE earnings are too big");

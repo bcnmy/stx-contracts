@@ -25,12 +25,20 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         wallet = createAndFundWallet("wallet", 1 ether);
     }
 
-    function _fixed_premium_single_base(bytes memory pmAndData, uint256 pmValidationGasLimit, uint256 pmPostOpGasLimit) internal returns (uint256 refund) {
+    function _fixed_premium_single_base(
+        bytes memory pmAndData,
+        uint256 pmValidationGasLimit,
+        uint256 pmPostOpGasLimit
+    )
+        internal
+        returns (uint256 refund)
+    {
         valueToSet = MEE_NODE_HEX;
         uint256 maxDiffPercentage = 0.1e18; // 10% difference
 
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.setValue.selector, valueToSet);
-        bytes memory callData = abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
+        bytes memory callData =
+            abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
 
         PackedUserOperation memory userOp = buildUserOpWithCalldata({
             account: address(mockAccount),
@@ -59,8 +67,8 @@ contract FixedPremium_Paymaster_Test is BaseTest {
 
         assertEq(mockTarget.value(), valueToSet);
 
-        uint256 maxGasLimit =
-            userOp.preVerificationGas + unpackVerificationGasLimitMemory(userOp) + unpackCallGasLimitMemory(userOp) + pmValidationGasLimit + pmPostOpGasLimit;
+        uint256 maxGasLimit = userOp.preVerificationGas + unpackVerificationGasLimitMemory(userOp)
+            + unpackCallGasLimitMemory(userOp) + pmValidationGasLimit + pmPostOpGasLimit;
 
         // When verification gas limits are tight, the difference is really small
         refund = assertFinancialStuffStrict({
@@ -141,7 +149,8 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         valueToSet = MEE_NODE_HEX;
 
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.setValue.selector, valueToSet);
-        bytes memory callData = abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
+        bytes memory callData =
+            abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
         PackedUserOperation memory userOp = buildUserOpWithCalldata({
             account: address(mockAccount),
             callData: callData,
@@ -151,12 +160,18 @@ contract FixedPremium_Paymaster_Test is BaseTest {
             callGasLimit: callGasLimit
         });
 
-        uint256 maxGasLimit = preVerificationGasLimit + verificationGasLimit + callGasLimit + pmValidationGasLimit + pmPostOpGasLimit;
+        uint256 maxGasLimit =
+            preVerificationGasLimit + verificationGasLimit + callGasLimit + pmValidationGasLimit + pmPostOpGasLimit;
 
         // refund mode = user
         // premium mode = percentage premium
-        userOp.paymasterAndData =
-            abi.encodePacked(address(EMITTING_NODE_PAYMASTER), pmValidationGasLimit, pmPostOpGasLimit, NODE_PM_MODE_USER, NODE_PM_PREMIUM_FIXED);
+        userOp.paymasterAndData = abi.encodePacked(
+            address(EMITTING_NODE_PAYMASTER),
+            pmValidationGasLimit,
+            pmPostOpGasLimit,
+            NODE_PM_MODE_USER,
+            NODE_PM_PREMIUM_FIXED
+        );
         userOps[0] = userOp;
 
         uint256 nodePMDepositBefore = getDeposit(address(EMITTING_NODE_PAYMASTER));
@@ -195,7 +210,8 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         returns (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 actualRefund)
     {
         // parse UserOperationEvent
-        (,, uint256 actualGasCostFromEP, uint256 actualGasUsedFromEP) = abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
+        (,, uint256 actualGasCostFromEP, uint256 actualGasUsedFromEP) =
+            abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
 
         uint256 actualGasPrice = actualGasCostFromEP / actualGasUsedFromEP;
 
@@ -207,7 +223,8 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         // deposit decrease = refund to sponsor (if any) + gas cost refund to beneficiary (EXECUTOR_EOA) =>
         actualRefund = (nodePMDepositBefore - getDeposit(address(EMITTING_NODE_PAYMASTER))) - actualGasCostFromEP;
 
-        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by executor EOA)
+        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by executor
+        // EOA)
         meeNodeEarnings = (maxGasCost + _premium) - (actualRefund + gasSpentByExecutorEOA * actualGasPrice);
 
         assertTrue(meeNodeEarnings > 0, "MEE_NODE should have earned something");

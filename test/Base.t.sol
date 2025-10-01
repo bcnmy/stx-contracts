@@ -18,7 +18,12 @@ import { CopyUserOpLib } from "./util/CopyUserOpLib.sol";
 import "contracts/types/Constants.sol";
 import { LibZip } from "solady/utils/LibZip.sol";
 import { ERC20 } from "solady/tokens/ERC20.sol";
-import { PERMIT_TYPEHASH, DecodedErc20PermitSig, DecodedErc20PermitSigShort, PermitValidatorLib } from "contracts/lib/fusion/PermitValidatorLib.sol";
+import {
+    PERMIT_TYPEHASH,
+    DecodedErc20PermitSig,
+    DecodedErc20PermitSigShort,
+    PermitValidatorLib
+} from "contracts/lib/fusion/PermitValidatorLib.sol";
 import { LibRLP } from "solady/utils/LibRLP.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { EcdsaLib } from "contracts/lib/util/EcdsaLib.sol";
@@ -160,9 +165,11 @@ contract BaseTest is Test {
             nonce: nonce,
             initCode: "",
             callData: "",
-            accountGasLimits: bytes32(abi.encodePacked(verificationGasLimit, callGasLimit)), // verification and call gas limit
+            accountGasLimits: bytes32(abi.encodePacked(verificationGasLimit, callGasLimit)), // verification and call gas
+                // limit
             preVerificationGas: preVerificationGasLimit, // Adjusted preVerificationGas
-            gasFees: bytes32(abi.encodePacked(uint128(11e9), uint128(1e9))), // maxFeePerGas = 11gwei and maxPriorityFeePerGas = 1gwei
+            gasFees: bytes32(abi.encodePacked(uint128(11e9), uint128(1e9))), // maxFeePerGas = 11gwei and
+                // maxPriorityFeePerGas = 1gwei
             paymasterAndData: "",
             signature: ""
         });
@@ -259,7 +266,13 @@ contract BaseTest is Test {
     }
     // ==== SIMPLE SUPER TX UTILS ====
 
-    function makeSimpleSuperTx(PackedUserOperation[] memory userOps, Vm.Wallet memory superTxSigner) internal returns (PackedUserOperation[] memory) {
+    function makeSimpleSuperTx(
+        PackedUserOperation[] memory userOps,
+        Vm.Wallet memory superTxSigner
+    )
+        internal
+        returns (PackedUserOperation[] memory)
+    {
         PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
@@ -274,7 +287,9 @@ contract BaseTest is Test {
         for (uint256 i = 0; i < userOps.length; i++) {
             superTxUserOps[i] = userOps[i].deepCopy();
             bytes32[] memory proof = tree.getProof(leaves, i);
-            bytes memory signature = abi.encodePacked(SIG_TYPE_SIMPLE, abi.encode(root, lowerBoundTimestamp, upperBoundTimestamp, proof, superTxHashSignature));
+            bytes memory signature = abi.encodePacked(
+                SIG_TYPE_SIMPLE, abi.encode(root, lowerBoundTimestamp, upperBoundTimestamp, proof, superTxHashSignature)
+            );
             superTxUserOps[i].signature = signature;
         }
         return superTxUserOps;
@@ -475,8 +490,14 @@ contract BaseTest is Test {
         for (uint256 i = 0; i < userOps.length; i++) {
             superTxUserOps[i] = userOps[i].deepCopy();
             bytes32[] memory proof = tree.getProof(leaves, i);
-            bytes memory signature =
-                abi.encodePacked(SIG_TYPE_ON_CHAIN, serializedTx, abi.encodePacked(proof), uint8(proof.length), lowerBoundTimestamp, upperBoundTimestamp);
+            bytes memory signature = abi.encodePacked(
+                SIG_TYPE_ON_CHAIN,
+                serializedTx,
+                abi.encodePacked(proof),
+                uint8(proof.length),
+                lowerBoundTimestamp,
+                upperBoundTimestamp
+            );
             superTxUserOps[i].signature = signature;
         }
         return superTxUserOps;
@@ -513,7 +534,8 @@ contract BaseTest is Test {
 
         for (uint256 i = 0; i < total; i++) {
             bytes32[] memory proof = tree.getProof(leaves, i);
-            bytes memory signature = abi.encodePacked(SIG_TYPE_ON_CHAIN, serializedTx, abi.encodePacked(proof), uint8(proof.length));
+            bytes memory signature =
+                abi.encodePacked(SIG_TYPE_ON_CHAIN, serializedTx, abi.encodePacked(proof), uint8(proof.length));
             meeSigs[i] = signature;
         }
         return meeSigs;
@@ -564,7 +586,8 @@ contract BaseTest is Test {
     {
         LibRLP.List memory accessList = LibRLP.p();
 
-        LibRLP.List memory serializedTxList = LibRLP.p(block.chainid).p(0).p(uint256(1)).p(uint256(20)).p(uint256(50_000)).p(to).p(uint256(0)).p(txnData) // chainId
+        LibRLP.List memory serializedTxList = LibRLP.p(block.chainid).p(0).p(uint256(1)).p(uint256(20)).p(uint256(50_000))
+            .p(to).p(uint256(0)).p(txnData) // chainId
                 // nonce
                 // maxPriorityFeePerGas
                 // maxFeePerGas
@@ -577,7 +600,8 @@ contract BaseTest is Test {
         bytes32 uTxHash = keccak256(abi.encodePacked(hex"02", serializedTxList.encode()));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, uTxHash);
 
-        serializedTxList = serializedTxList.p(v == 28 ? true : false).p(uint256(r)).p(uint256(s)); // add v, r, s to the list
+        serializedTxList = serializedTxList.p(v == 28 ? true : false).p(uint256(r)).p(uint256(s)); // add v, r, s to the
+            // list
         return abi.encodePacked(hex"02", serializedTxList.encode()); // add tx type to the list
     }
 }

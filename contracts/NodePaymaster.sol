@@ -14,7 +14,14 @@ import { BaseNodePaymaster } from "./BaseNodePaymaster.sol";
 contract NodePaymaster is BaseNodePaymaster {
     mapping(address => bool) private _workerEOAs;
 
-    constructor(IEntryPoint _entryPoint, address _meeNodeMasterEOA, address[] memory workerEOAs) payable BaseNodePaymaster(_entryPoint, _meeNodeMasterEOA) {
+    constructor(
+        IEntryPoint _entryPoint,
+        address _meeNodeMasterEOA,
+        address[] memory workerEOAs
+    )
+        payable
+        BaseNodePaymaster(_entryPoint, _meeNodeMasterEOA)
+    {
         for (uint256 i; i < workerEOAs.length; i++) {
             _workerEOAs[workerEOAs[i]] = true;
         }

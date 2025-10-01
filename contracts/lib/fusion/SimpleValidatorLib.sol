@@ -17,7 +17,8 @@ library SimpleValidatorLib {
      * Once parsed, the function will check for two conditions:
      *      1. is the root supertransaction hash signed by the account owner's EOA
      *      2. is the userOp actually a part of the given supertransaction
-     *      by checking the leaf based on this userOpHash is a part of the merkle tree represented by root hash = superTxHash
+     *      by checking the leaf based on this userOpHash is a part of the merkle tree represented by root hash =
+     * superTxHash
      *
      * If both conditions are met - outside contract can be sure that the expected signer has indeed
      * approved the given userOp - and the userOp is successfully validate.
@@ -26,7 +27,15 @@ library SimpleValidatorLib {
      * @param signatureData Signature provided as the userOp.signature parameter (minus the prepended tx type byte).
      * @param expectedSigner Signer expected to be recovered when decoding the ERC20OPermit signature.
      */
-    function validateUserOp(bytes32 userOpHash, bytes calldata signatureData, address expectedSigner) internal view returns (uint256) {
+    function validateUserOp(
+        bytes32 userOpHash,
+        bytes calldata signatureData,
+        address expectedSigner
+    )
+        internal
+        view
+        returns (uint256)
+    {
         bytes32 superTxHash;
         uint48 lowerBoundTimestamp;
         uint48 upperBoundTimestamp;
@@ -65,7 +74,15 @@ library SimpleValidatorLib {
      * @param dataHash data hash being validated.
      * @param signatureData Signature
      */
-    function validateSignatureForOwner(address owner, bytes32 dataHash, bytes calldata signatureData) internal view returns (bool) {
+    function validateSignatureForOwner(
+        address owner,
+        bytes32 dataHash,
+        bytes calldata signatureData
+    )
+        internal
+        view
+        returns (bool)
+    {
         bytes32 superTxHash;
         bytes32[] calldata proof;
         bytes calldata secp256k1Signature;

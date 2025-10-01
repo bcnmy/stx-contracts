@@ -5,7 +5,13 @@ import { BasePaymaster } from "account-abstraction/core/BasePaymaster.sol";
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
-import { NODE_PM_MODE_USER, NODE_PM_MODE_DAPP, NODE_PM_MODE_KEEP, NODE_PM_PREMIUM_PERCENT, NODE_PM_PREMIUM_FIXED } from "./types/Constants.sol";
+import {
+    NODE_PM_MODE_USER,
+    NODE_PM_MODE_DAPP,
+    NODE_PM_MODE_KEEP,
+    NODE_PM_PREMIUM_PERCENT,
+    NODE_PM_PREMIUM_FIXED
+} from "./types/Constants.sol";
 
 /**
  * @title BaseNode Paymaster
@@ -21,7 +27,7 @@ abstract contract BaseNodePaymaster is BasePaymaster {
     using UserOperationLib for bytes32;
 
     // 100% with 5 decimals precision
-    uint256 private constant PREMIUM_CALCULATION_BASE = 10_000_000;
+    uint256 private constant _PREMIUM_CALCULATION_BASE = 10_000_000;
 
     error EmptyMessageValue();
     error InsufficientBalance();
@@ -55,7 +61,15 @@ abstract contract BaseNodePaymaster is BasePaymaster {
      * @return validationData the validationData to be used in the postOp
      */
     // solhint-disable-next-line gas-named-return-values
-    function _validate(PackedUserOperation calldata userOp, bytes32, /*userOpHash*/ uint256 maxCost) internal virtual returns (bytes memory, uint256) {
+    function _validate(
+        PackedUserOperation calldata userOp,
+        bytes32, /*userOpHash*/
+        uint256 maxCost
+    )
+        internal
+        virtual
+        returns (bytes memory, uint256)
+    {
         bytes4 refundMode;
         bytes4 premiumMode;
         bytes calldata pmAndData = userOp.paymasterAndData;
@@ -131,7 +145,16 @@ abstract contract BaseNodePaymaster is BasePaymaster {
      * @param actualGasCost - actual gas used so far (without this postOp call).
      * @param actualUserOpFeePerGas - actual userOp fee per gas
      */
-    function _postOp(PostOpMode, bytes calldata context, uint256 actualGasCost, uint256 actualUserOpFeePerGas) internal virtual override {
+    function _postOp(
+        PostOpMode,
+        bytes calldata context,
+        uint256 actualGasCost,
+        uint256 actualUserOpFeePerGas
+    )
+        internal
+        virtual
+        override
+    {
         uint256 refund;
         address refundReceiver;
 
@@ -254,8 +277,8 @@ abstract contract BaseNodePaymaster is BasePaymaster {
         }
     }
 
-    function _applyPercentagePremium(uint256 amount, uint256 premiumPercentage) internal pure returns (uint256) {
-        return amount * (PREMIUM_CALCULATION_BASE + premiumPercentage) / PREMIUM_CALCULATION_BASE;
+    function _applyPercentagePremium(uint256 amount, uint256 premiumPercentage) internal pure returns (uint256 result) {
+        result = amount * (_PREMIUM_CALCULATION_BASE + premiumPercentage) / _PREMIUM_CALCULATION_BASE;
     }
 
     /// @dev This function is used to receive ETH from the user and immediately deposit it to the entryPoint

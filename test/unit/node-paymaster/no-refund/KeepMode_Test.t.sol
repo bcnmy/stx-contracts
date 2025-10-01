@@ -34,7 +34,8 @@ contract KeepMode_Paymaster_Test is BaseTest {
         valueToSet = MEE_NODE_HEX;
 
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.setValue.selector, valueToSet);
-        bytes memory callData = abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
+        bytes memory callData =
+            abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
 
         PackedUserOperation memory userOp = buildUserOpWithCalldata({
             account: address(mockAccount),

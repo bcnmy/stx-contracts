@@ -12,7 +12,15 @@ library NoMeeFlowLib {
      * @param parsedSignature Signature
      * @param expectedSigner Signer expected to be recovered
      */
-    function validateUserOp(bytes32 userOpHash, bytes memory parsedSignature, address expectedSigner) internal view returns (uint256) {
+    function validateUserOp(
+        bytes32 userOpHash,
+        bytes memory parsedSignature,
+        address expectedSigner
+    )
+        internal
+        view
+        returns (uint256)
+    {
         if (!EcdsaLib.isValidSignature(expectedSigner, userOpHash, parsedSignature)) {
             return SIG_VALIDATION_FAILED;
         }
@@ -25,7 +33,15 @@ library NoMeeFlowLib {
      * @param hash Hash of the userOp
      * @param parsedSignature Signature
      */
-    function validateSignatureForOwner(address expectedSigner, bytes32 hash, bytes memory parsedSignature) internal view returns (bool) {
+    function validateSignatureForOwner(
+        address expectedSigner,
+        bytes32 hash,
+        bytes memory parsedSignature
+    )
+        internal
+        view
+        returns (bool)
+    {
         return EcdsaLib.isValidSignature(expectedSigner, hash, parsedSignature);
     }
 }

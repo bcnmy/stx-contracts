@@ -24,7 +24,16 @@ contract EmittingNodePaymaster is BaseNodePaymaster {
         return _validate(userOp, userOpHash, maxCost);
     }
 
-    function _postOp(PostOpMode mode, bytes calldata context, uint256 actualGasCost, uint256 gasPrice) internal virtual override {
+    function _postOp(
+        PostOpMode mode,
+        bytes calldata context,
+        uint256 actualGasCost,
+        uint256 gasPrice
+    )
+        internal
+        virtual
+        override
+    {
         uint256 preGas = gasleft();
         super._postOp(mode, context, actualGasCost, gasPrice);
         // emit event

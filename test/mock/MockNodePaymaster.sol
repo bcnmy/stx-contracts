@@ -13,7 +13,13 @@ import { BaseNodePaymaster } from "../../contracts/BaseNodePaymaster.sol";
  * It is used to sponsor userOps. Introduced for gas efficient MEE flow.
  */
 contract MockNodePaymaster is BaseNodePaymaster {
-    constructor(IEntryPoint _entryPoint, address _meeNodeAddress) payable BaseNodePaymaster(_entryPoint, _meeNodeAddress) { }
+    constructor(
+        IEntryPoint _entryPoint,
+        address _meeNodeAddress
+    )
+        payable
+        BaseNodePaymaster(_entryPoint, _meeNodeAddress)
+    { }
 
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,

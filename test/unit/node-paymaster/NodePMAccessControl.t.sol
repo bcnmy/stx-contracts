@@ -96,7 +96,8 @@ contract NodePMAccessControlTest is BaseTest {
         uint256 premiumPercentage = 1_700_000;
 
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.setValue.selector, valueToSet);
-        bytes memory callData = abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
+        bytes memory callData =
+            abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
         PackedUserOperation memory userOp = buildUserOpWithCalldata({
             account: address(mockAccount),
             callData: callData,
@@ -112,7 +113,12 @@ contract NodePMAccessControlTest is BaseTest {
         // refund mode = user
         // premium mode = percentage premium
         userOp.paymasterAndData = abi.encodePacked(
-            address(NODE_PAYMASTER), pmValidationGasLimit, pmPostOpGasLimit, NODE_PM_MODE_USER, NODE_PM_PREMIUM_PERCENT, uint192(premiumPercentage)
+            address(NODE_PAYMASTER),
+            pmValidationGasLimit,
+            pmPostOpGasLimit,
+            NODE_PM_MODE_USER,
+            NODE_PM_PREMIUM_PERCENT,
+            uint192(premiumPercentage)
         );
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);

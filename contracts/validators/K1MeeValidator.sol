@@ -165,7 +165,14 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
      *  - <20-byte> aggregatorOrSigFail, <6-byte> validUntil and <6-byte> validAfter (see ERC-4337
      * for more details)
      */
-    function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external override returns (uint256 vd) {
+    function validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    )
+        external
+        override
+        returns (uint256 vd)
+    {
         address owner = getOwner(userOp.sender);
         if (userOp.signature.length < ENCODED_DATA_OFFSET) {
             // if sig is short then we are sure it is a non-MEE flow
@@ -175,7 +182,9 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
             if (sigType == SIG_TYPE_SIMPLE) {
                 vd = SimpleValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
             } else if (sigType == SIG_TYPE_ON_CHAIN) {
-                vd = TxValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:userOp.signature.length], owner);
+                vd = TxValidatorLib.validateUserOp(
+                    userOpHash, userOp.signature[ENCODED_DATA_OFFSET:userOp.signature.length], owner
+                );
             } else if (sigType == SIG_TYPE_ERC20_PERMIT) {
                 vd = PermitValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
             } else {
@@ -223,8 +232,9 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
                 mstore(add(ptr, 0x20), shl(96, caller()))
                 hashWithAccountAddress := keccak256(ptr, 0x34)
             }
-            return
-                _validateSignatureForOwner(getOwner(msg.sender), hashWithAccountAddress, _erc1271UnwrapSignature(signature)) ? EIP1271_SUCCESS : EIP1271_FAILED;
+            return _validateSignatureForOwner(
+                getOwner(msg.sender), hashWithAccountAddress, _erc1271UnwrapSignature(signature)
+            ) ? EIP1271_SUCCESS : EIP1271_FAILED;
         }
     }
 
@@ -232,7 +242,15 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     /// @param hash The hash of the data to validate
     /// @param sig The signature data
     /// @param data The data to validate against (owner address in this case)
-    function validateSignatureWithData(bytes32 hash, bytes calldata sig, bytes calldata data) external view returns (bool isValidSig) {
+    function validateSignatureWithData(
+        bytes32 hash,
+        bytes calldata sig,
+        bytes calldata data
+    )
+        external
+        view
+        returns (bool isValidSig)
+    {
         require(data.length >= 20, InvalidDataLength());
         isValidSig = _validateSignatureForOwner(address(bytes20(data[:20])), hash, sig);
     }
@@ -281,7 +299,15 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     /// @param owner The address of the owner
     /// @param hash The hash of the data to validate
     /// @param signature The signature data
-    function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool isValidSig) {
+    function _validateSignatureForOwner(
+        address owner,
+        bytes32 hash,
+        bytes calldata signature
+    )
+        internal
+        view
+        returns (bool isValidSig)
+    {
         bytes4 sigType = bytes4(signature[0:4]);
 
         if (sigType == SIG_TYPE_SIMPLE) {
@@ -328,7 +354,15 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     ///      Obtains the authorized signer's credentials and calls some
     ///      module's specific internal function to validate the signature
     ///      against credentials.
-    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view override returns (bool isValidSig) {
+    function _erc1271IsValidSignatureNowCalldata(
+        bytes32 hash,
+        bytes calldata signature
+    )
+        internal
+        view
+        override
+        returns (bool isValidSig)
+    {
         // call custom internal function to validate the signature against credentials
         isValidSig = EcdsaLib.isValidSignature(getOwner(msg.sender), hash, signature);
     }

@@ -25,7 +25,8 @@ contract NodePaymasterFactoryTest is BaseTest {
         uint256 codeSize = expectedPm.code.length;
         assertEq(codeSize, 0);
 
-        address nodePaymaster = factory.deployAndFundNodePaymaster{ value: 1 ether }(ENTRYPOINT_V07_ADDRESS, owner.addr, workerEOAs, 0);
+        address nodePaymaster =
+            factory.deployAndFundNodePaymaster{ value: 1 ether }(ENTRYPOINT_V07_ADDRESS, owner.addr, workerEOAs, 0);
         assertEq(nodePaymaster, expectedPm);
 
         uint256 deposit = IEntryPoint(ENTRYPOINT_V07_ADDRESS).getDepositInfo(nodePaymaster).deposit;

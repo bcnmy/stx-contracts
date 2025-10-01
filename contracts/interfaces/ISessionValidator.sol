@@ -18,5 +18,12 @@ uint256 constant ERC7579_MODULE_TYPE_STATELESS_VALIDATOR = 7;
  *  data the config data that is used to validate the signature
  */
 interface ISessionValidator is IModule {
-    function validateSignatureWithData(bytes32 hash, bytes calldata sig, bytes calldata data) external view returns (bool validSig);
+    function validateSignatureWithData(
+        bytes32 hash,
+        bytes calldata sig,
+        bytes calldata data
+    )
+        external
+        view
+        returns (bool validSig);
 }

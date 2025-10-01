@@ -29,7 +29,14 @@ contract MockAccount is IAccount {
         handler = IFallback(_handler);
     }
 
-    function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash, uint256 missingAccountFunds) external returns (uint256 vd) {
+    function validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash,
+        uint256 missingAccountFunds
+    )
+        external
+        returns (uint256 vd)
+    {
         if (address(validator) != address(0)) {
             vd = validator.validateUserOp(userOp, userOpHash);
         }
@@ -43,14 +50,34 @@ contract MockAccount is IAccount {
     }
 
     function isValidSignature(bytes32 hash, bytes calldata signature) external view returns (bytes4) {
-        return IValidator(address(validator)).isValidSignatureWithSender({ sender: msg.sender, hash: hash, data: signature });
+        return
+            IValidator(address(validator)).isValidSignatureWithSender({ sender: msg.sender, hash: hash, data: signature });
     }
 
-    function validateSignatureWithData(bytes32 signedHash, bytes calldata signature, bytes calldata signerData) external view returns (bool) {
-        return IStatelessValidator(address(validator)).validateSignatureWithData({ hash: signedHash, signature: signature, data: signerData });
+    function validateSignatureWithData(
+        bytes32 signedHash,
+        bytes calldata signature,
+        bytes calldata signerData
+    )
+        external
+        view
+        returns (bool)
+    {
+        return IStatelessValidator(address(validator)).validateSignatureWithData({
+            hash: signedHash,
+            signature: signature,
+            data: signerData
+        });
     }
 
-    function execute(address to, uint256 value, bytes calldata data) external returns (bool success, bytes memory result) {
+    function execute(
+        address to,
+        uint256 value,
+        bytes calldata data
+    )
+        external
+        returns (bool success, bytes memory result)
+    {
         emit MockAccountExecute(to, value, data);
         (success, result) = to.call{ value: value }(data);
     }
@@ -60,7 +87,8 @@ contract MockAccount is IAccount {
     }
 
     fallback(bytes calldata callData) external payable returns (bytes memory) {
-        (bool success, bytes memory result) = address(handler).call{ value: msg.value }(ERC2771Lib.get2771CallData(callData));
+        (bool success, bytes memory result) =
+            address(handler).call{ value: msg.value }(ERC2771Lib.get2771CallData(callData));
         if (!success) {
             revert(string(result));
         }

@@ -17,7 +17,15 @@ library MEEUserOpHashLib {
      * @param upperBoundTimestamp upper bound timestamp set when constructing userOp
      * Timestamps are used by the MEE node to schedule the execution of the userOps within the superTx
      */
-    function getMEEUserOpHash(bytes32 userOpHash, uint256 lowerBoundTimestamp, uint256 upperBoundTimestamp) internal pure returns (bytes32) {
+    function getMEEUserOpHash(
+        bytes32 userOpHash,
+        uint256 lowerBoundTimestamp,
+        uint256 upperBoundTimestamp
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
         // using double hashing to avoid second preimage attack:
         // https://flawed.net.nz/2018/02/21/attacking-merkle-trees-with-a-second-preimage-attack/
         // https://www.npmjs.com/package/@openzeppelin/merkle-tree#fn-1
