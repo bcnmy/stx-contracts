@@ -4,6 +4,11 @@ pragma solidity ^0.8.27;
 import { NodePaymaster } from "contracts/NodePaymaster.sol";
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 
+/// @title NodePaymasterFactory
+/// @notice A factory for deploying and funding NodePaymasters
+/// @dev The NodePaymaster is deployed using create2 with a deterministic address
+/// @dev The NodePaymaster is funded with the msg.value
+/// @author Biconomy
 contract NodePaymasterFactory {
     /// @notice The error thrown when the NodePaymaster deployment fails
     error NodePMDeployFailed();
@@ -11,6 +16,8 @@ contract NodePaymasterFactory {
     /// @notice Deploy and fund a new NodePaymaster
     /// @param entryPoint The 4337 EntryPoint address expected to call the NodePaymaster
     /// @param owner The owner of the NodePaymaster
+    /// @param workerEoas The worker EOAs of a given node. Only those will be allowed
+    /// to call handleOps
     /// @param index The deployment index of the NodePaymaster
     /// @return nodePaymaster The address of the deployed NodePaymaster
     /// @dev The NodePaymaster is deployed using create2 with a deterministic address
@@ -45,6 +52,8 @@ contract NodePaymasterFactory {
     /// @notice Get the counterfactual address of a NodePaymaster
     /// @param entryPoint The 4337 EntryPoint address expected to call the NodePaymaster
     /// @param owner The owner of the NodePaymaster
+    /// @param workerEoas The worker EOAs of a given node. Only those will be allowed
+    /// to call handleOps
     /// @param index The deployment index of the NodePaymaster
     /// @return nodePmAddress The counterfactual address of the NodePaymaster
     function getNodePaymasterAddress(
@@ -60,7 +69,13 @@ contract NodePaymasterFactory {
         nodePmAddress = _predictNodePaymasterAddress(entryPoint, owner, workerEoas, index);
     }
 
-    // function to check if some EOA got PmContract deployed
+    /// @notice Function to check if some EOA got PmContract deployed
+    /// @param entryPoint The 4337 EntryPoint address expected to call the NodePaymaster
+    /// @param owner The owner of the NodePaymaster
+    /// @param workerEoas The worker EOAs of a given node. Only those will be allowed
+    /// to call handleOps
+    /// @param index The deployment index of the NodePaymaster
+    /// @return nodePmAddress The predicted address of the NodePaymaster
     function _predictNodePaymasterAddress(
         address entryPoint,
         address owner,

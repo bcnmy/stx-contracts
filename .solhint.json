@@ -20,6 +20,7 @@
     "payable-fallback": "warn",
     "use-natspec": "warn",
     "no-empty-blocks": "off",
+    "import-path-check": "off",
 
     "gas-calldata-parameters": "warn",
     "gas-custom-errors": "error",
