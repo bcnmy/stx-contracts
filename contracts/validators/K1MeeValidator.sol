@@ -159,28 +159,32 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
      *      MEE flow: [65 bytes node master signature] [4 bytes sigType] [encoded data for this validator]
      *      Non-MEE flow: [65 bytes regular secp256k1 sig]
      *
-     * @return uint256 the result of the signature validation, which can be:
+     * @return vd validation data = the result of the signature validation, which can be:
      *  - 0 if the signature is valid
      *  - 1 if the signature is invalid
      *  - <20-byte> aggregatorOrSigFail, <6-byte> validUntil and <6-byte> validAfter (see ERC-4337
      * for more details)
      */
-    function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external override returns (uint256) {
+    function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external override returns (uint256 vd) {
         address owner = getOwner(userOp.sender);
         if (userOp.signature.length < ENCODED_DATA_OFFSET) {
             // if sig is short then we are sure it is a non-MEE flow
-            return NoMeeFlowLib.validateUserOp(userOpHash, userOp.signature, owner);
+            vd = NoMeeFlowLib.validateUserOp(userOpHash, userOp.signature, owner);
         } else {
             bytes4 sigType = bytes4(userOp.signature[0:ENCODED_DATA_OFFSET]);
             if (sigType == SIG_TYPE_SIMPLE) {
-                return SimpleValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
+                vd = SimpleValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
             } else if (sigType == SIG_TYPE_ON_CHAIN) {
-                return TxValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:userOp.signature.length], owner);
+                vd = TxValidatorLib.validateUserOp(
+                    userOpHash,
+                    userOp.signature[ENCODED_DATA_OFFSET:userOp.signature.length],
+                    owner
+                );
             } else if (sigType == SIG_TYPE_ERC20_PERMIT) {
-                return PermitValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
+                vd = PermitValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
             } else {
                 // fallback flow => non MEE flow => no prefix
-                return NoMeeFlowLib.validateUserOp(userOpHash, userOp.signature, owner);
+                vd = NoMeeFlowLib.validateUserOp(userOpHash, userOp.signature, owner);
             }
         }
     }
