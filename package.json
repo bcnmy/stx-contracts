@@ -15,7 +15,8 @@
     "lint:fix": "solhint 'contracts/**/*.sol' 'test/**/*.sol' --fix",
     "lint:report": "solhint 'contracts/**/*.sol' 'test/**/*.sol' -f table > solhint-report.txt",
     "lint:strict": "solhint 'contracts/**/*.sol' --max-warnings 0",
-    "lint:diff": "git diff --name-only HEAD~1 HEAD | grep '\\.sol$' | xargs solhint"
+    "lint:diff": "git diff --name-only HEAD~1 HEAD | grep '\\.sol$' | xargs solhint",
+    "prepare": "husky"
   },
   "author": "Biconomy",
   "license": "MIT",

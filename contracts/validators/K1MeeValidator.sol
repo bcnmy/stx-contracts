@@ -236,9 +236,13 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     /// @param hash The hash of the data to validate
     /// @param sig The signature data
     /// @param data The data to validate against (owner address in this case)
-    function validateSignatureWithData(bytes32 hash, bytes calldata sig, bytes calldata data) external view returns (bool validSig) {
+    function validateSignatureWithData(
+        bytes32 hash,
+        bytes calldata sig,
+        bytes calldata data
+    ) external view returns (bool isValidSig) {
         require(data.length >= 20, InvalidDataLength());
-        return _validateSignatureForOwner(address(bytes20(data[:20])), hash, sig);
+        isValidSig = _validateSignatureForOwner(address(bytes20(data[:20])), hash, sig);
     }
 
     /**
