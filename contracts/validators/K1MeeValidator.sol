@@ -165,7 +165,14 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
      *  - <20-byte> aggregatorOrSigFail, <6-byte> validUntil and <6-byte> validAfter (see ERC-4337
      * for more details)
      */
-    function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external override returns (uint256 vd) {
+    function validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    ) 
+    external 
+    override 
+    returns (uint256 vd) 
+    {
         address owner = getOwner(userOp.sender);
         if (userOp.signature.length < ENCODED_DATA_OFFSET) {
             // if sig is short then we are sure it is a non-MEE flow
