@@ -165,14 +165,7 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
      *  - <20-byte> aggregatorOrSigFail, <6-byte> validUntil and <6-byte> validAfter (see ERC-4337
      * for more details)
      */
-    function validateUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    ) 
-    external 
-    override 
-    returns (uint256 vd) 
-    {
+    function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external override returns (uint256 vd) {
         address owner = getOwner(userOp.sender);
         if (userOp.signature.length < ENCODED_DATA_OFFSET) {
             // if sig is short then we are sure it is a non-MEE flow
@@ -182,11 +175,7 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
             if (sigType == SIG_TYPE_SIMPLE) {
                 vd = SimpleValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
             } else if (sigType == SIG_TYPE_ON_CHAIN) {
-                vd = TxValidatorLib.validateUserOp(
-                    userOpHash,
-                    userOp.signature[ENCODED_DATA_OFFSET:userOp.signature.length],
-                    owner
-                );
+                vd = TxValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:userOp.signature.length], owner);
             } else if (sigType == SIG_TYPE_ERC20_PERMIT) {
                 vd = PermitValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
             } else {
@@ -243,11 +232,7 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     /// @param hash The hash of the data to validate
     /// @param sig The signature data
     /// @param data The data to validate against (owner address in this case)
-    function validateSignatureWithData(
-        bytes32 hash,
-        bytes calldata sig,
-        bytes calldata data
-    ) external view returns (bool isValidSig) {
+    function validateSignatureWithData(bytes32 hash, bytes calldata sig, bytes calldata data) external view returns (bool isValidSig) {
         require(data.length >= 20, InvalidDataLength());
         isValidSig = _validateSignatureForOwner(address(bytes20(data[:20])), hash, sig);
     }
@@ -296,32 +281,33 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     /// @param owner The address of the owner
     /// @param hash The hash of the data to validate
     /// @param signature The signature data
-    function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
+    function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool isValidSig) {
         bytes4 sigType = bytes4(signature[0:4]);
 
         if (sigType == SIG_TYPE_SIMPLE) {
-            return SimpleValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
+            isValidSig = SimpleValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
         } else if (sigType == SIG_TYPE_ON_CHAIN) {
-            return TxValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
+            isValidSig = TxValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
         } else if (sigType == SIG_TYPE_ERC20_PERMIT) {
-            return PermitValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
+            isValidSig = PermitValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
         } else {
             // fallback flow => non MEE flow => no prefix
-            return NoMeeFlowLib.validateSignatureForOwner(owner, hash, signature);
+            isValidSig = NoMeeFlowLib.validateSignatureForOwner(owner, hash, signature);
         }
     }
 
     /// @notice Checks if the smart account is initialized with an owner
     /// @param smartAccount The address of the smart account
-    /// @return True if the smart account has an owner, false otherwise
-    function _isInitialized(address smartAccount) private view returns (bool) {
-        return smartAccountOwners[smartAccount] != address(0);
+    /// @return isInitializedRet True if the smart account has an owner, false otherwise
+    function _isInitialized(address smartAccount) private view returns (bool isInitializedRet) {
+        isInitializedRet = smartAccountOwners[smartAccount] != address(0);
     }
 
     // @notice Fills the _safeSenders list from the given data
     function _fillSafeSenders(bytes calldata data) private {
-        require(data.length % 20 == 0, SafeSendersLengthInvalid());
-        for (uint256 i; i < data.length / 20; i++) {
+        uint256 length = data.length;
+        require(length % 20 == 0, SafeSendersLengthInvalid());
+        for (uint256 i; i < length / 20; ++i) {
             _safeSenders.add(msg.sender, address(bytes20(data[20 * i:20 * (i + 1)])));
         }
     }
@@ -342,9 +328,9 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     ///      Obtains the authorized signer's credentials and calls some
     ///      module's specific internal function to validate the signature
     ///      against credentials.
-    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view override returns (bool) {
+    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view override returns (bool isValidSig) {
         // call custom internal function to validate the signature against credentials
-        return EcdsaLib.isValidSignature(getOwner(msg.sender), hash, signature);
+        isValidSig = EcdsaLib.isValidSignature(getOwner(msg.sender), hash, signature);
     }
 
     /// @dev Returns whether the `sender` is considered safe, such
@@ -354,8 +340,8 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
     // is known to include the account in the hash to be signed.
     // msg.sender = Smart Account
     // sender = 1271 og request sender
-    function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool) {
-        return (
+    function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool isCallerSafe) {
+        isCallerSafe = (
             sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
                 || sender == msg.sender // Smart Account. Assume smart account never sends non safe eip-712 struct
                 || _safeSenders.contains(msg.sender, sender)
