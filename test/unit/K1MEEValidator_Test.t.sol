@@ -16,6 +16,7 @@ import { EIP1271_SUCCESS, EIP1271_FAILED } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 
 interface IGetOwner {
+    /* solhint-disable-next-line foundry-test-functions */
     function getOwner(address account) external view returns (address);
 }
 
