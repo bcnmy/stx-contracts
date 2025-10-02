@@ -108,7 +108,7 @@ contract NodePaymasterFactory {
     /// @notice Returns the version of the NodePaymasterFactory
     /// @return The version of the NodePaymasterFactory
     /// @dev adds versioning to the NodePaymasterFactory
-    function version() external pure returns (string memory) {
-        return "1.0.1";
+    function version() external pure returns (string memory _version) {
+        _version = "1.0.1";
     }
 }
