@@ -104,4 +104,11 @@ contract NodePaymasterFactory {
         }
         return payable(address(uint160(predictedAddress)));
     }
+
+    /// @notice Returns the version of the NodePaymasterFactory
+    /// @return _version version of the NodePaymasterFactory
+    /// @dev adds versioning to the NodePaymasterFactory
+    function version() external pure returns (string memory _version) {
+        _version = "1.0.1";
+    }
 }
