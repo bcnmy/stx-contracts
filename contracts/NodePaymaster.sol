@@ -122,4 +122,11 @@ contract NodePaymaster is BaseNodePaymaster {
         }
         return whitelisted;
     }
+
+    /// @notice Returns the version of the NodePaymaster
+    /// @return The version of the NodePaymaster
+    /// @dev adds versioning to the NodePaymaster
+    function version() external pure returns (string memory version) {
+        version = "1.0.1";
+    }
 }
