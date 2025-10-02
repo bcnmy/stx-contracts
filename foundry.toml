@@ -22,7 +22,7 @@
 
 [profile.ci]
   fuzz = { runs = 10_000 }
-  verbosity = 4
+  verbosity = 3
 
 [profile.coverage]
   via-ir = false
@@ -30,7 +30,7 @@
 [fmt]
   bracket_spacing = true
   int_types = "long"
-  line_length = 160
+  line_length = 123
   multiline_func_header = "all"
   number_underscore = "thousands"
   quote_style = "double"
