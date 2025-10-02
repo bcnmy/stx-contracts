@@ -1,6 +1,6 @@
 {
   "name": "@biconomy/mee-contracts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Biconomy MEE contracts",
   "main": "index.js",
   "type": "module",
@@ -26,8 +26,8 @@
   "license": "MIT",
   "dependencies": {
     "account-abstraction": "eth-infinitism/account-abstraction#v0.7.0",
-    "erc7739-validator-base": "erc7579/erc7739Validator#v1.0.0",
     "enumerablemap4337": "erc7579/enumerablemap",
+    "erc7739-validator-base": "erc7579/erc7739Validator#v1.0.0",
     "forge-std": "foundry-rs/forge-std#v1.10.0",
     "murky": "dmfxyz/murky#v0.1.0",
     "solady": "vectorized/solady#v0.1.26",
@@ -37,6 +37,7 @@
     "viem": "^2.22.17"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.7",
     "husky": "^9.1.7",
     "solhint": "^6.0.1"
   },
