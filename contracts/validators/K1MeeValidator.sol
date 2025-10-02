@@ -222,7 +222,7 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
             // to this contract's _erc1271IsValidSignatureNowCalldata() method.
             return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
         } else {
-            // non-7739 flow
+            // MEE: non-7739 flow
             // hash the SA into the `hash` to protect against two SA's with same owner vector
             bytes32 hashWithAccountAddress;
             // keccak256(abi.encodePacked(hash, msg.sender))

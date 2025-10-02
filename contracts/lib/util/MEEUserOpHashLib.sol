@@ -8,6 +8,9 @@ pragma solidity ^0.8.27;
 
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 
+// keccak256("MEEUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)");
+bytes32 constant MEE_USER_OP_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9; // TODO: Recalculate it!
+
 library MEEUserOpHashLib {
     /**
      * Calculates userOp hash. Almost works like a regular 4337 userOp hash with few fields added.
@@ -33,5 +36,9 @@ library MEEUserOpHashLib {
 
         // but since we are moving away from Merkle trees in future commits, we can just hash the userOpHash directly
         // return EfficientHashLib.hash(uint256(userOpHash), lowerBoundTimestamp, upperBoundTimestamp);
+    }
+
+    function getMeeUserOpEip712Hash(bytes32 userOpHash, uint256 lowerBoundTimestamp, uint256 upperBoundTimestamp) internal pure returns (bytes32) {
+        //
     }
 }
