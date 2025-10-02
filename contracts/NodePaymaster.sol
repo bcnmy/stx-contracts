@@ -45,8 +45,8 @@ contract NodePaymaster is BaseNodePaymaster {
      * @param userOp the userOp to validate
      * @param userOpHash the hash of the userOp
      * @param maxCost the max cost of the userOp
-     * @return validationData the validationData to be used in the postOp
      * @return context the context to be used in the postOp
+     * @return validationData the validationData to be used in the postOp
      */
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
@@ -56,13 +56,14 @@ contract NodePaymaster is BaseNodePaymaster {
         internal
         virtual
         override
-        returns (bytes memory validationData, uint256 context)
+        returns (bytes memory context, uint256 validationData)
     {
         // solhint-disable-next-line avoid-tx-origin
         if (tx.origin == owner() || _workerEOAs[tx.origin]) {
-            return _validate(userOp, userOpHash, maxCost);
+            (context, validationData) = _validate(userOp, userOpHash, maxCost);
+        } else {
+            validationData = 1;
         }
-        return (validationData, context);
     }
 
     // ====== Manage worker EOAs ======
@@ -119,6 +120,7 @@ contract NodePaymaster is BaseNodePaymaster {
      * @param workerEOAs The list of worker EOAs to check
      * @return An array of booleans, where each element corresponds to the whitelist status of the corresponding worker EOA
      */
+    /* solhint-disable-next-line gas-named-return-values */
     function areWorkerEOAsWhitelisted(address[] calldata workerEOAs) external view returns (bool[] memory) {
         bool[] memory whitelisted = new bool[](workerEOAs.length);
         uint256 length = workerEOAs.length;
