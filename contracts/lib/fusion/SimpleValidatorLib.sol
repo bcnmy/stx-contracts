@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
-import {EcdsaLib} from "../util/EcdsaLib.sol";
-import {MEEUserOpHashLib} from "../util/MEEUserOpHashLib.sol";
-import "account-abstraction/core/Helpers.sol";
+import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
+import { EcdsaLib } from "../util/EcdsaLib.sol";
+import { MEEUserOpHashLib } from "../util/MEEUserOpHashLib.sol";
+import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
 
 /**
  * @dev Library to validate the signature for MEE Simple mode
@@ -17,7 +17,8 @@ library SimpleValidatorLib {
      * Once parsed, the function will check for two conditions:
      *      1. is the root supertransaction hash signed by the account owner's EOA
      *      2. is the userOp actually a part of the given supertransaction
-     *      by checking the leaf based on this userOpHash is a part of the merkle tree represented by root hash = superTxHash
+     *      by checking the leaf based on this userOpHash is a part of the merkle tree represented by root hash =
+     * superTxHash
      *
      * If both conditions are met - outside contract can be sure that the expected signer has indeed
      * approved the given userOp - and the userOp is successfully validate.
@@ -26,7 +27,11 @@ library SimpleValidatorLib {
      * @param signatureData Signature provided as the userOp.signature parameter (minus the prepended tx type byte).
      * @param expectedSigner Signer expected to be recovered when decoding the ERC20OPermit signature.
      */
-    function validateUserOp(bytes32 userOpHash, bytes calldata signatureData, address expectedSigner)
+    function validateUserOp(
+        bytes32 userOpHash,
+        bytes calldata signatureData,
+        address expectedSigner
+    )
         internal
         view
         returns (uint256)
@@ -56,7 +61,7 @@ library SimpleValidatorLib {
             return SIG_VALIDATION_FAILED;
         }
 
-        if (!MerkleProof.verify(proof, superTxHash, leaf)) {
+        if (!MerkleProofLib.verify(proof, superTxHash, leaf)) {
             return SIG_VALIDATION_FAILED;
         }
 
@@ -69,7 +74,11 @@ library SimpleValidatorLib {
      * @param dataHash data hash being validated.
      * @param signatureData Signature
      */
-    function validateSignatureForOwner(address owner, bytes32 dataHash, bytes calldata signatureData)
+    function validateSignatureForOwner(
+        address owner,
+        bytes32 dataHash,
+        bytes calldata signatureData
+    )
         internal
         view
         returns (bool)
@@ -94,7 +103,7 @@ library SimpleValidatorLib {
             return false;
         }
 
-        if (!MerkleProof.verify(proof, superTxHash, dataHash)) {
+        if (!MerkleProofLib.verify(proof, superTxHash, dataHash)) {
             return false;
         }
 

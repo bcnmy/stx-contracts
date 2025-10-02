@@ -22,7 +22,7 @@
 
 [profile.ci]
   fuzz = { runs = 10_000 }
-  verbosity = 4
+  verbosity = 3
 
 [profile.coverage]
   via-ir = false
@@ -30,9 +30,28 @@
 [fmt]
   bracket_spacing = true
   int_types = "long"
-  line_length = 160
+  line_length = 123
   multiline_func_header = "all"
   number_underscore = "thousands"
   quote_style = "double"
   tab_width = 4
   wrap_comments = true
+
+[lint]
+  lint_on_build = true
+  ignore = [
+    # Test files
+    "test/*/*.t.sol",
+    "test/*.t.sol", 
+    "test/**/*.t.sol",
+    
+    # Mock contracts
+    "test/mock/*.sol",
+    "contracts/mock/*.sol",
+    "**/mock/*.sol",
+    
+    # Specific file patterns that are often problematic
+    "**/*Mock*.sol",
+    "**/*Test*.sol",
+  ]
+  severity = ["high", "med", "gas"]

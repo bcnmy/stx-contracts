@@ -1,34 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Test, Vm, console2} from "forge-std/Test.sol";
-import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
-import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
-import {PackedUserOperation, UserOperationLib} from "account-abstraction/core/UserOperationLib.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import {MockAccount, ENTRY_POINT_V07} from "./mock/MockAccount.sol";
-import {MockTarget} from "./mock/MockTarget.sol";
-import {BaseNodePaymaster} from "../contracts/BaseNodePaymaster.sol";
-import {NodePaymaster} from "../contracts/NodePaymaster.sol";
-import {EmittingNodePaymaster} from "./mock/EmittingNodePaymaster.sol";
-import {MockNodePaymaster} from "./mock/MockNodePaymaster.sol";
-import {K1MeeValidator} from "../contracts/validators/K1MeeValidator.sol";
-import {MerkleProof} from "openzeppelin/utils/cryptography/MerkleProof.sol";
-import {MEEUserOpHashLib} from "../contracts/lib/util/MEEUserOpHashLib.sol";
-import {Merkle} from "murky-trees/Merkle.sol";
-import {CopyUserOpLib} from "./util/CopyUserOpLib.sol";
+import { Test, Vm, console2 } from "forge-std/Test.sol";
+import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
+import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
+import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
+import { MockAccount, ENTRY_POINT_V07 } from "./mock/MockAccount.sol";
+import { MockTarget } from "./mock/MockTarget.sol";
+import { BaseNodePaymaster } from "../contracts/BaseNodePaymaster.sol";
+import { NodePaymaster } from "../contracts/NodePaymaster.sol";
+import { EmittingNodePaymaster } from "./mock/EmittingNodePaymaster.sol";
+import { MockNodePaymaster } from "./mock/MockNodePaymaster.sol";
+import { K1MeeValidator } from "../contracts/validators/K1MeeValidator.sol";
+import { MEEUserOpHashLib } from "../contracts/lib/util/MEEUserOpHashLib.sol";
+import { Merkle } from "murky-trees/Merkle.sol";
+import { CopyUserOpLib } from "./util/CopyUserOpLib.sol";
 import "contracts/types/Constants.sol";
-import {LibZip} from "solady/utils/LibZip.sol";
-import {ERC20Permit} from "openzeppelin/token/ERC20/extensions/ERC20Permit.sol";
-import {IERC20Permit} from "openzeppelin/token/ERC20/extensions/IERC20Permit.sol";
+import { LibZip } from "solady/utils/LibZip.sol";
+import { ERC20 } from "solady/tokens/ERC20.sol";
 import {
     PERMIT_TYPEHASH,
     DecodedErc20PermitSig,
     DecodedErc20PermitSigShort,
     PermitValidatorLib
 } from "contracts/lib/fusion/PermitValidatorLib.sol";
-import {LibRLP} from "solady/utils/LibRLP.sol";
+import { LibRLP } from "solady/utils/LibRLP.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
+import { EcdsaLib } from "contracts/lib/util/EcdsaLib.sol";
 
 address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
@@ -61,34 +59,34 @@ contract BaseTest is Test {
     address constant MEE_NODE_EXECUTOR_EOA = address(0xa11cebeefb0bdecaf0);
 
     IEntryPoint internal ENTRYPOINT;
-    
+
     NodePaymaster internal NODE_PAYMASTER;
     EmittingNodePaymaster internal EMITTING_NODE_PAYMASTER;
     MockNodePaymaster internal MOCK_NODE_PAYMASTER;
     K1MeeValidator internal k1MeeValidator;
     address internal MEE_NODE_ADDRESS;
     Vm.Wallet internal MEE_NODE;
-    
+
     MockTarget internal mockTarget;
     address nodePmDeployer = address(0x011a23423423423);
 
     function setUp() public virtual {
         setupEntrypoint();
-        
-        MEE_NODE = createAndFundWallet("MEE_NODE", 1_000 ether);
+
+        MEE_NODE = createAndFundWallet("MEE_NODE", 1000 ether);
         MEE_NODE_ADDRESS = MEE_NODE.addr;
-        
-        deployNodePaymaster(ENTRYPOINT, MEE_NODE_ADDRESS);
+
+        deployNodePaymaster();
         mockTarget = new MockTarget();
         k1MeeValidator = new K1MeeValidator();
     }
 
-    function deployNodePaymaster(IEntryPoint ep, address meeNodeAddress) internal {
+    function deployNodePaymaster() internal {
         vm.prank(nodePmDeployer);
 
         address[] memory workerEOAs = new address[](1);
         workerEOAs[0] = MEE_NODE_EXECUTOR_EOA;
-        
+
         NODE_PAYMASTER = new NodePaymaster(ENTRYPOINT, MEE_NODE_ADDRESS, workerEOAs);
         EMITTING_NODE_PAYMASTER = new EmittingNodePaymaster(ENTRYPOINT, MEE_NODE_ADDRESS);
         MOCK_NODE_PAYMASTER = new MockNodePaymaster(ENTRYPOINT, MEE_NODE_ADDRESS);
@@ -104,7 +102,7 @@ contract BaseTest is Test {
             vm.deal(nodePaymasters[i], 100 ether);
 
             vm.prank(nodePaymasters[i]);
-            ENTRYPOINT.depositTo{value: 10 ether}(nodePaymasters[i]);
+            ENTRYPOINT.depositTo{ value: 10 ether }(nodePaymasters[i]);
         }
     }
 
@@ -113,7 +111,7 @@ contract BaseTest is Test {
     }
 
     function setupEntrypoint() internal {
-        if (block.chainid == 31337) {
+        if (block.chainid == 31_337) {
             if (address(ENTRYPOINT) != address(0)) {
                 return;
             }
@@ -134,7 +132,11 @@ contract BaseTest is Test {
         uint256 preVerificationGasLimit,
         uint128 verificationGasLimit,
         uint128 callGasLimit
-    ) internal view returns (PackedUserOperation memory userOp) {
+    )
+        internal
+        view
+        returns (PackedUserOperation memory userOp)
+    {
         uint256 nonce = ENTRYPOINT.getNonce(account, 0);
         userOp = buildPackedUserOp(account, nonce, verificationGasLimit, callGasLimit, preVerificationGasLimit);
         userOp.callData = callData;
@@ -153,22 +155,28 @@ contract BaseTest is Test {
         uint128 verificationGasLimit,
         uint128 callGasLimit,
         uint256 preVerificationGasLimit
-    ) internal pure returns (PackedUserOperation memory) {
+    )
+        internal
+        pure
+        returns (PackedUserOperation memory)
+    {
         return PackedUserOperation({
             sender: sender,
             nonce: nonce,
             initCode: "",
             callData: "",
-            accountGasLimits: bytes32(abi.encodePacked(verificationGasLimit, callGasLimit)), // verification and call gas limit
+            accountGasLimits: bytes32(abi.encodePacked(verificationGasLimit, callGasLimit)), // verification and call gas
+                // limit
             preVerificationGas: preVerificationGasLimit, // Adjusted preVerificationGas
-            gasFees: bytes32(abi.encodePacked(uint128(11e9), uint128(1e9))), // maxFeePerGas = 11gwei and maxPriorityFeePerGas = 1gwei
+            gasFees: bytes32(abi.encodePacked(uint128(11e9), uint128(1e9))), // maxFeePerGas = 11gwei and
+                // maxPriorityFeePerGas = 1gwei
             paymasterAndData: "",
             signature: ""
         });
     }
 
     function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal view returns (bytes memory) {
-        bytes32 opHash = MessageHashUtils.toEthSignedMessageHash(_getUserOpHash(userOp));
+        bytes32 opHash = ECDSA.toEthSignedMessageHash(_getUserOpHash(userOp));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, opHash);
         return abi.encodePacked(r, s, v);
     }
@@ -183,14 +191,13 @@ contract BaseTest is Test {
         PackedUserOperation memory userOp,
         uint128 pmValidationGasLimit,
         uint128 pmPostOpGasLimit,
-        uint256 impliedCostPercentageOfMaxGasCost,
         Vm.Wallet memory wallet,
         bytes4 sigType
-    ) internal view returns (PackedUserOperation memory) {
-        uint256 maxGasLimit = userOp.preVerificationGas + unpackVerificationGasLimitMemory(userOp)
-            + unpackCallGasLimitMemory(userOp) + pmValidationGasLimit + pmPostOpGasLimit;
-        uint256 maxGasCost = maxGasLimit * unpackMaxFeePerGasMemory(userOp);
-        
+    )
+        internal
+        view
+        returns (PackedUserOperation memory)
+    {
         // refund mode = user
         // premium mode = percentage premium
         userOp.paymasterAndData = abi.encodePacked(
@@ -199,9 +206,9 @@ contract BaseTest is Test {
             pmPostOpGasLimit, // pm post-op gas limit
             NODE_PM_MODE_USER,
             NODE_PM_PREMIUM_PERCENT,
-            uint192(17_00000)
+            uint192(1_700_000)
         );
-        
+
         userOp.signature = signUserOp(wallet, userOp);
         if (sigType != bytes4(0)) {
             userOp.signature = abi.encodePacked(sigType, userOp.signature);
@@ -209,7 +216,10 @@ contract BaseTest is Test {
         return userOp;
     }
 
-    function duplicateUserOpAndIncrementNonce(PackedUserOperation memory userOp, Vm.Wallet memory userOpSigner)
+    function duplicateUserOpAndIncrementNonce(
+        PackedUserOperation memory userOp,
+        Vm.Wallet memory userOpSigner
+    )
         internal
         view
         returns (PackedUserOperation memory)
@@ -220,7 +230,11 @@ contract BaseTest is Test {
         return newUserOp;
     }
 
-    function cloneUserOpToAnArray(PackedUserOperation memory userOp, Vm.Wallet memory userOpSigner, uint256 numOfClones)
+    function cloneUserOpToAnArray(
+        PackedUserOperation memory userOp,
+        Vm.Wallet memory userOpSigner,
+        uint256 numOfClones
+    )
         internal
         view
         returns (PackedUserOperation[] memory)
@@ -238,7 +252,11 @@ contract BaseTest is Test {
         PackedUserOperation[] memory userOps,
         uint48 lowerBoundTimestamp,
         uint48 upperBoundTimestamp
-    ) internal view returns (bytes32[] memory) {
+    )
+        internal
+        view
+        returns (bytes32[] memory)
+    {
         bytes32[] memory leaves = new bytes32[](userOps.length);
         for (uint256 i = 0; i < userOps.length; i++) {
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[i]);
@@ -248,7 +266,10 @@ contract BaseTest is Test {
     }
     // ==== SIMPLE SUPER TX UTILS ====
 
-    function makeSimpleSuperTx(PackedUserOperation[] memory userOps, Vm.Wallet memory superTxSigner)
+    function makeSimpleSuperTx(
+        PackedUserOperation[] memory userOps,
+        Vm.Wallet memory superTxSigner
+    )
         internal
         returns (PackedUserOperation[] memory)
     {
@@ -279,7 +300,10 @@ contract BaseTest is Test {
         uint256 total,
         Vm.Wallet memory superTxSigner,
         address mockAccount
-    ) internal returns (bytes[] memory) {
+    )
+        internal
+        returns (bytes[] memory)
+    {
         bytes[] memory meeSigs = new bytes[](total);
         require(total > 0, "total must be greater than 0");
 
@@ -313,11 +337,14 @@ contract BaseTest is Test {
 
     function makePermitSuperTx(
         PackedUserOperation[] memory userOps,
-        IERC20Permit token,
+        ERC20 token,
         Vm.Wallet memory signer,
         address spender,
         uint256 amount
-    ) internal returns (PackedUserOperation[] memory) {
+    )
+        internal
+        returns (PackedUserOperation[] memory)
+    {
         PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
@@ -338,7 +365,7 @@ contract BaseTest is Test {
             )
         );
 
-        bytes32 dataHashToSign = MessageHashUtils.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
+        bytes32 dataHashToSign = EcdsaLib.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, dataHashToSign);
 
@@ -375,11 +402,14 @@ contract BaseTest is Test {
     function makePermitSuperTxSignatures(
         bytes32 baseHash,
         uint256 total,
-        IERC20Permit token,
+        ERC20 token,
         Vm.Wallet memory signer,
         address spender,
         uint256 amount
-    ) internal returns (bytes[] memory) {
+    )
+        internal
+        returns (bytes[] memory)
+    {
         bytes[] memory meeSigs = new bytes[](total);
         require(total > 0, "total must be greater than 0");
 
@@ -407,7 +437,7 @@ contract BaseTest is Test {
             )
         );
 
-        bytes32 dataHashToSign = MessageHashUtils.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
+        bytes32 dataHashToSign = EcdsaLib.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, dataHashToSign);
 
@@ -440,7 +470,10 @@ contract BaseTest is Test {
         PackedUserOperation[] memory userOps,
         Vm.Wallet memory superTxSigner,
         bytes memory callData
-    ) internal returns (PackedUserOperation[] memory) {
+    )
+        internal
+        returns (PackedUserOperation[] memory)
+    {
         PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
@@ -476,7 +509,10 @@ contract BaseTest is Test {
         bytes memory callData,
         address smartAccount,
         Vm.Wallet memory superTxSigner
-    ) internal returns (bytes[] memory) {
+    )
+        internal
+        returns (bytes[] memory)
+    {
         bytes[] memory meeSigs = new bytes[](total);
         require(total > 0, "total must be greater than 0");
 
@@ -543,24 +579,29 @@ contract BaseTest is Test {
         bytes memory txnData, // calldata + root
         address to,
         Vm.Wallet memory signer
-    ) internal view returns (bytes memory) {
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         LibRLP.List memory accessList = LibRLP.p();
 
-        LibRLP.List memory serializedTxList = 
-            LibRLP.p(block.chainid). // chainId
-                p(0). // nonce
-                    p(uint256(1)). // maxPriorityFeePerGas
-                        p(uint256(20)). // maxFeePerGas
-                            p(uint256(50000)). // gasLimit
-                                p(to). // to
-                                    p(uint256(0)). // value
-                                        p(txnData). // txn data
-                                            p(accessList); // empty access list
+        LibRLP.List memory serializedTxList = LibRLP.p(block.chainid).p(0).p(uint256(1)).p(uint256(20)).p(uint256(50_000))
+            .p(to).p(uint256(0)).p(txnData) // chainId
+                // nonce
+                // maxPriorityFeePerGas
+                // maxFeePerGas
+                // gasLimit
+                // to
+                // value
+                // txn data
+            .p(accessList); // empty access list
 
         bytes32 uTxHash = keccak256(abi.encodePacked(hex"02", serializedTxList.encode()));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, uTxHash);
 
-        serializedTxList = serializedTxList.p(v == 28 ? true : false).p(uint256(r)).p(uint256(s)); // add v, r, s to the list
+        serializedTxList = serializedTxList.p(v == 28 ? true : false).p(uint256(r)).p(uint256(s)); // add v, r, s to the
+            // list
         return abi.encodePacked(hex"02", serializedTxList.encode()); // add tx type to the list
     }
 }
