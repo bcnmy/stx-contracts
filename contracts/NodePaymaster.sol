@@ -12,7 +12,7 @@ import { BaseNodePaymaster } from "./BaseNodePaymaster.sol";
  * It is used to sponsor userOps. Introduced for gas efficient MEE flow.
  */
 contract NodePaymaster is BaseNodePaymaster {
-    mapping(address => bool) private _workerEOAs;
+    mapping(address workerEOA => bool isWhitelisted) private _workerEOAs;
 
     constructor(
         IEntryPoint _entryPoint,
@@ -22,7 +22,8 @@ contract NodePaymaster is BaseNodePaymaster {
         payable
         BaseNodePaymaster(_entryPoint, _meeNodeMasterEOA)
     {
-        for (uint256 i; i < workerEOAs.length; i++) {
+        uint256 length = workerEOAs.length;
+        for (uint256 i; i < length; ++i) {
             _workerEOAs[workerEOAs[i]] = true;
         }
     }
@@ -44,8 +45,8 @@ contract NodePaymaster is BaseNodePaymaster {
      * @param userOp the userOp to validate
      * @param userOpHash the hash of the userOp
      * @param maxCost the max cost of the userOp
-     * @return context the context to be used in the postOp
      * @return validationData the validationData to be used in the postOp
+     * @return context the context to be used in the postOp
      */
     function _validatePaymasterUserOp(
         PackedUserOperation calldata userOp,
@@ -55,12 +56,13 @@ contract NodePaymaster is BaseNodePaymaster {
         internal
         virtual
         override
-        returns (bytes memory, uint256)
+        returns (bytes memory validationData, uint256 context)
     {
+        // solhint-disable-next-line avoid-tx-origin
         if (tx.origin == owner() || _workerEOAs[tx.origin]) {
             return _validate(userOp, userOpHash, maxCost);
         }
-        return ("", 1);
+        return (validationData, context);
     }
 
     // ====== Manage worker EOAs ======
@@ -78,7 +80,8 @@ contract NodePaymaster is BaseNodePaymaster {
      * @param workerEOAs The list of worker EOAs to whitelist
      */
     function whitelistWorkerEOAs(address[] calldata workerEOAs) external onlyOwner {
-        for (uint256 i; i < workerEOAs.length; i++) {
+        uint256 length = workerEOAs.length;
+        for (uint256 i; i < length; ++i) {
             _workerEOAs[workerEOAs[i]] = true;
         }
     }
@@ -96,7 +99,8 @@ contract NodePaymaster is BaseNodePaymaster {
      * @param workerEOAs The list of worker EOAs to remove from the whitelist
      */
     function removeWorkerEOAsFromWhitelist(address[] calldata workerEOAs) external onlyOwner {
-        for (uint256 i; i < workerEOAs.length; i++) {
+        uint256 length = workerEOAs.length;
+        for (uint256 i; i < length; ++i) {
             _workerEOAs[workerEOAs[i]] = false;
         }
     }
@@ -104,10 +108,10 @@ contract NodePaymaster is BaseNodePaymaster {
     /**
      * @notice Check if a worker EOA is whitelisted
      * @param workerEOA The worker EOA to check
-     * @return True if the worker EOA is whitelisted, false otherwise
+     * @return _isWhitelisted True if the worker EOA is whitelisted, false otherwise
      */
-    function isWorkerEOAWhitelisted(address workerEOA) external view returns (bool) {
-        return _workerEOAs[workerEOA];
+    function isWorkerEOAWhitelisted(address workerEOA) external view returns (bool _isWhitelisted) {
+        _isWhitelisted = _workerEOAs[workerEOA];
     }
 
     /**
@@ -117,16 +121,17 @@ contract NodePaymaster is BaseNodePaymaster {
      */
     function areWorkerEOAsWhitelisted(address[] calldata workerEOAs) external view returns (bool[] memory) {
         bool[] memory whitelisted = new bool[](workerEOAs.length);
-        for (uint256 i; i < workerEOAs.length; i++) {
+        uint256 length = workerEOAs.length;
+        for (uint256 i; i < length; ++i) {
             whitelisted[i] = _workerEOAs[workerEOAs[i]];
         }
         return whitelisted;
     }
 
     /// @notice Returns the version of the NodePaymaster
-    /// @return The version of the NodePaymaster
+    /// @return _version version of the NodePaymaster
     /// @dev adds versioning to the NodePaymaster
-    function version() external pure returns (string memory version) {
-        version = "1.0.1";
+    function version() external pure returns (string memory _version) {
+        _version = "1.0.1";
     }
 }
