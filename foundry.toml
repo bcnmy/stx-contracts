@@ -22,7 +22,7 @@
 
 [profile.ci]
   fuzz = { runs = 10_000 }
-  verbosity = 4
+  verbosity = 3
 
 [profile.coverage]
   via-ir = false
