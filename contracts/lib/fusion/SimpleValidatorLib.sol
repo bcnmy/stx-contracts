@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { EcdsaLib } from "../util/EcdsaLib.sol";
 import { MEEUserOpHashLib } from "../util/MEEUserOpHashLib.sol";
 import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
@@ -101,7 +100,7 @@ library SimpleValidatorLib {
         returns (bool)
     {
         (bytes32 outerTypeHash, uint8 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) =
-            parsePackedSigDataHead(signatureData);
+            HashLib.parsePackedSigDataHead(signatureData);
 
         bytes32 superTxEip712Hash = _compareAndGetFinalHash(outerTypeHash, dataHash, itemIndex, itemHashes);
         if (superTxEip712Hash == bytes32(0)) {

@@ -6,6 +6,13 @@ STAGED_FILES=$(git diff --cached --name-only)
 # Run formatter
 forge fmt
 
+# Re-stage only the files that were originally staged
+for file in $STAGED_FILES; do
+  if [ -f "$file" ]; then
+    git add "$file"
+  fi
+done
+
 # Run Solhint and only output Errors, not warnings via awk
 ERROR_OUTPUT=$(pnpm lint | awk '
 /\.sol$/ { current_file = $0 }
@@ -27,10 +34,3 @@ if [ "$ERROR_COUNT" -gt 0 ]; then
   echo "$ERROR_OUTPUT"
   exit 1
 fi
-
-# Re-stage only the files that were originally staged
-for file in $STAGED_FILES; do
-  if [ -f "$file" ]; then
-    git add "$file"
-  fi
-done
