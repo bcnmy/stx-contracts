@@ -2,23 +2,30 @@
 pragma solidity ^0.8.27;
 
 interface IERC5267 {
-    function eip712Domain() external view returns (
-        bytes1 fields,
-        string memory name,
-        string memory version,
-        uint256 chainId,
-        address verifyingContract,
-        bytes32 salt,
-        uint256[] memory extensions
-    );
+    function eip712Domain()
+        external
+        view
+        returns (
+            bytes1 fields,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            bytes32 salt,
+            uint256[] memory extensions
+        );
 }
 
 bytes32 constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
 library HashLib {
-    function parsePackedSigDataHead(bytes calldata packedSignatureData) internal pure returns (bytes32 outerTypeHash, uint8 itemIndex, uint8 itemType, bytes32[] calldata itemHashes) {
+    function parsePackedSigDataHead(bytes calldata packedSignatureData)
+        internal
+        pure
+        returns (bytes32 outerTypeHash, uint8 itemIndex, uint8 itemType, bytes32[] calldata itemHashes)
+    {
         /**
-         * packedSignatureData layout : 
+         * packedSignatureData layout :
          * ======== static head part : 0x61 (97) bytes========
          * 32 bytes : outerTypeHash
          * 1 byte : itemIndex
@@ -43,13 +50,22 @@ library HashLib {
         }
     }
 
-    function compareAndGetFinalHash(bytes32 outerTypeHash, bytes32 currentItemHash, uint8 itemIndex, bytes32[] calldata itemHashes) internal pure returns (bytes32 finalHash) {
+    function compareAndGetFinalHash(
+        bytes32 outerTypeHash,
+        bytes32 currentItemHash,
+        uint8 itemIndex,
+        bytes32[] calldata itemHashes
+    )
+        internal
+        pure
+        returns (bytes32 finalHash)
+    {
         // Compare
         if (currentItemHash != itemHashes[itemIndex]) {
             finalHash = bytes32(0);
         } else {
             // SuperTx is a dynamic struct { EntryType1 entryA, EntryType2 entryB, ... EntryTypeN entryX }
-            // It's typehash is provided from the sdk, and the items are considered to be already 
+            // It's typehash is provided from the sdk, and the items are considered to be already
             // hashed as properly encoded structs as per eip-712 and provided as bytes32 hashes.
             // hashStruct(s : 𝕊) = keccak256(typeHash ‖ encodeData(s))
             // The encoding of a struct instance is enc(value₁) ‖ enc(value₂) ‖ … ‖ enc(valueₙ)
@@ -67,12 +83,14 @@ library HashLib {
     /// @param structHash the typed data struct hash
     function hashTypedDataForAccount(address account, bytes32 structHash) private view returns (bytes32 digest) {
         (
-            /*bytes1 fields*/,
+            /*bytes1 fields*/
+            ,
             string memory name,
             string memory version,
             uint256 chainId,
             address verifyingContract,
-            /*bytes32 salt*/,
+            /*bytes32 salt*/
+            ,
             /*uint256[] memory extensions*/
         ) = IERC5267(account).eip712Domain();
 

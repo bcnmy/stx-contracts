@@ -9,7 +9,8 @@ pragma solidity ^0.8.27;
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 
 // keccak256("MEEUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)");
-bytes32 constant MEE_USER_OP_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9; // TODO: Recalculate it!
+bytes32 constant MEE_USER_OP_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9; // TODO:
+    // Recalculate it!
 
 library MEEUserOpHashLib {
     /**
@@ -38,7 +39,15 @@ library MEEUserOpHashLib {
         // return EfficientHashLib.hash(uint256(userOpHash), lowerBoundTimestamp, upperBoundTimestamp);
     }
 
-    function getMeeUserOpEip712Hash(bytes32 userOpHash, uint256 lowerBoundTimestamp, uint256 upperBoundTimestamp) internal pure returns (bytes32) {
+    function getMeeUserOpEip712Hash(
+        bytes32 userOpHash,
+        uint256 lowerBoundTimestamp,
+        uint256 upperBoundTimestamp
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
         //
     }
 }

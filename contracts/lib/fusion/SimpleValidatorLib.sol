@@ -34,7 +34,7 @@ library SimpleValidatorLib {
         returns (uint256)
     {
         /**
-         * packedSignatureData layout : 
+         * packedSignatureData layout :
          * ======== static head part : 0x61 (97) bytes========
          * ... static head part ...
          * ======== static tail for simple mode =====
@@ -43,7 +43,8 @@ library SimpleValidatorLib {
          * ======== dynamic tail  ==========
          * ... dynamic tail ...
          */
-        (bytes32 outerTypeHash, uint8 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) = HashLib.parsePackedSigDataHead(signatureData);
+        (bytes32 outerTypeHash, uint8 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) =
+            HashLib.parsePackedSigDataHead(signatureData);
 
         uint48 lowerBoundTimestamp;
         uint48 upperBoundTimestamp;
@@ -53,7 +54,8 @@ library SimpleValidatorLib {
             upperBoundTimestamp := shr(208, calldataload(add(packedSignatureData.offset, 0x67)))
         }
 
-        bytes32 currentItemHash = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+        bytes32 currentItemHash =
+            MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
 
         bytes32 superTxEip712Hash = HashLib.compareAndGetFinalHash(outerTypeHash, currentItemHash, itemIndex, itemHashes);
         if (superTxEip712Hash == bytes32(0)) {
@@ -69,21 +71,21 @@ library SimpleValidatorLib {
 
     /**
      * @notice Validates the signature against the expected signer (owner)
-     * @dev In this case everything is even simpler, as this interface expects 
-     * a ready hash to be provided as dataHash, we do not need to rehash 
+     * @dev In this case everything is even simpler, as this interface expects
+     * a ready hash to be provided as dataHash, we do not need to rehash
      * Task to rehash data and provide the dataHash lies on the protocol,
-     * that requests isValidSignature/validateSignatureWithData 
-     * 
+     * that requests isValidSignature/validateSignatureWithData
+     *
      * @dev What we expect is that dataHash is a properly made in according to
-     * the algorithm of getting the superTxEip712Hash. 
+     * the algorithm of getting the superTxEip712Hash.
      * Since this is the hash of the superTx entry, and superTx is a struct,
-     * and the entry is a struct as well, according to EIP-712, 
+     * and the entry is a struct as well, according to EIP-712,
      * "the struct values are encoded recursively as hashStruct(value)".
-     * So when the SuperTx data struct is hashed as per eip-712 on front-end, 
+     * So when the SuperTx data struct is hashed as per eip-712 on front-end,
      * the inner structs are also hashed as hashStruct(s : 𝕊) = keccak256(typeHash ‖ encodeData(s))
      * So this function expects protocol to build `dataHash` as describe above.
      * Which will be true for most cases.
-     * 
+     *
      * @param owner Signer expected to be recovered
      * @param dataHash the hash of the superTx entry that is being validated
      * @param signatureData Signature
@@ -98,7 +100,8 @@ library SimpleValidatorLib {
         view
         returns (bool)
     {
-        (bytes32 outerTypeHash, uint8 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) = parsePackedSigDataHead(signatureData);
+        (bytes32 outerTypeHash, uint8 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) =
+            parsePackedSigDataHead(signatureData);
 
         bytes32 superTxEip712Hash = _compareAndGetFinalHash(outerTypeHash, dataHash, itemIndex, itemHashes);
         if (superTxEip712Hash == bytes32(0)) {
