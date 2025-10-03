@@ -61,7 +61,7 @@ library SimpleValidatorLib {
             return SIG_VALIDATION_FAILED;
         }
 
-        if (!EcdsaLib.isValidSignature(expectedSigner, superTxEip712Hash, superTxEip712Hash)) {
+        if (!EcdsaLib.isValidSignature(expectedSigner, superTxEip712Hash, signature)) {
             return SIG_VALIDATION_FAILED;
         }
 
