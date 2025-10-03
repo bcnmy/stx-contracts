@@ -5,6 +5,7 @@ import { EcdsaLib } from "../util/EcdsaLib.sol";
 import { MEEUserOpHashLib } from "../util/MEEUserOpHashLib.sol";
 import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
 import { UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
+// solhint-disable-next-line no-unused-import
 import { HashLib, STATIC_HEAD_LENGTH } from "../util/HashLib.sol";
 
 /**

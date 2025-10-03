@@ -87,7 +87,7 @@ library HashLib {
             // There is one case which deserves a dedicated flow in terms of optimizations -
             // it is when all the superTxn entries are MeeUserOps structs. Then it makes sense
             // to treat them as an array of MeeUserOps structs and use the dedicated typehash.
-            bytes memory encodedData;
+            bytes32 structHash;
             if (outerTypeHash == SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH) {
                 // if SuperTx is an array of MeeUserOps structs, then encoded data is a
                 // "keccak256 hash of the concatenated encodeData of their contents" as per eip-712
@@ -96,12 +96,14 @@ library HashLib {
                 for (uint256 i; i < length; ++i) {
                     a.set(i, itemHashes[i]);
                 }
-                encodedData = abi.encodePacked(a.hash());
+                bytes32 encodedData = a.hash();
+                structHash = EfficientHashLib.hash(outerTypeHash, encodedData);
             } else {
                 // if SuperTx is a struct, then encoded data is just the concat of all the itemHashes
-                encodedData = abi.encode(itemHashes);
+                bytes memory encodedData = abi.encode(itemHashes);
+                /// forge-lint:disable-next-line(asm-keccak256)
+                structHash = keccak256(abi.encodePacked(outerTypeHash, encodedData));
             }
-            bytes32 structHash = keccak256(abi.encodePacked(outerTypeHash, encodedData));
             finalHash = hashTypedDataForAccount(msg.sender, structHash);
         }
     }

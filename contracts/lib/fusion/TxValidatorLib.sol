@@ -7,7 +7,7 @@ import { RLPEncoder } from "../rlp/RLPEncoder.sol";
 import { MEEUserOpHashLib } from "../util/MEEUserOpHashLib.sol";
 import { EcdsaLib } from "../util/EcdsaLib.sol";
 import { BytesLib } from "byteslib/BytesLib.sol";
-import { SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS, _packValidationData } from "account-abstraction/core/Helpers.sol";
+import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 
 /**
@@ -34,15 +34,18 @@ import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
  *           and are just appended at the end.
  */
 library TxValidatorLib {
-    uint8 constant LEGACY_TX_TYPE = 0x00;
-    uint8 constant EIP1559_TX_TYPE = 0x02;
+    error TxDecoder_CallDataLengthTooShort();
+    error TxValidatorLib_UnsupportedTxType();
 
-    uint8 constant EIP_155_MIN_V_VALUE = 37;
-    uint8 constant HASH_BYTE_SIZE = 32;
+    uint8 internal constant LEGACY_TX_TYPE = 0x00;
+    uint8 internal constant EIP1559_TX_TYPE = 0x02;
 
-    uint8 constant TIMESTAMP_BYTE_SIZE = 6;
-    uint8 constant PROOF_ITEM_BYTE_SIZE = 32;
-    uint8 constant ITX_HASH_BYTE_SIZE = 32;
+    uint8 internal constant EIP_155_MIN_V_VALUE = 37;
+    uint8 internal constant HASH_BYTE_SIZE = 32;
+
+    uint8 internal constant TIMESTAMP_BYTE_SIZE = 6;
+    uint8 internal constant PROOF_ITEM_BYTE_SIZE = 32;
+    uint8 internal constant ITX_HASH_BYTE_SIZE = 32;
 
     using RLPDecoder for RLPDecoder.RLPItem;
     using RLPDecoder for bytes;
@@ -233,7 +236,7 @@ library TxValidatorLib {
             rPos = 10;
             sPos = 11;
         } else {
-            revert("TxValidatorLib:: unsupported evm tx type");
+            revert TxValidatorLib_UnsupportedTxType();
         }
 
         return TxParams(
@@ -242,7 +245,7 @@ library TxValidatorLib {
     }
 
     function extractAppendedHash(bytes memory callData) private pure returns (bytes32 iTxHash) {
-        if (callData.length < ITX_HASH_BYTE_SIZE) revert("TxDecoder:: callData length too short");
+        if (callData.length < ITX_HASH_BYTE_SIZE) revert TxDecoder_CallDataLengthTooShort();
         iTxHash = bytes32(callData.slice(callData.length - ITX_HASH_BYTE_SIZE, ITX_HASH_BYTE_SIZE));
     }
 
@@ -304,7 +307,7 @@ library TxValidatorLib {
                 return EfficientHashLib.hash(prependRlpContentSize(rlpEncodedTxNoSigAndPrefix, ""));
             }
         } else {
-            revert("TxValidatorLib:: unsupported tx type");
+            revert TxValidatorLib_UnsupportedTxType();
         }
     }
 
