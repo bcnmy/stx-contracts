@@ -27,6 +27,8 @@ import {
 import { LibRLP } from "solady/utils/LibRLP.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { EcdsaLib } from "contracts/lib/util/EcdsaLib.sol";
+import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
+import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/util/HashLib.sol";
 
 address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
@@ -53,6 +55,7 @@ contract BaseTest is Test {
     using CopyUserOpLib for PackedUserOperation;
     using LibZip for bytes;
     using LibRLP for LibRLP.List;
+    using EfficientHashLib for *;
 
     uint256 constant MEE_NODE_HEX = 0x177ee170de;
 
@@ -69,6 +72,10 @@ contract BaseTest is Test {
 
     MockTarget internal mockTarget;
     address nodePmDeployer = address(0x011a23423423423);
+
+    string constant MEE_USER_OP_SIGNATURE =
+        "MEEUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)";
+    string constant SUPER_TX_SIGNATURE_HEADER = "SuperTx";
 
     function setUp() public virtual {
         setupEntrypoint();
@@ -248,7 +255,7 @@ contract BaseTest is Test {
         return userOps;
     }
 
-    function buildLeavesOutOfUserOps(
+    function eip712HashMeeUserOps(
         PackedUserOperation[] memory userOps,
         uint48 lowerBoundTimestamp,
         uint48 upperBoundTimestamp
@@ -257,38 +264,48 @@ contract BaseTest is Test {
         view
         returns (bytes32[] memory)
     {
-        bytes32[] memory leaves = new bytes32[](userOps.length);
-        for (uint256 i = 0; i < userOps.length; i++) {
+        bytes32[] memory itemHashes = new bytes32[](userOps.length);
+        for (uint256 i; i < userOps.length; ++i) {
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[i]);
-            leaves[i] = MEEUserOpHashLib.getMEEUserOpHash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+            itemHashes[i] = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
         }
-        return leaves;
+        return itemHashes;
     }
     // ==== SIMPLE SUPER TX UTILS ====
 
     function makeSimpleSuperTx(
         PackedUserOperation[] memory userOps,
-        Vm.Wallet memory superTxSigner
+        Vm.Wallet memory superTxSigner,
+        address smartAccount
     )
         internal
+        view
         returns (PackedUserOperation[] memory)
     {
-        PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
-        bytes32[] memory leaves = buildLeavesOutOfUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
+        bytes32[] memory stxItemHashes = eip712HashMeeUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
 
-        // make a tree
-        Merkle tree = new Merkle();
-        bytes32 root = tree.getRoot(leaves);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(superTxSigner.privateKey, root);
+        (bytes32 stxStructTypeHash, bytes32 stxEip712HashToSign) =
+            _hashPureMeeUserOpsStx(userOps, smartAccount, lowerBoundTimestamp, upperBoundTimestamp);
+
+        // eip-712 sign the stx struct
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(superTxSigner.privateKey, stxEip712HashToSign);
         bytes memory superTxHashSignature = abi.encodePacked(r, s, v);
 
-        for (uint256 i = 0; i < userOps.length; i++) {
+        PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
+        for (uint256 i; i < userOps.length; ++i) {
             superTxUserOps[i] = userOps[i].deepCopy();
-            bytes32[] memory proof = tree.getProof(leaves, i);
+
             bytes memory signature = abi.encodePacked(
-                SIG_TYPE_SIMPLE, abi.encode(root, lowerBoundTimestamp, upperBoundTimestamp, proof, superTxHashSignature)
+                SIG_TYPE_SIMPLE,
+                abi.encode(
+                    stxStructTypeHash,
+                    i,
+                    stxItemHashes,
+                    superTxHashSignature,
+                    uint256((uint256(lowerBoundTimestamp) << 128) | uint256(upperBoundTimestamp))
+                )
             );
             superTxUserOps[i].signature = signature;
         }
@@ -348,7 +365,7 @@ contract BaseTest is Test {
         PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
-        bytes32[] memory leaves = buildLeavesOutOfUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
+        bytes32[] memory leaves = eip712HashMeeUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
 
         // make a tree
         Merkle tree = new Merkle();
@@ -477,7 +494,7 @@ contract BaseTest is Test {
         PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
-        bytes32[] memory leaves = buildLeavesOutOfUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
+        bytes32[] memory leaves = eip712HashMeeUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
 
         // make a tree
         Merkle tree = new Merkle();
@@ -603,5 +620,36 @@ contract BaseTest is Test {
         serializedTxList = serializedTxList.p(v == 28 ? true : false).p(uint256(r)).p(uint256(s)); // add v, r, s to the
             // list
         return abi.encodePacked(hex"02", serializedTxList.encode()); // add tx type to the list
+    }
+
+    // ============ HASHING UTILS ============
+
+    function _hashPureMeeUserOpsStx(
+        PackedUserOperation[] memory superTxUserOps,
+        address smartAccount,
+        uint48 lowerBoundTimestamp,
+        uint48 upperBoundTimestamp
+    )
+        internal
+        view
+        returns (bytes32 stxStructTypeHash, bytes32 stxEip712HashToSign)
+    {
+        // TODO: since in this function stx is built of MeeUserOps only, we treat it as an array of MeeUserOps structs
+        // SuperTx(MeeUserOp[] meeUserOps)
+        stxStructTypeHash = SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH;
+        // and thus we also have to hash the encoded data as an array of MeeUserOps structs
+        bytes memory encodedData;
+        bytes32[] memory a = EfficientHashLib.malloc(superTxUserOps.length);
+        for (uint256 i; i < superTxUserOps.length; ++i) {
+            bytes32 userOpHash = ENTRYPOINT.getUserOpHash(superTxUserOps[i]);
+            bytes32 meeUserOpEip712Hash =
+                MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+            a.set(i, meeUserOpEip712Hash);
+        }
+        encodedData = abi.encodePacked(a.hash());
+        // now has the struct as per eip-712
+        bytes32 structHash = keccak256(abi.encodePacked(stxStructTypeHash, encodedData));
+        // and make the final hash to sign with the domain separator
+        stxEip712HashToSign = HashLib.hashTypedDataForAccount(smartAccount, structHash);
     }
 }

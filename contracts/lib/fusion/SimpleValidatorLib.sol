@@ -4,7 +4,8 @@ pragma solidity ^0.8.27;
 import { EcdsaLib } from "../util/EcdsaLib.sol";
 import { MEEUserOpHashLib } from "../util/MEEUserOpHashLib.sol";
 import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
-import { HashLib } from "../util/HashLib.sol";
+import { UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
+import { HashLib, STATIC_HEAD_LENGTH } from "../util/HashLib.sol";
 
 /**
  * @dev Library to validate the signature for MEE Simple mode
@@ -32,26 +33,26 @@ library SimpleValidatorLib {
         view
         returns (uint256)
     {
-        /**
+        /*
          * packedSignatureData layout :
          * ======== static head part : 0x61 (97) bytes========
          * ... static head part ...
          * ======== static tail for simple mode =====
-         * uint48 = 6 bytes : lowerBoundTimestamp
-         * uint48 = 6 bytes : upperBoundTimestamp
+         * uint256 = 32 bytes : packedTimestamps
+         * packedTimestamps is expected to be in the following format:
+         * lowerBoundTimestamp in the most significant 128 bits (left)
+         * upperBoundTimestamp in the least significant 128 bits (right)
          * ======== dynamic tail  ==========
          * ... dynamic tail ...
          */
-        (bytes32 outerTypeHash, uint8 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) =
+        (bytes32 outerTypeHash, uint256 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) =
             HashLib.parsePackedSigDataHead(signatureData);
 
-        uint48 lowerBoundTimestamp;
-        uint48 upperBoundTimestamp;
-
+        bytes32 packedTimestamps;
         assembly {
-            lowerBoundTimestamp := shr(208, calldataload(add(packedSignatureData.offset, 0x61)))
-            upperBoundTimestamp := shr(208, calldataload(add(packedSignatureData.offset, 0x67)))
+            packedTimestamps := calldataload(add(signatureData.offset, STATIC_HEAD_LENGTH))
         }
+        (uint256 lowerBoundTimestamp, uint256 upperBoundTimestamp) = UserOperationLib.unpackUints(packedTimestamps);
 
         bytes32 currentItemHash =
             MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
@@ -65,7 +66,7 @@ library SimpleValidatorLib {
             return SIG_VALIDATION_FAILED;
         }
 
-        return _packValidationData(false, upperBoundTimestamp, lowerBoundTimestamp);
+        return _packValidationData(false, uint48(upperBoundTimestamp), uint48(lowerBoundTimestamp));
     }
 
     /**
@@ -99,15 +100,15 @@ library SimpleValidatorLib {
         view
         returns (bool)
     {
-        (bytes32 outerTypeHash, uint8 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) =
+        (bytes32 outerTypeHash, uint256 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) =
             HashLib.parsePackedSigDataHead(signatureData);
 
-        bytes32 superTxEip712Hash = _compareAndGetFinalHash(outerTypeHash, dataHash, itemIndex, itemHashes);
+        bytes32 superTxEip712Hash = HashLib.compareAndGetFinalHash(outerTypeHash, dataHash, itemIndex, itemHashes);
         if (superTxEip712Hash == bytes32(0)) {
             return false;
         }
 
-        if (!EcdsaLib.isValidSignature(owner, superTxHash, signature)) {
+        if (!EcdsaLib.isValidSignature(owner, superTxEip712Hash, signature)) {
             return false;
         }
 

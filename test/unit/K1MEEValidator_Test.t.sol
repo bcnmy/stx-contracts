@@ -56,7 +56,7 @@ contract K1MEEValidatorTest is BaseTest {
 
         PackedUserOperation[] memory userOps = cloneUserOpToAnArray(userOp, wallet, numOfClones);
 
-        userOps = makeSimpleSuperTx(userOps, wallet);
+        userOps = makeSimpleSuperTx(userOps, wallet, address(mockAccount));
 
         vm.startPrank(MEE_NODE_EXECUTOR_EOA, MEE_NODE_EXECUTOR_EOA);
         ENTRYPOINT.handleOps(userOps, payable(MEE_NODE_ADDRESS));
@@ -298,6 +298,7 @@ contract K1MEEValidatorTest is BaseTest {
     }
 
     /// @notice Generates an ERC-1271 hash for the given contents and account.
+    /// @dev This function is used for ERC-7739 flow
     /// @param contents The contents hash.
     /// @param account The account address.
     /// @return The ERC-1271 hash.

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
+import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
+
 interface IERC5267 {
     function eip712Domain()
         external
@@ -16,19 +18,27 @@ interface IERC5267 {
         );
 }
 
+// keccak256("SuperTx(MeeUserOp[] meeUserOps)");
+// TODO: recalculate it!
+bytes32 constant SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
+// keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[]
+// extensions)");
 bytes32 constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+uint256 constant STATIC_HEAD_LENGTH = 0x80; // introduced to re-use it in the contracts that use this library
 
 library HashLib {
+    using EfficientHashLib for *;
+
     function parsePackedSigDataHead(bytes calldata packedSignatureData)
         internal
         pure
-        returns (bytes32 outerTypeHash, uint8 itemIndex, uint8 itemType, bytes32[] calldata itemHashes)
+        returns (bytes32 outerTypeHash, uint256 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature)
     {
-        /**
+        /*
          * packedSignatureData layout :
-         * ======== static head part : 0x61 (97) bytes========
+         * ======== static head part : 0x80 (128) bytes========
          * 32 bytes : outerTypeHash
-         * 1 byte : itemIndex
+         * 32 bytes : itemIndex
          * 32 bytes : itemHashes offset
          * 32 bytes : signature offset
          * ======== static tail for fusion modes =====
@@ -41,23 +51,27 @@ library HashLib {
          */
         assembly {
             outerTypeHash := calldataload(packedSignatureData.offset)
-            itemIndex := shr(248, calldataload(add(packedSignatureData.offset, 0x20)))
-            itemType := shr(248, calldataload(add(packedSignatureData.offset, 0x21)))
-            let u := calldataload(add(packedSignatureData.offset, 0x22)) // local offset of the array of hashes
+            itemIndex := calldataload(add(packedSignatureData.offset, 0x20))
+            let u := calldataload(add(packedSignatureData.offset, 0x40)) // local offset of the array of hashes
             let s := add(packedSignatureData.offset, u) // global offset of the array of hashes
             itemHashes.offset := add(s, 0x20) // account for 20 bytes length
             itemHashes.length := calldataload(s) // get the length
+            u := calldataload(add(packedSignatureData.offset, sub(STATIC_HEAD_LENGTH, 0x20))) // load local offset of the
+                // signature
+            s := add(packedSignatureData.offset, u) // global offset of the signature
+            signature.offset := add(s, 0x20) // account for 20 bytes length
+            signature.length := calldataload(s) // get the length
         }
     }
 
     function compareAndGetFinalHash(
         bytes32 outerTypeHash,
         bytes32 currentItemHash,
-        uint8 itemIndex,
+        uint256 itemIndex,
         bytes32[] calldata itemHashes
     )
         internal
-        pure
+        view
         returns (bytes32 finalHash)
     {
         // Compare
@@ -70,9 +84,24 @@ library HashLib {
             // hashStruct(s : 𝕊) = keccak256(typeHash ‖ encodeData(s))
             // The encoding of a struct instance is enc(value₁) ‖ enc(value₂) ‖ … ‖ enc(valueₙ)
             // Since all our values are bytes32, we need to just concat all of them
-            bytes memory encodedData = abi.encode(itemHashes);
+            // There is one case which deserves a dedicated flow in terms of optimizations -
+            // it is when all the superTxn entries are MeeUserOps structs. Then it makes sense
+            // to treat them as an array of MeeUserOps structs and use the dedicated typehash.
+            bytes memory encodedData;
+            if (outerTypeHash == SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH) {
+                // if SuperTx is an array of MeeUserOps structs, then encoded data is a
+                // "keccak256 hash of the concatenated encodeData of their contents" as per eip-712
+                uint256 length = itemHashes.length;
+                bytes32[] memory a = EfficientHashLib.malloc(length);
+                for (uint256 i; i < length; ++i) {
+                    a.set(i, itemHashes[i]);
+                }
+                encodedData = abi.encodePacked(a.hash());
+            } else {
+                // if SuperTx is a struct, then encoded data is just the concat of all the itemHashes
+                encodedData = abi.encode(itemHashes);
+            }
             bytes32 structHash = keccak256(abi.encodePacked(outerTypeHash, encodedData));
-
             finalHash = hashTypedDataForAccount(msg.sender, structHash);
         }
     }
@@ -81,7 +110,7 @@ library HashLib {
     ///         Uses account's domain separator
     /// @param account the smart account, who's domain separator will be used
     /// @param structHash the typed data struct hash
-    function hashTypedDataForAccount(address account, bytes32 structHash) private view returns (bytes32 digest) {
+    function hashTypedDataForAccount(address account, bytes32 structHash) internal view returns (bytes32 digest) {
         (
             /*bytes1 fields*/
             ,
