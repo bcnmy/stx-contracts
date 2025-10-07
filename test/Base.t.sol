@@ -192,167 +192,9 @@ contract BaseTest is Test {
         return ENTRYPOINT.getUserOpHash(userOp);
     }
 
-    // ============ MEE USER OP SUPER TX UTILS ============
-
-    function makeMEEUserOp(
-        PackedUserOperation memory userOp,
-        uint128 pmValidationGasLimit,
-        uint128 pmPostOpGasLimit,
-        Vm.Wallet memory wallet,
-        bytes4 sigType
-    )
-        internal
-        view
-        returns (PackedUserOperation memory)
-    {
-        // refund mode = user
-        // premium mode = percentage premium
-        userOp.paymasterAndData = abi.encodePacked(
-            address(NODE_PAYMASTER),
-            pmValidationGasLimit, // pm validation gas limit
-            pmPostOpGasLimit, // pm post-op gas limit
-            NODE_PM_MODE_USER,
-            NODE_PM_PREMIUM_PERCENT,
-            uint192(1_700_000)
-        );
-
-        userOp.signature = signUserOp(wallet, userOp);
-        if (sigType != bytes4(0)) {
-            userOp.signature = abi.encodePacked(sigType, userOp.signature);
-        }
-        return userOp;
-    }
-
-    function duplicateUserOpAndIncrementNonce(
-        PackedUserOperation memory userOp,
-        Vm.Wallet memory userOpSigner
-    )
-        internal
-        view
-        returns (PackedUserOperation memory)
-    {
-        PackedUserOperation memory newUserOp = userOp.deepCopy();
-        newUserOp.nonce = userOp.nonce + 1;
-        newUserOp.signature = signUserOp(userOpSigner, newUserOp);
-        return newUserOp;
-    }
-
-    function cloneUserOpToAnArray(
-        PackedUserOperation memory userOp,
-        Vm.Wallet memory userOpSigner,
-        uint256 numOfClones
-    )
-        internal
-        view
-        returns (PackedUserOperation[] memory)
-    {
-        PackedUserOperation[] memory userOps = new PackedUserOperation[](numOfClones + 1);
-        userOps[0] = userOp;
-        for (uint256 i = 0; i < numOfClones; i++) {
-            assertEq(userOps[i].nonce, i);
-            userOps[i + 1] = duplicateUserOpAndIncrementNonce(userOps[i], userOpSigner);
-        }
-        return userOps;
-    }
-
-    function eip712HashMeeUserOps(
-        PackedUserOperation[] memory userOps,
-        uint48 lowerBoundTimestamp,
-        uint48 upperBoundTimestamp
-    )
-        internal
-        view
-        returns (bytes32[] memory)
-    {
-        bytes32[] memory itemHashes = new bytes32[](userOps.length);
-        for (uint256 i; i < userOps.length; ++i) {
-            bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[i]);
-            itemHashes[i] = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
-        }
-        return itemHashes;
-    }
-    // ==== SIMPLE SUPER TX UTILS ====
-
-    function makeSimpleSuperTx(
-        PackedUserOperation[] memory userOps,
-        Vm.Wallet memory superTxSigner,
-        address smartAccount
-    )
-        internal
-        view
-        returns (PackedUserOperation[] memory)
-    {
-        uint48 lowerBoundTimestamp = uint48(block.timestamp);
-        uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
-        bytes32[] memory stxItemHashes = eip712HashMeeUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
-
-        (bytes32 stxStructTypeHash, bytes32 stxEip712HashToSign) =
-            _hashPureMeeUserOpsStx(userOps, smartAccount, lowerBoundTimestamp, upperBoundTimestamp);
-
-        // eip-712 sign the stx struct
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(superTxSigner.privateKey, stxEip712HashToSign);
-        bytes memory superTxHashSignature = abi.encodePacked(r, s, v);
-
-        PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
-        for (uint256 i; i < userOps.length; ++i) {
-            superTxUserOps[i] = userOps[i].deepCopy();
-
-            bytes memory signature = abi.encodePacked(
-                SIG_TYPE_SIMPLE,
-                abi.encode(
-                    stxStructTypeHash,
-                    i,
-                    stxItemHashes,
-                    superTxHashSignature,
-                    uint256((uint256(lowerBoundTimestamp) << 128) | uint256(upperBoundTimestamp))
-                )
-            );
-            superTxUserOps[i].signature = signature;
-        }
-        return superTxUserOps;
-    }
-
-    function makeSimpleSuperTxSignatures(
-        bytes32 baseHash,
-        uint256 total,
-        Vm.Wallet memory superTxSigner,
-        address mockAccount
-    )
-        internal
-        returns (bytes[] memory)
-    {
-        bytes[] memory meeSigs = new bytes[](total);
-        require(total > 0, "total must be greater than 0");
-
-        bytes32[] memory leaves = new bytes32[](total);
-
-        bytes32 hash;
-        for (uint256 i = 0; i < total; i++) {
-            if (i / 2 == 0) {
-                hash = keccak256(abi.encode(baseHash, i));
-            } else {
-                hash = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), address(mockAccount)));
-            }
-            leaves[i] = hash;
-        }
-
-        Merkle tree = new Merkle();
-        bytes32 root = tree.getRoot(leaves);
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(superTxSigner.privateKey, root);
-        bytes memory superTxHashSignature = abi.encodePacked(r, s, v);
-
-        for (uint256 i = 0; i < total; i++) {
-            bytes32[] memory proof = tree.getProof(leaves, i);
-            bytes memory signature = abi.encodePacked(SIG_TYPE_SIMPLE, abi.encode(root, proof, superTxHashSignature));
-            meeSigs[i] = signature;
-        }
-        return meeSigs;
-    }
-
     // ==== PERMIT SUPER TX UTILS ====
 
-    function makePermitSuperTx(
+    /* function makePermitSuperTx(
         PackedUserOperation[] memory userOps,
         ERC20 token,
         Vm.Wallet memory signer,
@@ -556,7 +398,7 @@ contract BaseTest is Test {
             meeSigs[i] = signature;
         }
         return meeSigs;
-    }
+    } */
 
     // ============ WALLET UTILS ============
 

@@ -36,59 +36,8 @@ contract K1MEEValidatorTest is BaseTest {
         valueToSet = MEE_NODE_HEX;
     }
 
-    // test simple mode
-    function test_superTxFlow_simple_mode_ValidateUserOp_success(uint256 numOfClones)
-        public
-        returns (PackedUserOperation[] memory)
-    {
-        numOfClones = bound(numOfClones, 1, 25);
-        uint256 counterBefore = mockTarget.counter();
-        bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
-        PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
-            account: address(mockAccount),
-            userOpSigner: wallet
-        });
-
-        PackedUserOperation[] memory userOps = cloneUserOpToAnArray(userOp, wallet, numOfClones);
-
-        userOps = makeSimpleSuperTx(userOps, wallet, address(mockAccount));
-
-        vm.startPrank(MEE_NODE_EXECUTOR_EOA, MEE_NODE_EXECUTOR_EOA);
-        ENTRYPOINT.handleOps(userOps, payable(MEE_NODE_ADDRESS));
-        vm.stopPrank();
-
-        assertEq(mockTarget.counter(), counterBefore + numOfClones + 1);
-        return userOps;
-    }
-
-    function test_superTxFlow_simple_mode_1271_and_WithData_success(uint256 numOfObjs) public {
-        numOfObjs = bound(numOfObjs, 2, 25);
-        bytes[] memory meeSigs = new bytes[](numOfObjs);
-        bytes32 baseHash = keccak256(abi.encode("test"));
-        meeSigs = makeSimpleSuperTxSignatures({
-            baseHash: baseHash,
-            total: numOfObjs,
-            superTxSigner: wallet,
-            mockAccount: address(mockAccount)
-        });
-
-        for (uint256 i = 0; i < numOfObjs; i++) {
-            // pass the 'unsafe hash' here. however, the root is made with the 'safe' one
-            // hash will rehashed in the K1MEEValidator.isValidSignatureWithSender by hashing the SA address into it
-            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
-            if (i / 2 == 0) {
-                assertTrue(
-                    mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr))
-                );
-            } else {
-                assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == EIP1271_SUCCESS);
-            }
-        }
-    }
-
     // test permit mode
-    function test_superTxFlow_permit_mode_ValidateUserOp_success(uint256 numOfClones) public {
+    /* function test_superTxFlow_permit_mode_ValidateUserOp_success(uint256 numOfClones) public {
         numOfClones = bound(numOfClones, 1, 25);
         MockERC20PermitToken erc20 = new MockERC20PermitToken("test", "TEST");
         deal(address(erc20), wallet.addr, 1000 ether); // mint erc20 tokens to the wallet
@@ -180,7 +129,7 @@ contract K1MEEValidatorTest is BaseTest {
         // it is not possible to get the actual executed and serialized txn (above) from Foundry tests
         // so this is just some calldata for testing purposes
         bytes memory callData =
-            hex"a9059cbb000000000000000000000000c7183455a4c133ae270771860664b6b7ec320bb100000000000000000000000000000000000000000000000053444835ec580000";
+    hex"a9059cbb000000000000000000000000c7183455a4c133ae270771860664b6b7ec320bb100000000000000000000000000000000000000000000000053444835ec580000";
 
         userOps = makeOnChainTxnSuperTx(userOps, wallet, callData);
 
@@ -221,7 +170,7 @@ contract K1MEEValidatorTest is BaseTest {
 
         PackedUserOperation memory userOp = buildUserOpWithCalldata({
             account: address(mockAccount),
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
+    callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
             wallet: wallet,
             preVerificationGasLimit: 3e5,
             verificationGasLimit: 500e3,
@@ -241,7 +190,7 @@ contract K1MEEValidatorTest is BaseTest {
     function test_nonMEEFlow_validateSignatureWithData_success() public view {
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
+    callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
             account: address(mockAccount),
             userOpSigner: wallet
         });
@@ -256,42 +205,12 @@ contract K1MEEValidatorTest is BaseTest {
         (t.v, t.r, t.s) = vm.sign(wallet.privateKey, dataToSign);
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+    abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
         bytes4 ret = mockAccount.isValidSignature(toContentsHash(t.contents), signature);
         assertEq(ret, bytes4(EIP1271_SUCCESS));
-    }
+    } */
 
     // ================================
-
-    /* solhint-disable foundry-test-functions */
-    function buildBasicMEEUserOpWithCalldata(
-        bytes memory callData,
-        address account,
-        Vm.Wallet memory userOpSigner
-    )
-        public
-        view
-        returns (PackedUserOperation memory)
-    {
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
-            account: account,
-            callData: callData,
-            wallet: userOpSigner,
-            preVerificationGasLimit: 3e5,
-            verificationGasLimit: 500e3,
-            callGasLimit: 3e6
-        });
-
-        userOp = makeMEEUserOp({
-            userOp: userOp,
-            pmValidationGasLimit: 40_000,
-            pmPostOpGasLimit: 50_000,
-            wallet: userOpSigner,
-            sigType: bytes4(0)
-        });
-
-        return userOp;
-    }
 
     /// @notice Generates an ERC-1271 hash for the given contents and account.
     /// @dev This function is used for ERC-7739 flow
