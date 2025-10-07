@@ -28,6 +28,7 @@
         "func-name-mixedcase": "off",
         "contract-name-capwords": "off",
         "var-name-mixedcase": "off",
-        "private-vars-leading-underscore": "off"
+        "private-vars-leading-underscore": "off",
+        "import-path-check": "off"
     }
 }

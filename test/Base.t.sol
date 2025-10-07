@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { Test, Vm, console2 } from "forge-std/Test.sol";
+import { Test, Vm } from "forge-std/Test.sol";
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
@@ -53,7 +53,6 @@ contract BaseTest is Test {
     using CopyUserOpLib for PackedUserOperation;
     using LibZip for bytes;
     using LibRLP for LibRLP.List;
-    using EfficientHashLib for *;
 
     uint256 constant MEE_NODE_HEX = 0x177ee170de;
 
