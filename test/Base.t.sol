@@ -28,7 +28,6 @@ import { LibRLP } from "solady/utils/LibRLP.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { EcdsaLib } from "contracts/lib/util/EcdsaLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
-import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/util/HashLib.sol";
 
 address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
@@ -462,36 +461,5 @@ contract BaseTest is Test {
         serializedTxList = serializedTxList.p(v == 28 ? true : false).p(uint256(r)).p(uint256(s)); // add v, r, s to the
             // list
         return abi.encodePacked(hex"02", serializedTxList.encode()); // add tx type to the list
-    }
-
-    // ============ HASHING UTILS ============
-
-    function _hashPureMeeUserOpsStx(
-        PackedUserOperation[] memory superTxUserOps,
-        address smartAccount,
-        uint48 lowerBoundTimestamp,
-        uint48 upperBoundTimestamp
-    )
-        internal
-        view
-        returns (bytes32 stxStructTypeHash, bytes32 stxEip712HashToSign)
-    {
-        // TODO: since in this function stx is built of MeeUserOps only, we treat it as an array of MeeUserOps structs
-        // SuperTx(MeeUserOp[] meeUserOps)
-        stxStructTypeHash = SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH;
-        // and thus we also have to hash the encoded data as an array of MeeUserOps structs
-        bytes memory encodedData;
-        bytes32[] memory a = EfficientHashLib.malloc(superTxUserOps.length);
-        for (uint256 i; i < superTxUserOps.length; ++i) {
-            bytes32 userOpHash = ENTRYPOINT.getUserOpHash(superTxUserOps[i]);
-            bytes32 meeUserOpEip712Hash =
-                MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
-            a.set(i, meeUserOpEip712Hash);
-        }
-        encodedData = abi.encodePacked(a.hash());
-        // now has the struct as per eip-712
-        bytes32 structHash = keccak256(abi.encodePacked(stxStructTypeHash, encodedData));
-        // and make the final hash to sign with the domain separator
-        stxEip712HashToSign = HashLib.hashTypedDataForAccount(smartAccount, structHash);
     }
 }

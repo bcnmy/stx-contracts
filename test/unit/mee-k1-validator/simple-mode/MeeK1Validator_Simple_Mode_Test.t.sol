@@ -16,7 +16,8 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         super.setUp();
     }
 
-    // tests simple mode, where the super tx entries are MEE user operations only
+    // tests simple mode, validateUserOp, where the super tx entries are MEE user operations only
+    // SuperTx
     function test_simple_mode_ValidateUserOp_with_MeeUserOps_only_as_entries_success(uint256 numOfClones)
         public
         returns (PackedUserOperation[] memory)
@@ -41,6 +42,8 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         assertEq(mockTarget.counter(), counterBefore + numOfClones + 1);
         return userOps;
     }
+
+    // test simple mode, validateUserOp, where the super tx entries are of mixed types
 
     /*    function test_superTxFlow_simple_mode_1271_and_WithData_success(uint256 numOfObjs) public {
         numOfObjs = bound(numOfObjs, 2, 25);

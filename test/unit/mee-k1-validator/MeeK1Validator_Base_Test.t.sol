@@ -2,15 +2,18 @@
 pragma solidity ^0.8.27;
 
 import { Test, Vm, console2 } from "forge-std/Test.sol";
+import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
+import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { BaseTest } from "../../Base.t.sol";
 import { MEEUserOpHashLib } from "../../../contracts/lib/util/MEEUserOpHashLib.sol";
 import { MockAccount, ENTRY_POINT_V07 } from "../../mock/MockAccount.sol";
-import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
-import "contracts/types/Constants.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
+import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/util/HashLib.sol";
+import "contracts/types/Constants.sol";
 
 contract MeeK1Validator_Base_Test is BaseTest {
     using CopyUserOpLib for PackedUserOperation;
+    using EfficientHashLib for *;
 
     Vm.Wallet wallet;
     MockAccount mockAccount;
@@ -151,7 +154,49 @@ contract MeeK1Validator_Base_Test is BaseTest {
     }
 
     /**
-     * @notice Hashes an array of user operations with the given lower and upper bound timestamps
+     * @notice Hashes a super tx with only MeeUserOps as entries
+     * @param superTxUserOps The array of user operations to hash
+     * @param smartAccount The smart account to hash the super tx for
+     * @param lowerBoundTimestamp The lower bound timestamp
+     * @param upperBoundTimestamp The upper bound timestamp
+     * @return stxStructTypeHash The type hash of the super tx
+     * @return stxEip712HashToSign The EIP-712 hash of the SuperTx(MeeUserOp[] meeUserOps) to sign
+     */
+    function _hashPureMeeUserOpsStx(
+        PackedUserOperation[] memory superTxUserOps,
+        address smartAccount,
+        uint48 lowerBoundTimestamp,
+        uint48 upperBoundTimestamp
+    )
+        internal
+        view
+        returns (bytes32 stxStructTypeHash, bytes32 stxEip712HashToSign)
+    {
+        // since in this function stx is built of MeeUserOps only, we treat it as an array of MeeUserOps structs
+        // SuperTx(MeeUserOp[] meeUserOps)
+        stxStructTypeHash = SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH;
+        // and thus we also have to hash the encoded data as an array of MeeUserOps structs
+        // encode data for an array of structs is "keccak256 hash of the concatenated encodeData
+        // of their contents" as per eip-712
+        bytes memory encodedData;
+        bytes32[] memory a = EfficientHashLib.malloc(superTxUserOps.length);
+        for (uint256 i; i < superTxUserOps.length; ++i) {
+            bytes32 userOpHash = ENTRYPOINT.getUserOpHash(superTxUserOps[i]);
+            bytes32 meeUserOpEip712Hash =
+                MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+            a.set(i, meeUserOpEip712Hash);
+        }
+        encodedData = abi.encodePacked(a.hash());
+        // now has the struct as per eip-712
+        bytes32 structHash = keccak256(abi.encodePacked(stxStructTypeHash, encodedData));
+        // and make the final hash to sign with the domain separator
+        stxEip712HashToSign = HashLib.hashTypedDataForAccount(smartAccount, structHash);
+    }
+
+    // TODO: function _hashMixedTypeStx()
+
+    /**
+     * @notice Hashes every user operation in the array with the given lower and upper bound timestamps
      * @param userOps The array of user operations to hash
      * @param lowerBoundTimestamp The lower bound timestamp
      * @param upperBoundTimestamp The upper bound timestamp
