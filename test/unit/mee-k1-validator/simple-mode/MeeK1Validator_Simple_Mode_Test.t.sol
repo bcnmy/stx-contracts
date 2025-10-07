@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.27;
 
-import { Vm, console2 } from "forge-std/Test.sol";
+import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { MeeK1Validator_Base_Test } from "../MeeK1Validator_Base_Test.t.sol";
 import { MockTarget } from "../../../mock/MockTarget.sol";

@@ -27,6 +27,7 @@
         "gas-struct-packing": "off",
         "func-name-mixedcase": "off",
         "contract-name-capwords": "off",
-        "var-name-mixedcase": "off"
+        "var-name-mixedcase": "off",
+        "private-vars-leading-underscore": "off"
     }
 }

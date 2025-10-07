@@ -27,7 +27,6 @@ import {
 import { LibRLP } from "solady/utils/LibRLP.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { EcdsaLib } from "contracts/lib/util/EcdsaLib.sol";
-import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 
 address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
