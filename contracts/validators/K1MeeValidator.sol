@@ -230,7 +230,10 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
 
             // 1) because for simple mode we sign stx 712  data struct now,
             // so can not blindly rehash it with the msg.sender
-            // TODO: add account field as first field of the SuperTx data struct
+            // However this is not needed for simple mode, because
+            // in simple mode domain separator is the domain separator
+            // of the smart account which includes the account address!
+            // so 7739 is not needed for simple mode
 
             // 2) for permit mode we also sign the data struct Permit()
             // can not be replayed because it has nonce
@@ -238,20 +241,9 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
             // 3) on-chain mode : can not be replayed because it has nonce
 
             // 4) leave comment for the future modes!
-
-            // MEE: non-7739 flow
-            // hash the SA into the `hash` to protect against two SA's with same owner vector
-            bytes32 hashWithAccountAddress;
-            // keccak256(abi.encodePacked(hash, msg.sender))
-            assembly {
-                let ptr := mload(0x40)
-                mstore(ptr, hash)
-                mstore(add(ptr, 0x20), shl(96, caller()))
-                hashWithAccountAddress := keccak256(ptr, 0x34)
-            }
-            return _validateSignatureForOwner(
-                getOwner(msg.sender), hashWithAccountAddress, _erc1271UnwrapSignature(signature)
-            ) ? EIP1271_SUCCESS : EIP1271_FAILED;
+            return _validateSignatureForOwner(getOwner(msg.sender), hash, _erc1271UnwrapSignature(signature))
+                ? EIP1271_SUCCESS
+                : EIP1271_FAILED;
         }
     }
 

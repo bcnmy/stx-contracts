@@ -61,11 +61,8 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         });
         PackedUserOperation[] memory userOps = _cloneUserOpToAnArray(userOp, wallet, numOfClones);
 
-        (
-            PackedUserOperation[] memory superTxUserOps,
-            NonUserOpEntryData[] memory nonUserOpEntryDatas,
-            StxEntryData[] memory stxLayout
-        ) = _makeSimpleSuperTxWithMixedTypes(userOps, wallet, address(mockAccount));
+        (PackedUserOperation[] memory superTxUserOps, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
+            _makeSimpleSuperTxWithMixedTypes(userOps, wallet, address(mockAccount));
 
         // make sure userOps are handled correctly
         // sending them one by one to emulate the real world scenario
@@ -78,35 +75,36 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         }
         vm.stopPrank();
         assertEq(mockTarget.counter(), counterBefore + userOps.length);
-    }
 
-    /*    function test_superTxFlow_simple_mode_1271_and_WithData_success(uint256 numOfObjs) public {
-        numOfObjs = bound(numOfObjs, 2, 25);
-        bytes[] memory meeSigs = new bytes[](numOfObjs);
-        bytes32 baseHash = keccak256(abi.encode("test"));
-        meeSigs = makeSimpleSuperTxSignatures({
-            baseHash: baseHash,
-            total: numOfObjs,
-            superTxSigner: wallet,
-            mockAccount: address(mockAccount)
-        });
+        // Now validate the rest of the entries via
+        // - validateSignatureWithData
+        // - isValidSignature (no 7739 flow needed for simple mode)
+        for (uint256 i; i < nonUserOpEntryDatas.length; i++) {
+            assertTrue(
+                mockAccount.validateSignatureWithData(
+                    nonUserOpEntryDatas[i].entryHash,
+                    nonUserOpEntryDatas[i].packedSignatureForEntry,
+                    abi.encodePacked(wallet.addr)
+                )
+            );
 
-        for (uint256 i = 0; i < numOfObjs; i++) {
-            // pass the 'unsafe hash' here. however, the root is made with the 'safe' one
-            // hash will rehashed in the K1MEEValidator.isValidSignatureWithSender by hashing the SA address into it
-            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
-            if (i / 2 == 0) {
-                assertTrue(
-                    mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr))
-                );
-            } else {
-                assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == EIP1271_SUCCESS);
-            }
+            assertTrue(
+                mockAccount.isValidSignature(
+                    nonUserOpEntryDatas[i].entryHash, nonUserOpEntryDatas[i].packedSignatureForEntry
+                ) == EIP1271_SUCCESS
+            );
         }
-    } */
+    }
 
     // ==== SIMPLE SUPER TX UTILS ====
 
+    /**
+     * @notice Makes a simple superTx with MeeUserOps only as entries
+     * @param userOps The user operations to include in the superTx
+     * @param superTxSigner The signer of the superTx
+     * @param smartAccount The smart account address
+     * @return superTxUserOps The superTx user operations
+     */
     function _makeSimpleSuperTxWithMeeUserOpsOnlyAsEntries(
         PackedUserOperation[] memory userOps,
         Vm.Wallet memory superTxSigner,
@@ -164,6 +162,15 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         EntryType entryType;
     }
 
+    /**
+     * @notice Makes a simple superTx with mixed types
+     * Dynamically creates the superTx struct and according typehash
+     * @param userOps The user operations to include in the superTx
+     * @param superTxSigner The signer of the superTx
+     * @param smartAccount The smart account address
+     * @return superTxUserOps The superTx user operations
+     * @return nonUserOpEntryDatas The non-userOp entry data
+     */
     function _makeSimpleSuperTxWithMixedTypes(
         PackedUserOperation[] memory userOps,
         Vm.Wallet memory superTxSigner,
@@ -171,7 +178,7 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
     )
         internal
         view
-        returns (PackedUserOperation[] memory, NonUserOpEntryData[] memory, StxEntryData[] memory)
+        returns (PackedUserOperation[] memory, NonUserOpEntryData[] memory)
     {
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
@@ -424,44 +431,6 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         }
 
         // ==== STEP 8: Return all results ====
-        return (superTxUserOps, nonUserOpEntryDatas, stxLayout);
+        return (superTxUserOps, nonUserOpEntryDatas);
     }
-
-    /* function makeSimpleSuperTxSignatures(
-        bytes32 baseHash,
-        uint256 total,
-        Vm.Wallet memory superTxSigner,
-        address mockAccount
-    )
-        internal
-        returns (bytes[] memory)
-    {
-        bytes[] memory meeSigs = new bytes[](total);
-        require(total > 0, "total must be greater than 0");
-
-        bytes32[] memory leaves = new bytes32[](total);
-
-        bytes32 hash;
-        for (uint256 i = 0; i < total; i++) {
-            if (i / 2 == 0) {
-                hash = keccak256(abi.encode(baseHash, i));
-            } else {
-                hash = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), address(mockAccount)));
-            }
-            leaves[i] = hash;
-        }
-
-        Merkle tree = new Merkle();
-        bytes32 root = tree.getRoot(leaves);
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(superTxSigner.privateKey, root);
-        bytes memory superTxHashSignature = abi.encodePacked(r, s, v);
-
-        for (uint256 i = 0; i < total; i++) {
-            bytes32[] memory proof = tree.getProof(leaves, i);
-            bytes memory signature = abi.encodePacked(SIG_TYPE_SIMPLE, abi.encode(root, proof, superTxHashSignature));
-            meeSigs[i] = signature;
-        }
-        return meeSigs;
-    } */
 }
