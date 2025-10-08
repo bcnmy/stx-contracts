@@ -1,36 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { BaseTest } from "../Base.t.sol";
-import { Vm } from "forge-std/Test.sol";
+import { MeeK1Validator_Base_Test } from "./MeeK1Validator_Base_Test.t.sol";
 import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
-import { MockAccount } from "../mock/MockAccount.sol";
 import { MEEUserOpHashLib } from "contracts/lib/util/MEEUserOpHashLib.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
+import { MockTarget } from "../../mock/MockTarget.sol";
+import { EIP1271_SUCCESS } from "contracts/types/Constants.sol";
 
-interface IGetOwner {
-    /* solhint-disable-next-line foundry-test-functions */
-    function getOwner(address account) external view returns (address);
-}
-
-contract K1MEEValidatorTest is BaseTest {
+contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
     using UserOperationLib for PackedUserOperation;
     using MEEUserOpHashLib for PackedUserOperation;
 
-    uint256 constant PREMIUM_CALCULATION_BASE = 100e5;
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
-
-    Vm.Wallet wallet;
-    MockAccount mockAccount;
-    uint256 valueToSet;
 
     function setUp() public virtual override {
         super.setUp();
-        wallet = createAndFundWallet("wallet", 5 ether);
-        mockAccount = deployMockAccount({ validator: address(k1MeeValidator), handler: address(0) });
-        vm.prank(address(mockAccount));
-        k1MeeValidator.transferOwnership(wallet.addr);
-        valueToSet = MEE_NODE_HEX;
     }
 
     // test non-MEE flow
