@@ -189,11 +189,6 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         NonUserOpEntryData[] memory nonUserOpEntryDatas = new NonUserOpEntryData[](otherEntriesLength);
         string memory dynamicStxStructDefinition;
 
-        console2.log("everyNonUserOpEntryTypeEntriesCount", everyNonUserOpEntryTypeEntriesCount);
-        console2.log("otherEntriesLength", otherEntriesLength);
-        console2.log("userOpsLength", userOpsLength);
-        console2.log("totalEntries", userOpsLength + otherEntriesLength);
-
         //create other entries
         string memory entryTypeADefinition = "EntryTypeA(uint256 foo,bytes32 bar, address baz)";
         string memory entryTypeBDefinition = "EntryTypeB(string qux,address corge)";
