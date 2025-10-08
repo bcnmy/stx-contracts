@@ -7,7 +7,7 @@ import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.s
 import { MockERC20PermitToken } from "../../../mock/MockERC20PermitToken.sol";
 import { EIP1271_SUCCESS } from "contracts/types/Constants.sol";
 import { CopyUserOpLib } from "../../../util/CopyUserOpLib.sol";
-import { Merkle } from "murky-trees/Merkle.sol";
+import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
 import { SIG_TYPE_ON_CHAIN } from "contracts/types/Constants.sol";
 import { LibRLP } from "solady/utils/LibRLP.sol";
 import { MockTarget } from "../../../mock/MockTarget.sol";
@@ -15,6 +15,7 @@ import { MockTarget } from "../../../mock/MockTarget.sol";
 contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
     using LibRLP for LibRLP.List;
+    using MerkleTreeLib for bytes32[];
 
     function test_superTxFlow_on_chain_mode_ValidateUserOp_success(uint256 numOfClones) public {
         numOfClones = bound(numOfClones, 1, 25);
@@ -83,6 +84,7 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
         bytes memory callData
     )
         internal
+        view
         returns (PackedUserOperation[] memory)
     {
         PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
@@ -91,8 +93,8 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
         bytes32[] memory leaves = _buildLeavesOutOfUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
 
         // make a tree
-        Merkle tree = new Merkle();
-        bytes32 root = tree.getRoot(leaves);
+        bytes32[] memory tree = leaves.build();
+        bytes32 root = tree.root();
 
         callData = abi.encodePacked(callData, root);
 
@@ -100,7 +102,7 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
 
         for (uint256 i = 0; i < userOps.length; i++) {
             superTxUserOps[i] = userOps[i].deepCopy();
-            bytes32[] memory proof = tree.getProof(leaves, i);
+            bytes32[] memory proof = tree.leafProof(i);
             bytes memory signature = abi.encodePacked(
                 SIG_TYPE_ON_CHAIN,
                 serializedTx,
@@ -122,6 +124,7 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
         Vm.Wallet memory superTxSigner
     )
         internal
+        view
         returns (bytes[] memory)
     {
         bytes[] memory meeSigs = new bytes[](total);
@@ -137,14 +140,14 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
             }
         }
 
-        Merkle tree = new Merkle();
-        bytes32 root = tree.getRoot(leaves);
+        bytes32[] memory tree = leaves.build();
+        bytes32 root = tree.root();
         callData = abi.encodePacked(callData, root);
 
         bytes memory serializedTx = _getSerializedTxn(callData, address(0xa11cebeefb0bdecaf0), superTxSigner);
 
         for (uint256 i = 0; i < total; i++) {
-            bytes32[] memory proof = tree.getProof(leaves, i);
+            bytes32[] memory proof = tree.leafProof(i);
             bytes memory signature =
                 abi.encodePacked(SIG_TYPE_ON_CHAIN, serializedTx, abi.encodePacked(proof), uint8(proof.length));
             meeSigs[i] = signature;

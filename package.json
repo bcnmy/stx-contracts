@@ -29,7 +29,6 @@
     "enumerablemap4337": "erc7579/enumerablemap",
     "erc7739-validator-base": "erc7579/erc7739Validator#v1.0.0",
     "forge-std": "foundry-rs/forge-std#v1.10.0",
-    "murky": "dmfxyz/murky#v0.1.0",
     "solady": "vectorized/solady#v0.1.26",
     "solidity-bytes-utils": "GNSPS/solidity-bytes-utils#v0.8.4",
     "solidity-rlp": "hamdiallam/Solidity-RLP#v2.0.8"

@@ -167,6 +167,7 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
         uint256 amount
     )
         internal
+        view
         returns (bytes[] memory)
     {
         bytes[] memory meeSigs = new bytes[](total);
@@ -183,8 +184,8 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
             }
         }
 
-        Merkle tree = new Merkle();
-        bytes32 root = tree.getRoot(leaves);
+        bytes32[] memory tree = leaves.build();
+        bytes32 root = tree.root();
 
         bytes32 structHash = keccak256(
             abi.encode(
@@ -202,7 +203,7 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, dataHashToSign);
 
         for (uint256 i = 0; i < total; i++) {
-            bytes32[] memory proof = tree.getProof(leaves, i);
+            bytes32[] memory proof = tree.leafProof(i);
             bytes memory signature = abi.encodePacked(
                 SIG_TYPE_ERC20_PERMIT,
                 abi.encode(
