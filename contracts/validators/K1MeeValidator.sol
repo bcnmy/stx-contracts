@@ -222,6 +222,23 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
             // to this contract's _erc1271IsValidSignatureNowCalldata() method.
             return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
         } else {
+            // TODO:
+            // since we now sign no the blind hash in many cases for MEE flow,
+            // we can not blindly rehash it with the msg.sender
+            // Looks lie we have to make the decision in the _validateSignatureForOwner
+            // based on the mode
+
+            // 1) because for simple mode we sign stx 712  data struct now,
+            // so can not blindly rehash it with the msg.sender
+            // TODO: add account field as first field of the SuperTx data struct
+
+            // 2) for permit mode we also sign the data struct Permit()
+            // can not be replayed because it has nonce
+
+            // 3) on-chain mode : can not be replayed because it has nonce
+
+            // 4) leave comment for the future modes!
+
             // MEE: non-7739 flow
             // hash the SA into the `hash` to protect against two SA's with same owner vector
             bytes32 hashWithAccountAddress;

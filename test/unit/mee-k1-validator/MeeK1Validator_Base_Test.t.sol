@@ -193,8 +193,6 @@ contract MeeK1Validator_Base_Test is BaseTest {
         stxEip712HashToSign = HashLib.hashTypedDataForAccount(smartAccount, structHash);
     }
 
-    // TODO: function _hashMixedTypeStx()
-
     /**
      * @notice Hashes every user operation in the array with the given lower and upper bound timestamps
      * @param userOps The array of user operations to hash
@@ -218,5 +216,187 @@ contract MeeK1Validator_Base_Test is BaseTest {
             itemHashes[i] = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
         }
         return itemHashes;
+    }
+
+    // ==== DYNAMIC STRUCT DEFINITION HELPERS ====
+
+    /**
+     * @notice Builds a dynamic SuperTx struct definition string as per EIP-712
+     * @dev Format: SuperTx(Type1 entry1,Type2 entry2,...TypeN entryN)‖Type1Definition‖Type2Definition‖...
+     * @param entryTypeNames Array of entry type names in order (e.g., ["MeeUserOp", "EntryTypeA", "MeeUserOp"])
+     * @param meeUserOpDefinition The MeeUserOp type definition string
+     * @param otherTypeDefinitions Array of other type definitions (e.g., EntryTypeA, EntryTypeB, EntryTypeC definitions)
+     * @return dynamicStructDefinition The complete EIP-712 struct definition string
+     */
+    function _buildDynamicStxStructDefinition(
+        string[] memory entryTypeNames,
+        string memory meeUserOpDefinition,
+        string[] memory otherTypeDefinitions
+    )
+        internal
+        pure
+        returns (string memory dynamicStructDefinition)
+    {
+        // Start building: SuperTx(
+        dynamicStructDefinition = "SuperTx(";
+
+        // Add each entry with format "Type entryN,"
+        for (uint256 i = 0; i < entryTypeNames.length; i++) {
+            dynamicStructDefinition =
+                string.concat(dynamicStructDefinition, entryTypeNames[i], " entry", _uintToString(i + 1));
+            if (i < entryTypeNames.length - 1) {
+                dynamicStructDefinition = string.concat(dynamicStructDefinition, ",");
+            }
+        }
+
+        // Close the SuperTx definition
+        dynamicStructDefinition = string.concat(dynamicStructDefinition, ")");
+
+        // ==== SORT AND APPEND TYPE DEFINITIONS ====
+        // As per EIP-712: "the set of referenced struct types is collected, sorted by name and appended"
+        // Example: Transaction(Person from,Person to,Asset tx)Asset(address token,uint256 amount)Person(address
+        // wallet,string name)
+
+        // Check if MeeUserOp is present in the entries
+        bool hasMeeUserOp = false;
+        for (uint256 i = 0; i < entryTypeNames.length; i++) {
+            if (keccak256(bytes(entryTypeNames[i])) == keccak256(bytes("MeeUserOp"))) {
+                hasMeeUserOp = true;
+                break;
+            }
+        }
+
+        // Collect all type definitions that need to be appended
+        uint256 totalTypeDefs = otherTypeDefinitions.length + (hasMeeUserOp ? 1 : 0);
+        string[] memory allTypeDefinitions = new string[](totalTypeDefs);
+
+        uint256 idx = 0;
+        if (hasMeeUserOp) {
+            allTypeDefinitions[idx++] = meeUserOpDefinition;
+        }
+        for (uint256 i = 0; i < otherTypeDefinitions.length; i++) {
+            allTypeDefinitions[idx++] = otherTypeDefinitions[i];
+        }
+
+        string[] memory allTypeDefinitionsSorted = new string[](totalTypeDefs);
+        // Sort alphabetically by extracting type names and comparing
+        allTypeDefinitionsSorted = _sortTypeDefinitionsAlphabetically(allTypeDefinitions);
+
+        // Append sorted type definitions
+        for (uint256 i = 0; i < allTypeDefinitionsSorted.length; i++) {
+            dynamicStructDefinition = string.concat(dynamicStructDefinition, allTypeDefinitionsSorted[i]);
+        }
+    }
+
+    /**
+     * @notice Sorts type definitions alphabetically by their type name (before the opening parenthesis)
+     * @dev Uses bubble sort for simplicity in test code. Type name is extracted from "TypeName(...)" format
+     * @param typeDefinitions Array of type definition strings
+     * @return sorted Alphabetically sorted array of type definitions
+     */
+    function _sortTypeDefinitionsAlphabetically(string[] memory typeDefinitions)
+        internal
+        pure
+        returns (string[] memory sorted)
+    {
+        sorted = typeDefinitions;
+        uint256 n = sorted.length;
+
+        // Bubble sort - sufficient for small arrays in tests
+        for (uint256 i = 0; i < n; i++) {
+            for (uint256 j = 0; j < n - i - 1; j++) {
+                // Extract type names (everything before '(')
+                string memory typeName1 = _extractTypeName(sorted[j]);
+                string memory typeName2 = _extractTypeName(sorted[j + 1]);
+
+                // Compare alphabetically
+                if (_compareStrings(typeName1, typeName2) > 0) {
+                    // Swap
+                    string memory temp = sorted[j];
+                    sorted[j] = sorted[j + 1];
+                    sorted[j + 1] = temp;
+                }
+            }
+        }
+    }
+
+    /**
+     * @notice Extracts the type name from a type definition string (text before '(')
+     * @param typeDefinition The type definition string (e.g., "TypeName(field1,field2)")
+     * @return typeName The extracted type name (e.g., "TypeName")
+     */
+    function _extractTypeName(string memory typeDefinition) internal pure returns (string memory typeName) {
+        bytes memory defBytes = bytes(typeDefinition);
+        uint256 parenIndex = 0;
+
+        // Find the position of '('
+        for (uint256 i = 0; i < defBytes.length; i++) {
+            if (defBytes[i] == "(") {
+                parenIndex = i;
+                break;
+            }
+        }
+
+        // Extract substring before '('
+        bytes memory nameBytes = new bytes(parenIndex);
+        for (uint256 i = 0; i < parenIndex; i++) {
+            nameBytes[i] = defBytes[i];
+        }
+
+        typeName = string(nameBytes);
+    }
+
+    /**
+     * @notice Compares two strings lexicographically
+     * @param a First string
+     * @param b Second string
+     * @return result -1 if a < b, 0 if a == b, 1 if a > b
+     */
+    function _compareStrings(string memory a, string memory b) internal pure returns (int256 result) {
+        bytes memory aBytes = bytes(a);
+        bytes memory bBytes = bytes(b);
+
+        uint256 minLength = aBytes.length < bBytes.length ? aBytes.length : bBytes.length;
+
+        for (uint256 i = 0; i < minLength; i++) {
+            if (uint8(aBytes[i]) < uint8(bBytes[i])) {
+                return -1;
+            } else if (uint8(aBytes[i]) > uint8(bBytes[i])) {
+                return 1;
+            }
+        }
+
+        // If all compared characters are equal, shorter string comes first
+        if (aBytes.length < bBytes.length) {
+            return -1;
+        } else if (aBytes.length > bBytes.length) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * @notice Helper to convert uint to string
+     * @param value The uint value to convert
+     * @return The string representation
+     */
+    function _uintToString(uint256 value) internal pure returns (string memory) {
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+        return string(buffer);
     }
 }
