@@ -46,9 +46,8 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
     }
 
     // test simple mode, validateUserOp, where the super tx entries are of mixed types
-    function test_simple_mode_ValidateUserOp_with_MixedTypes_success( /*uint256 numOfEntries*/ ) public {
-        //numOfEntries = bound(numOfEntries, 5, 50);
-        uint256 numOfClones = 9;
+    function test_simple_mode_ValidateUserOp_with_MixedTypes_success(uint256 numOfClones) public {
+        numOfClones = bound(numOfClones, 1, 9);
 
         uint256 counterBefore = mockTarget.counter();
 

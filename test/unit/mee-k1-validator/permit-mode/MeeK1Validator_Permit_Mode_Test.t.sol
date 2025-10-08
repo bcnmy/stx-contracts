@@ -2,14 +2,12 @@
 pragma solidity ^0.8.27;
 
 import { MeeK1Validator_Base_Test } from "../MeeK1Validator_Base_Test.t.sol";
-import { Vm } from "forge-std/Test.sol";
+import { Vm, console2 } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { ERC20 } from "solady/tokens/ERC20.sol";
 import { MockERC20PermitToken } from "../../../mock/MockERC20PermitToken.sol";
 import { EIP1271_SUCCESS } from "contracts/types/Constants.sol";
-
-//TODO: switch to solady/utils/MerkleTreeLib.sol to remove on dependency
-import { Merkle } from "murky-trees/Merkle.sol";
+import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
 
 import { EcdsaLib } from "contracts/lib/util/EcdsaLib.sol";
 import {
@@ -22,6 +20,7 @@ import { CopyUserOpLib } from "../../../util/CopyUserOpLib.sol";
 
 contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
+    using MerkleTreeLib for bytes32[];
 
     function setUp() public virtual override {
         super.setUp();
@@ -48,7 +47,7 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
 
         PackedUserOperation[] memory userOps = _cloneUserOpToAnArray(userOp, wallet, numOfClones);
 
-        userOps = makePermitSuperTx({
+        userOps = _makePermitSuperTx({
             userOps: userOps,
             token: erc20,
             signer: wallet,
@@ -69,7 +68,7 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
         bytes[] memory meeSigs = new bytes[](numOfObjs);
         bytes32 baseHash = keccak256(abi.encode("test"));
 
-        meeSigs = makePermitSuperTxSignatures({
+        meeSigs = _makePermitSuperTxSignatures({
             baseHash: baseHash,
             total: numOfObjs,
             token: erc20,
@@ -92,7 +91,7 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
 
     // ==== PERMIT SUPER TX UTILS ====
 
-    function makePermitSuperTx(
+    function _makePermitSuperTx(
         PackedUserOperation[] memory userOps,
         ERC20 token,
         Vm.Wallet memory signer,
@@ -100,6 +99,7 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
         uint256 amount
     )
         internal
+        view
         returns (PackedUserOperation[] memory)
     {
         PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
@@ -109,8 +109,8 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
         (userOps, lowerBoundTimestamp, upperBoundTimestamp);
 
         // make a tree
-        Merkle tree = new Merkle();
-        bytes32 root = tree.getRoot(leaves);
+        bytes32[] memory tree = leaves.build();
+        bytes32 root = tree.root();
 
         bytes32 structHash = keccak256(
             abi.encode(
@@ -119,7 +119,8 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
                 spender,
                 amount,
                 token.nonces(signer.addr), //nonce
-                root //we use deadline field to store the super tx root hash
+                //root //we use deadline field to store the super tx root hash
+                root
             )
         );
 
@@ -129,7 +130,7 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
 
         for (uint256 i = 0; i < userOps.length; i++) {
             superTxUserOps[i] = userOps[i].deepCopy();
-            bytes32[] memory proof = tree.getProof(leaves, i);
+            bytes32[] memory proof = tree.leafProof(i);
 
             bytes memory signature = abi.encodePacked(
                 SIG_TYPE_ERC20_PERMIT,
@@ -157,7 +158,7 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
         return superTxUserOps;
     }
 
-    function makePermitSuperTxSignatures(
+    function _makePermitSuperTxSignatures(
         bytes32 baseHash,
         uint256 total,
         ERC20 token,

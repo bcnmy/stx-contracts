@@ -41,64 +41,7 @@ contract K1MEEValidatorTest is BaseTest {
 
     // test txn mode
     // Fuzz for txn mode after solidity txn serialization is done
-    function test_superTxFlow_txn_mode_ValidateUserOp_success(uint256 numOfClones) public {
-        numOfClones = bound(numOfClones, 1, 25);
-        MockERC20PermitToken erc20 = new MockERC20PermitToken("test", "TEST");
-        deal(address(erc20), wallet.addr, 1000 ether); // mint erc20 tokens to the wallet
-        address bob = address(0xb0bb0b);
-        assertEq(erc20.balanceOf(bob), 0);
-        assertEq(erc20.balanceOf(address(mockAccount)), 0);
-        uint256 amountToTransfer = 1 ether; // 1 token
-
-        bytes memory innerCallData = abi.encodeWithSelector(erc20.transfer.selector, bob, amountToTransfer); // mock
-            // Account transfers tokens to bob
-        PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(erc20), uint256(0), innerCallData),
-            account: address(mockAccount),
-            userOpSigner: wallet
-        });
-
-        PackedUserOperation[] memory userOps = cloneUserOpToAnArray(userOp, wallet, numOfClones);
-
-        // simulate the txn execution
-        vm.startPrank(wallet.addr);
-        erc20.transfer(address(mockAccount), amountToTransfer * (numOfClones + 1));
-        vm.stopPrank();
-
-        // it is not possible to get the actual executed and serialized txn (above) from Foundry tests
-        // so this is just some calldata for testing purposes
-        bytes memory callData =
-    hex"a9059cbb000000000000000000000000c7183455a4c133ae270771860664b6b7ec320bb100000000000000000000000000000000000000000000000053444835ec580000";
-
-        userOps = makeOnChainTxnSuperTx(userOps, wallet, callData);
-
-        vm.startPrank(MEE_NODE_EXECUTOR_EOA, MEE_NODE_EXECUTOR_EOA);
-        ENTRYPOINT.handleOps(userOps, payable(MEE_NODE_ADDRESS));
-        vm.stopPrank();
-
-        assertEq(erc20.balanceOf(bob), amountToTransfer * (numOfClones + 1));
-    }
-
-    function test_superTxFlow_txn_mode_1271_and_WithData_success() public {
-        uint256 numOfObjs = 5;
-        bytes[] memory meeSigs = new bytes[](numOfObjs);
-        bytes32 baseHash = keccak256(abi.encode("test"));
-
-        bytes memory callData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
-
-        meeSigs = makeOnChainTxnSuperTxSignatures(baseHash, numOfObjs, callData, address(mockAccount), wallet);
-
-        for (uint256 i = 0; i < numOfObjs; i++) {
-            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
-            if (i / 2 == 0) {
-                assertTrue(
-                    mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr))
-                );
-            } else {
-                assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == EIP1271_SUCCESS);
-            }
-        }
-    }
+    
 
     // test non-MEE flow
     function test_nonMEEFlow_ValidateUserOp_success() public {
