@@ -198,7 +198,7 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
      * Validates an ERC-1271 signature
      *
      * @param sender The sender of the ERC-1271 call to the account
-     * @param hash The hash of the message
+     * @param dataHash The hash of the message
      * @param signature The signature of the message
      *
      * @return sigValidationResult the result of the signature validation, which can be:
@@ -207,7 +207,7 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
      */
     function isValidSignatureWithSender(
         address sender,
-        bytes32 hash,
+        bytes32 dataHash,
         bytes calldata signature
     )
         external
@@ -220,16 +220,27 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
             // Non MEE flow => uses 7739
             // goes to ERC7739Validator to apply 7739 magic and then returns back
             // to this contract's _erc1271IsValidSignatureNowCalldata() method.
-            return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
+            return _erc1271IsValidSignatureWithSender(sender, dataHash, _erc1271UnwrapSignature(signature));
         } else {
             // MEE flow:
             // 1) in simple mode domain separator is the domain separator
             // of the smart account which includes the account address!
             // so 7739 is not needed for simple mode
-            // 2) for permit mode we also sign the data struct Permit()
-            // can not be replayed because it has nonce => no need for 7739
-            // 3) on-chain mode : can not be replayed because it has nonce => no need for 7739
-            return _validateSignatureForOwner(getOwner(msg.sender), hash, _erc1271UnwrapSignature(signature))
+            // 2) for permit mode and on-chain mode we still need the secure hash
+            bytes4 sigType = bytes4(signature[0:4]);
+            if (sigType == SIG_TYPE_ERC20_PERMIT || sigType == SIG_TYPE_ON_CHAIN) {
+                // since we do not know if the underlying hash is safe or not'
+                // and for permit mode it is blind anyways since it is packed into the deadline field
+                // so we can hash the SA into the final hash to protect against two SA's with same owner vector
+                // dataHash = keccak256(abi.encodePacked(dataHash, msg.sender))
+                assembly {
+                    let ptr := mload(0x40)
+                    mstore(ptr, dataHash)
+                    mstore(add(ptr, 0x20), shl(96, caller()))
+                    dataHash := keccak256(ptr, 0x34)
+                }
+            }
+            return _validateSignatureForOwner(getOwner(msg.sender), dataHash, _erc1271UnwrapSignature(signature))
                 ? EIP1271_SUCCESS
                 : EIP1271_FAILED;
         }

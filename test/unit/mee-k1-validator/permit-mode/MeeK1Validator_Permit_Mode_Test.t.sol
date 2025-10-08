@@ -177,6 +177,7 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
             if (i / 2 == 0) {
                 leaves[i] = keccak256(abi.encode(baseHash, i));
             } else {
+                // safe hash
                 leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), spender));
             }
         }
