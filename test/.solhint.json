@@ -29,6 +29,7 @@
         "contract-name-capwords": "off",
         "var-name-mixedcase": "off",
         "private-vars-leading-underscore": "off",
-        "import-path-check": "off"
+        "import-path-check": "off",
+        "function-max-lines": "off"
     }
 }

@@ -5,27 +5,18 @@ import { Test, Vm } from "forge-std/Test.sol";
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
-import { MockAccount, ENTRY_POINT_V07 } from "./mock/MockAccount.sol";
+import { MockAccount } from "./mock/MockAccount.sol";
 import { MockTarget } from "./mock/MockTarget.sol";
 import { BaseNodePaymaster } from "../contracts/BaseNodePaymaster.sol";
 import { NodePaymaster } from "../contracts/NodePaymaster.sol";
 import { EmittingNodePaymaster } from "./mock/EmittingNodePaymaster.sol";
 import { MockNodePaymaster } from "./mock/MockNodePaymaster.sol";
 import { K1MeeValidator } from "../contracts/validators/K1MeeValidator.sol";
-import { MEEUserOpHashLib } from "../contracts/lib/util/MEEUserOpHashLib.sol";
 import { CopyUserOpLib } from "./util/CopyUserOpLib.sol";
 import "contracts/types/Constants.sol";
 import { LibZip } from "solady/utils/LibZip.sol";
-import { ERC20 } from "solady/tokens/ERC20.sol";
-import {
-    PERMIT_TYPEHASH,
-    DecodedErc20PermitSig,
-    DecodedErc20PermitSigShort,
-    PermitValidatorLib
-} from "contracts/lib/fusion/PermitValidatorLib.sol";
 import { LibRLP } from "solady/utils/LibRLP.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
-import { EcdsaLib } from "contracts/lib/util/EcdsaLib.sol";
 
 address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
@@ -141,7 +132,13 @@ contract BaseTest is Test {
         returns (PackedUserOperation memory userOp)
     {
         uint256 nonce = ENTRYPOINT.getNonce(account, 0);
-        userOp = buildPackedUserOp(account, nonce, verificationGasLimit, callGasLimit, preVerificationGasLimit);
+        userOp = buildPackedUserOp({
+            sender: account,
+            nonce: nonce,
+            verificationGasLimit: verificationGasLimit,
+            callGasLimit: callGasLimit,
+            preVerificationGasLimit: preVerificationGasLimit
+        });
         userOp.callData = callData;
 
         bytes memory signature = signUserOp(wallet, userOp);
