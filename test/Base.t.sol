@@ -13,7 +13,6 @@ import { EmittingNodePaymaster } from "./mock/EmittingNodePaymaster.sol";
 import { MockNodePaymaster } from "./mock/MockNodePaymaster.sol";
 import { K1MeeValidator } from "../contracts/validators/K1MeeValidator.sol";
 import { MEEUserOpHashLib } from "../contracts/lib/util/MEEUserOpHashLib.sol";
-import { Merkle } from "murky-trees/Merkle.sol";
 import { CopyUserOpLib } from "./util/CopyUserOpLib.sol";
 import "contracts/types/Constants.sol";
 import { LibZip } from "solady/utils/LibZip.sol";
@@ -189,140 +188,9 @@ contract BaseTest is Test {
         return ENTRYPOINT.getUserOpHash(userOp);
     }
 
-    // ==== PERMIT SUPER TX UTILS ====
-
-    /* function makePermitSuperTx(
-        PackedUserOperation[] memory userOps,
-        ERC20 token,
-        Vm.Wallet memory signer,
-        address spender,
-        uint256 amount
-    )
-        internal
-        returns (PackedUserOperation[] memory)
-    {
-        PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
-        uint48 lowerBoundTimestamp = uint48(block.timestamp);
-        uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
-        bytes32[] memory leaves = eip712HashMeeUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
-
-        // make a tree
-        Merkle tree = new Merkle();
-        bytes32 root = tree.getRoot(leaves);
-
-        bytes32 structHash = keccak256(
-            abi.encode(
-                PERMIT_TYPEHASH,
-                signer.addr,
-                spender,
-                amount,
-                token.nonces(signer.addr), //nonce
-                root //we use deadline field to store the super tx root hash
-            )
-        );
-
-        bytes32 dataHashToSign = EcdsaLib.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, dataHashToSign);
-
-        for (uint256 i = 0; i < userOps.length; i++) {
-            superTxUserOps[i] = userOps[i].deepCopy();
-            bytes32[] memory proof = tree.getProof(leaves, i);
-
-            bytes memory signature = abi.encodePacked(
-                SIG_TYPE_ERC20_PERMIT,
-                abi.encode(
-                    DecodedErc20PermitSig({
-                        token: token,
-                        spender: spender,
-                        domainSeparator: token.DOMAIN_SEPARATOR(),
-                        amount: amount,
-                        nonce: token.nonces(signer.addr),
-                        isPermitTx: i == 0 ? true : false,
-                        superTxHash: root,
-                        lowerBoundTimestamp: lowerBoundTimestamp,
-                        upperBoundTimestamp: upperBoundTimestamp,
-                        v: v,
-                        r: r,
-                        s: s,
-                        proof: proof
-                    })
-                )
-            );
-
-            superTxUserOps[i].signature = signature;
-        }
-        return superTxUserOps;
-    }
-
-    function makePermitSuperTxSignatures(
-        bytes32 baseHash,
-        uint256 total,
-        ERC20 token,
-        Vm.Wallet memory signer,
-        address spender,
-        uint256 amount
-    )
-        internal
-        returns (bytes[] memory)
-    {
-        bytes[] memory meeSigs = new bytes[](total);
-        require(total > 0, "total must be greater than 0");
-
-        bytes32[] memory leaves = new bytes32[](total);
-
-        for (uint256 i = 0; i < total; i++) {
-            if (i / 2 == 0) {
-                leaves[i] = keccak256(abi.encode(baseHash, i));
-            } else {
-                leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), spender));
-            }
-        }
-
-        Merkle tree = new Merkle();
-        bytes32 root = tree.getRoot(leaves);
-
-        bytes32 structHash = keccak256(
-            abi.encode(
-                PERMIT_TYPEHASH,
-                signer.addr,
-                spender,
-                amount,
-                token.nonces(signer.addr), //nonce
-                root //we use deadline field to store the super tx root hash
-            )
-        );
-
-        bytes32 dataHashToSign = EcdsaLib.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, dataHashToSign);
-
-        for (uint256 i = 0; i < total; i++) {
-            bytes32[] memory proof = tree.getProof(leaves, i);
-            bytes memory signature = abi.encodePacked(
-                SIG_TYPE_ERC20_PERMIT,
-                abi.encode(
-                    DecodedErc20PermitSigShort({
-                        spender: spender,
-                        domainSeparator: token.DOMAIN_SEPARATOR(),
-                        amount: amount,
-                        nonce: token.nonces(signer.addr),
-                        superTxHash: root,
-                        v: v,
-                        r: r,
-                        s: s,
-                        proof: proof
-                    })
-                )
-            );
-            meeSigs[i] = signature;
-        }
-        return meeSigs;
-    }
-
     //                  ========== ON CHAIN TXN MODE ==========
 
-    function makeOnChainTxnSuperTx(
+    /* function makeOnChainTxnSuperTx(
         PackedUserOperation[] memory userOps,
         Vm.Wallet memory superTxSigner,
         bytes memory callData
@@ -395,7 +263,7 @@ contract BaseTest is Test {
             meeSigs[i] = signature;
         }
         return meeSigs;
-    } */
+    }  */
 
     // ============ WALLET UTILS ============
 

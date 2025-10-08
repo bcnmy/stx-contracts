@@ -19,9 +19,7 @@ interface IERC5267 {
 }
 
 // keccak256("SuperTx(MeeUserOp[] meeUserOps)");
-// TODO: recalculate it!
-// TODO: add account field as first field of the SuperTx data struct :: SuperTx(address account, MeeUserOp[] meeUserOps)
-bytes32 constant SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
+bytes32 constant SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH = 0x07bdf0267970db0d5b9acc9d9fa8ef0cbb5b543fb897017542bfb306f5e46ad0;
 // keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[]
 // extensions)");
 bytes32 constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
@@ -89,9 +87,6 @@ library HashLib {
             // There is one case which deserves a dedicated flow in terms of optimizations -
             // it is when all the superTxn entries are MeeUserOps structs. Then it makes sense
             // to treat them as an array of MeeUserOps structs and use the dedicated typehash.
-
-            // TODO: add account field as first field of the SuperTx data struct
-
             bytes32 structHash;
             if (outerTypeHash == SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH) {
                 // if SuperTx is an array of MeeUserOps structs, then encoded data is a

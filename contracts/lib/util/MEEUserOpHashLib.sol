@@ -9,9 +9,7 @@ pragma solidity ^0.8.27;
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 
 // keccak256("MEEUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)");
-// TODO: Recalculate it!
-bytes32 constant MEE_USER_OP_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
-// TODO: Recalculate it!
+bytes32 constant MEE_USER_OP_TYPEHASH = 0xa893e832cd40f0161a05fdeee70845d347394fb92e8ffc59e56e6b2d37605454;
 
 library MEEUserOpHashLib {
     /**

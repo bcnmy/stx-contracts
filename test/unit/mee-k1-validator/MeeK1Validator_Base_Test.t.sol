@@ -218,6 +218,25 @@ contract MeeK1Validator_Base_Test is BaseTest {
         return itemHashes;
     }
 
+    // == Merkle tree helpers ==
+
+    function _buildLeavesOutOfUserOps(
+        PackedUserOperation[] memory userOps,
+        uint48 lowerBoundTimestamp,
+        uint48 upperBoundTimestamp
+    )
+        internal
+        view
+        returns (bytes32[] memory)
+    {
+        bytes32[] memory leaves = new bytes32[](userOps.length);
+        for (uint256 i = 0; i < userOps.length; i++) {
+            bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[i]);
+            leaves[i] = MEEUserOpHashLib.getMEEUserOpHash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+        }
+        return leaves;
+    }
+
     // ==== DYNAMIC STRUCT DEFINITION HELPERS ====
 
     /**

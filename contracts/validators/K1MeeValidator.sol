@@ -222,25 +222,13 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
             // to this contract's _erc1271IsValidSignatureNowCalldata() method.
             return _erc1271IsValidSignatureWithSender(sender, hash, _erc1271UnwrapSignature(signature));
         } else {
-            // TODO:
-            // since we now sign no the blind hash in many cases for MEE flow,
-            // we can not blindly rehash it with the msg.sender
-            // Looks lie we have to make the decision in the _validateSignatureForOwner
-            // based on the mode
-
-            // 1) because for simple mode we sign stx 712  data struct now,
-            // so can not blindly rehash it with the msg.sender
-            // However this is not needed for simple mode, because
-            // in simple mode domain separator is the domain separator
+            // MEE flow:
+            // 1) in simple mode domain separator is the domain separator
             // of the smart account which includes the account address!
             // so 7739 is not needed for simple mode
-
             // 2) for permit mode we also sign the data struct Permit()
-            // can not be replayed because it has nonce
-
-            // 3) on-chain mode : can not be replayed because it has nonce
-
-            // 4) leave comment for the future modes!
+            // can not be replayed because it has nonce => no need for 7739
+            // 3) on-chain mode : can not be replayed because it has nonce => no need for 7739
             return _validateSignatureForOwner(getOwner(msg.sender), hash, _erc1271UnwrapSignature(signature))
                 ? EIP1271_SUCCESS
                 : EIP1271_FAILED;

@@ -7,7 +7,7 @@ import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/
 import { MockTarget } from "../mock/MockTarget.sol";
 import { MockAccount } from "../mock/MockAccount.sol";
 import { MEEUserOpHashLib } from "contracts/lib/util/MEEUserOpHashLib.sol";
-import { MockERC20PermitToken } from "../mock/MockERC20PermitToken.sol";
+
 import { EIP1271_SUCCESS, EIP1271_FAILED } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 
@@ -37,68 +37,7 @@ contract K1MEEValidatorTest is BaseTest {
     }
 
     // test permit mode
-    /* function test_superTxFlow_permit_mode_ValidateUserOp_success(uint256 numOfClones) public {
-        numOfClones = bound(numOfClones, 1, 25);
-        MockERC20PermitToken erc20 = new MockERC20PermitToken("test", "TEST");
-        deal(address(erc20), wallet.addr, 1000 ether); // mint erc20 tokens to the wallet
-        address bob = address(0xb0bb0b);
-        assertEq(erc20.balanceOf(bob), 0);
-        uint256 amountToTransfer = 1 ether;
-
-        // userOps will transfer tokens from wallet, not from mockAccount
-        // because of permit applies in the first userop validation
-        bytes memory innerCallData =
-            abi.encodeWithSelector(erc20.transferFrom.selector, wallet.addr, bob, amountToTransfer);
-
-        PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(erc20), uint256(0), innerCallData),
-            account: address(mockAccount),
-            userOpSigner: wallet
-        });
-
-        PackedUserOperation[] memory userOps = cloneUserOpToAnArray(userOp, wallet, numOfClones);
-
-        userOps = makePermitSuperTx({
-            userOps: userOps,
-            token: erc20,
-            signer: wallet,
-            spender: address(mockAccount),
-            amount: amountToTransfer * userOps.length
-        });
-
-        vm.startPrank(MEE_NODE_EXECUTOR_EOA, MEE_NODE_EXECUTOR_EOA);
-        ENTRYPOINT.handleOps(userOps, payable(MEE_NODE_ADDRESS));
-        vm.stopPrank();
-
-        assertEq(erc20.balanceOf(bob), amountToTransfer * numOfClones + 1e18);
-    }
-
-    function test_superTxFlow_permit_mode_1271_and_WithData_success(uint256 numOfObjs) public {
-        numOfObjs = bound(numOfObjs, 2, 25);
-        MockERC20PermitToken erc20 = new MockERC20PermitToken("test", "TEST");
-        bytes[] memory meeSigs = new bytes[](numOfObjs);
-        bytes32 baseHash = keccak256(abi.encode("test"));
-
-        meeSigs = makePermitSuperTxSignatures({
-            baseHash: baseHash,
-            total: numOfObjs,
-            token: erc20,
-            signer: wallet,
-            spender: address(mockAccount),
-            amount: 1e18
-        });
-
-        for (uint256 i = 0; i < numOfObjs; i++) {
-            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
-            if (i / 2 == 0) {
-                assertTrue(
-                    mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr))
-                );
-            } else {
-                assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == EIP1271_SUCCESS);
-            }
-        }
-    }
+    /* 
 
     // test txn mode
     // Fuzz for txn mode after solidity txn serialization is done
