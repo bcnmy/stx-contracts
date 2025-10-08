@@ -4,11 +4,8 @@ pragma solidity ^0.8.23;
 import { BaseTest } from "../Base.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
-import { MockTarget } from "../mock/MockTarget.sol";
 import { MockAccount } from "../mock/MockAccount.sol";
 import { MEEUserOpHashLib } from "contracts/lib/util/MEEUserOpHashLib.sol";
-
-import { EIP1271_SUCCESS, EIP1271_FAILED } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 
 interface IGetOwner {
@@ -36,13 +33,6 @@ contract K1MEEValidatorTest is BaseTest {
         valueToSet = MEE_NODE_HEX;
     }
 
-    // test permit mode
-    /* 
-
-    // test txn mode
-    // Fuzz for txn mode after solidity txn serialization is done
-    
-
     // test non-MEE flow
     function test_nonMEEFlow_ValidateUserOp_success() public {
         uint256 counterBefore = mockTarget.counter();
@@ -52,7 +42,7 @@ contract K1MEEValidatorTest is BaseTest {
 
         PackedUserOperation memory userOp = buildUserOpWithCalldata({
             account: address(mockAccount),
-    callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
+            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
             wallet: wallet,
             preVerificationGasLimit: 3e5,
             verificationGasLimit: 500e3,
@@ -72,7 +62,7 @@ contract K1MEEValidatorTest is BaseTest {
     function test_nonMEEFlow_validateSignatureWithData_success() public view {
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
-    callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
+            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
             account: address(mockAccount),
             userOpSigner: wallet
         });
@@ -87,10 +77,10 @@ contract K1MEEValidatorTest is BaseTest {
         (t.v, t.r, t.s) = vm.sign(wallet.privateKey, dataToSign);
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
-    abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+            abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
         bytes4 ret = mockAccount.isValidSignature(toContentsHash(t.contents), signature);
         assertEq(ret, bytes4(EIP1271_SUCCESS));
-    } */
+    }
 
     // ================================
 

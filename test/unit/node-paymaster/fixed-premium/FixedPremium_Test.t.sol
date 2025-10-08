@@ -244,8 +244,13 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         view
         returns (uint256)
     {
-        (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 refund) =
-            assertFinancialStuff(entries, nodePMDepositBefore, maxGasLimit, maxFeePerGas, gasSpentByExecutorEOA);
+        (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 refund) = assertFinancialStuff({
+            entries: entries,
+            nodePMDepositBefore: nodePMDepositBefore,
+            maxGasLimit: maxGasLimit,
+            maxFeePerGas: maxFeePerGas,
+            gasSpentByExecutorEOA: gasSpentByExecutorEOA
+        });
 
         // assert that MEE_NODE extra earnings are not too big
         assertApproxEqRel(expectedNodeEarnings, meeNodeEarnings, maxDiffPercentage, "MEE_NODE earnings are too big");

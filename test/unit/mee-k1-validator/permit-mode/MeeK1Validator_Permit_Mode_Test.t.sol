@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { MeeK1Validator_Base_Test } from "../MeeK1Validator_Base_Test.t.sol";
-import { Vm, console2 } from "forge-std/Test.sol";
+import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { ERC20 } from "solady/tokens/ERC20.sol";
 import { MockERC20PermitToken } from "../../../mock/MockERC20PermitToken.sol";

@@ -62,7 +62,13 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
 
         bytes memory callData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
 
-        meeSigs = _makeOnChainTxnSuperTxSignatures(baseHash, numOfObjs, callData, address(mockAccount), wallet);
+        meeSigs = _makeOnChainTxnSuperTxSignatures({
+            baseHash: baseHash,
+            total: numOfObjs,
+            callData: callData,
+            smartAccount: address(mockAccount),
+            superTxSigner: wallet
+        });
 
         for (uint256 i = 0; i < numOfObjs; i++) {
             bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));

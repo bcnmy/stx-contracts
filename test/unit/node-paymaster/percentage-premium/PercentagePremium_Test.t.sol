@@ -275,7 +275,9 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
 
         assertTrue(meeNodeEarnings > 0, "MEE_NODE should have earned something");
         assertTrue(
-            meeNodeEarnings >= expectedNodeEarnings, "MEE_NODE should have earned more or equal to expectedNodeEarnings"
+            // solhint-disable-next-line gas-strict-inequalities
+            meeNodeEarnings >= expectedNodeEarnings,
+            "MEE_NODE should have earned more or equal to expectedNodeEarnings"
         );
     }
 
@@ -292,9 +294,14 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         view
         returns (uint256)
     {
-        (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 refund) = assertFinancialStuff(
-            entries, meeNodePremiumPercentage, nodePMDepositBefore, maxGasLimit, maxFeePerGas, gasSpentByExecutorEOA
-        );
+        (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 refund) = assertFinancialStuff({
+            entries: entries,
+            meeNodePremiumPercentage: meeNodePremiumPercentage,
+            nodePMDepositBefore: nodePMDepositBefore,
+            maxGasLimit: maxGasLimit,
+            maxFeePerGas: maxFeePerGas,
+            gasSpentByExecutorEOA: gasSpentByExecutorEOA
+        });
 
         // assert that MEE_NODE extra earnings are not too big
         assertApproxEqRel(expectedNodeEarnings, meeNodeEarnings, maxDiffPercentage, "MEE_NODE earnings are too big");
