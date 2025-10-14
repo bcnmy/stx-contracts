@@ -55,7 +55,7 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
         assertEq(erc20.balanceOf(bob), amountToTransfer * (numOfClones + 1));
     }
 
-    function test_superTxFlow_on_chain_mode_1271_and_WithData_success() public {
+    function test_superTxFlow_on_chain_mode_1271_and_WithData_success() public view {
         uint256 numOfObjs = 5;
         bytes[] memory meeSigs = new bytes[](numOfObjs);
         bytes32 baseHash = keccak256(abi.encode("test"));
