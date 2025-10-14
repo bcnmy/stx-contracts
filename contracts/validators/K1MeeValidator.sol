@@ -223,14 +223,16 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
             return _erc1271IsValidSignatureWithSender(sender, dataHash, _erc1271UnwrapSignature(signature));
         } else {
             // MEE flow:
-            // 1) in simple mode domain separator is the domain separator
-            // of the smart account which includes the account address!
+            // 1) in simple mode, domain separator used for 712 is the domain separator
+            // of the smart account, which includes the account address,
             // so 7739 is not needed for simple mode
             // 2) for permit mode and on-chain mode we still need the secure hash
             bytes4 sigType = bytes4(signature[0:4]);
             if (sigType == SIG_TYPE_ERC20_PERMIT || sigType == SIG_TYPE_ON_CHAIN) {
-                // since we do not know if the underlying hash is safe or not'
-                // and for permit mode it is blind anyways since it is packed into the deadline field
+                // since we do not know if the underlying hash is safe or not,
+                // and :
+                // - for permit mode it is blind anyways since it is packed into the deadline field
+                // - for on-chain mode it is blind anyways since it is packed into the txn data
                 // so we can hash the SA into the final hash to protect against two SA's with same owner vector
                 // dataHash = keccak256(abi.encodePacked(dataHash, msg.sender))
                 assembly {
