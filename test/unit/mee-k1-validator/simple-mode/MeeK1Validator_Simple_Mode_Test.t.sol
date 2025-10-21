@@ -361,8 +361,7 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         // As per EIP-712: hashStruct(s) = keccak256(typeHash ‖ encodeData(s))
         // For a struct with multiple entries: encodeData(s) = encode(value1, value2, ..., valueN)
         // Since all our values are bytes32 hashes, we concatenate them
-        bytes memory encodedData = abi.encode(stxItemHashes);
-        bytes32 structHash = keccak256(abi.encodePacked(stxStructTypeHash, encodedData));
+        bytes32 structHash = keccak256(abi.encodePacked(stxStructTypeHash, stxItemHashes));
 
         // Now wrap with domain separator as per EIP-712: "\x19\x01" ‖ domainSeparator ‖ hashStruct(message)
         bytes32 superTxEip712Hash = HashLib.hashTypedDataForAccount(smartAccount, structHash);

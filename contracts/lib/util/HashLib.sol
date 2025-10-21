@@ -100,9 +100,8 @@ library HashLib {
                 structHash = EfficientHashLib.hash(outerTypeHash, encodedData);
             } else {
                 // if SuperTx is a struct, then encoded data is just the concat of all the itemHashes
-                bytes memory encodedData = abi.encode(itemHashes);
                 /// forge-lint:disable-next-line(asm-keccak256)
-                structHash = keccak256(abi.encodePacked(outerTypeHash, encodedData));
+                structHash = keccak256(abi.encodePacked(outerTypeHash, itemHashes));
             }
             finalHash = hashTypedDataForAccount(msg.sender, structHash);
         }
