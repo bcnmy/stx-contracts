@@ -31,7 +31,7 @@
     "gas-small-strings": "warn",
     "gas-struct-packing": "warn",
 
-    "duplicated-imports": "warn",
+    "duplicated-imports": "error",
     "const-name-snakecase": "error",
     "contract-name-capwords": "error",
     "event-name-capwords": "error",

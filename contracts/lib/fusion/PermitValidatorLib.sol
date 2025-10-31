@@ -60,7 +60,7 @@ struct DecodedErc20PermitSigShort {
 library PermitValidatorLib {
     error PermitFailed();
 
-    uint8 constant EIP_155_MIN_V_VALUE = 37;
+    uint8 internal constant EIP_155_MIN_V_VALUE = 37;
 
     using EcdsaLib for bytes32;
 
