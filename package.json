@@ -1,0 +1,21 @@
+{
+  "name": "stx-contracts",
+  "version": "2.2.0",
+  "description": "Smart contracts that enable supertransactions on Biconomy's modular execution environment.",
+  "repository": "github:bcnmy/stx-contracts",
+  "author": {
+    "name": "Biconomy",
+    "url": "https://github.com/bcnmy"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "supertransaction",
+    "cross chain",
+    "account abstraction",
+    "biconomy",
+    "mee"
+  ],
+  "license": "MIT"
+}
