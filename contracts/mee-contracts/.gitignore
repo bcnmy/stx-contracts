@@ -1,0 +1,58 @@
+# directories
+cache
+cache_forge
+coverage
+node_modules
+out
+docs
+storageLayout
+deployments
+.yarn
+
+# files
+*.env
+*.log
+.DS_Store
+.pnp.*
+lcov.info
+package-lock.json
+# yarn.lock
+*.bak
+
+# broadcasts
+!broadcast
+broadcast/*
+broadcast/*/31337/
+
+# basic
+node_modules
+.env
+
+# Hardhat files
+/cache
+/artifacts
+/docs
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+# Foundry cache
+cache_forge/solidity-files-cache.json
+
+artifacts
+.states
+
+# Claude
+.claude
+CLAUDE.MD
+
+# VSCode
+.vscode
+
+# Solhint
+solhint-report.txt
