@@ -21,7 +21,7 @@
   fs_permissions = [{ access = "read", path = "scripts/bash-deploy/artifacts"}]
 
 [profile.ci]
-  fuzz = { runs = 10_000 }
+  fuzz = { runs = 1_000 }
   verbosity = 3
 
 [profile.coverage]

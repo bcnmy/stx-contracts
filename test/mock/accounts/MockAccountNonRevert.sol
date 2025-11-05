@@ -6,19 +6,20 @@ import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.s
 import { IValidator, IFallback } from "erc7579/interfaces/IERC7579Module.sol";
 import { IStatelessValidator } from "node_modules/@rhinestone/module-bases/src/interfaces/IStatelessValidator.sol";
 import { EIP1271_SUCCESS, EIP1271_FAILED } from "contracts/types/Constants.sol";
-import { ERC2771Lib } from "./lib/ERC2771Lib.sol";
+import { ERC2771Lib } from "../lib/ERC2771Lib.sol";
+import { ComposableExecutionBase } from "contracts/composability/ComposableExecutionBase.sol";
+import { ComposableExecution } from "contracts/types/ComposabilityDataTypes.sol";
 
 import { console2 } from "forge-std/console2.sol";
 
 address constant ENTRY_POINT_V07 = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
 
-contract MockAccount is IAccount {
+contract MockAccountNonRevert is ComposableExecutionBase, IAccount {
     event MockAccountValidateUserOp(PackedUserOperation userOp, bytes32 userOpHash, uint256 missingAccountFunds);
     event MockAccountExecute(address to, uint256 value, bytes data);
     event MockAccountReceive(uint256 value);
     event MockAccountFallback(bytes callData, uint256 value);
 
-    error ExecutionFailed();
     error OnlyEntryPointOrSelf();
 
     IValidator public validator;
@@ -39,12 +40,6 @@ contract MockAccount is IAccount {
     {
         if (address(validator) != address(0)) {
             vd = validator.validateUserOp(userOp, userOpHash);
-        }
-        assembly {
-            if missingAccountFunds {
-                // Ignore failure (it's EntryPoint's job to verify, not the account's).
-                pop(call(gas(), caller(), missingAccountFunds, codesize(), 0x00, codesize(), 0x00))
-            }
         }
         // if validator is not set, return 0 = success
     }
@@ -82,6 +77,23 @@ contract MockAccount is IAccount {
         (success, result) = to.call{ value: value }(data);
     }
 
+    function executeComposable(ComposableExecution[] calldata cExecutions) external payable override {
+        require(msg.sender == ENTRY_POINT_V07 || msg.sender == address(this), OnlyEntryPointOrSelf());
+        _executeComposable(cExecutions);
+    }
+
+    function _executeAction(
+        address to,
+        uint256 value,
+        bytes memory data
+    )
+        internal
+        override
+        returns (bytes memory returnData)
+    {
+        (, returnData) = to.call{ value: value }(data);
+    }
+
     receive() external payable {
         emit MockAccountReceive(msg.value);
     }
@@ -93,7 +105,6 @@ contract MockAccount is IAccount {
             revert(string(result));
         }
         emit MockAccountFallback(callData, msg.value);
-        return result;
     }
 
     function eip712Domain()

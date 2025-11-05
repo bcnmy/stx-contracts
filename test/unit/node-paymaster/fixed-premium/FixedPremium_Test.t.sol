@@ -5,7 +5,7 @@ import { BaseTest } from "../../../Base.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
 import { MockTarget } from "../../../mock/MockTarget.sol";
-import { MockAccount } from "../../../mock/MockAccount.sol";
+import { MockAccount } from "../../../mock/accounts/MockAccount.sol";
 import "../../../../contracts/types/Constants.sol";
 import "forge-std/console2.sol";
 
