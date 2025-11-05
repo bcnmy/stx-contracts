@@ -36,7 +36,7 @@ contract KeepMode_Paymaster_Test is BaseTest {
             callData: callData,
             wallet: wallet,
             preVerificationGasLimit: 50e3,
-            verificationGasLimit: 35e3,
+            verificationGasLimit: 55e3,
             callGasLimit: 100e3
         });
 

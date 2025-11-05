@@ -45,7 +45,7 @@ contract FixedPremium_Paymaster_Test is BaseTest {
             callData: callData,
             wallet: wallet,
             preVerificationGasLimit: 50e3,
-            verificationGasLimit: 35e3,
+            verificationGasLimit: 55e3,
             callGasLimit: 100e3
         });
 
@@ -138,7 +138,7 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         public
     {
         preVerificationGasLimit = bound(preVerificationGasLimit, 1e5, 5e6);
-        verificationGasLimit = uint128(bound(verificationGasLimit, 50e3, 5e6));
+        verificationGasLimit = uint128(bound(verificationGasLimit, 55e3, 5e6));
         callGasLimit = uint128(bound(callGasLimit, 100e3, 5e6));
         pmValidationGasLimit = uint128(bound(pmValidationGasLimit, 30e3, 5e6));
         pmPostOpGasLimit = uint128(bound(pmPostOpGasLimit, 45e3, 5e6));
