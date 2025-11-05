@@ -109,7 +109,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
     // test percentage user single
     function test_percentage_user_single() public {
         _premiumPercentage = 1_700_000;
-        uint128 pmValidationGasLimit = 25_000;
+        uint128 pmValidationGasLimit = 15_000;
         // ~ 12_000 is raw PM.postOp gas spent
         // here we add more for emitting events in the wrapper + refunds etc in EP
         uint128 pmPostOpGasLimit = 37_000;
@@ -274,6 +274,8 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
             applyPremium(maxGasCost, meeNodePremiumPercentage) - actualRefund - gasSpentByExecutorEOA * actualGasPrice;
 
         assertTrue(meeNodeEarnings > 0, "MEE_NODE should have earned something");
+        console2.log("meeNodeEarnings", meeNodeEarnings);
+        console2.log("expectedNodeEar", expectedNodeEarnings);
         assertTrue(
             // solhint-disable-next-line gas-strict-inequalities
             meeNodeEarnings >= expectedNodeEarnings,
