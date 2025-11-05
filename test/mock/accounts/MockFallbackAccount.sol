@@ -13,7 +13,7 @@ import "contracts/interfaces/IComposableExecution.sol";
 
 import { console2 } from "forge-std/console2.sol";
 
-contract MockAccountFallback is IAccount {
+contract MockFallbackAccount is IAccount {
     event MockAccountValidateUserOp(PackedUserOperation userOp, bytes32 userOpHash, uint256 missingAccountFunds);
     event MockAccountExecute(address to, uint256 value, bytes data);
     event MockAccountReceive(uint256 value);

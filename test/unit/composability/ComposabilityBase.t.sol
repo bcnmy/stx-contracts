@@ -1,27 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { Test, Vm, console2 } from "forge-std/Test.sol";
-import { MockAccountFallback } from "./mock/accounts/MockAccountFallback.sol";
-import { MockAccountNonRevert } from "./mock/accounts/MockAccountNonRevert.sol";
+import { BaseTest } from "../../Base.t.sol";
+import { MockFallbackAccount } from "../../mock/accounts/MockFallbackAccount.sol";
+import { MockAccountNonRevert } from "../../mock/accounts/MockAccountNonRevert.sol";
 import { ComposableExecutionModule } from "contracts/composability/ComposableExecutionModule.sol";
-import { MockAccountDelegateCaller } from "./mock/accounts/MockAccountDelegateCaller.sol";
-import { MockAccountCaller } from "./mock/accounts/MockAccountCaller.sol";
-import { MockAccount } from "./mock/accounts/MockAccount.sol";
+import { MockAccountDelegateCaller } from "../../mock/accounts/MockAccountDelegateCaller.sol";
+import { MockAccountCaller } from "../../mock/accounts/MockAccountCaller.sol";
+import { MockAccount } from "../../mock/accounts/MockAccount.sol";
 import { ComposableStorage } from "contracts/composability/ComposableStorage.sol";
 import { InputParam, Constraint, InputParamType, InputParamFetcherType } from "contracts/types/ComposabilityDataTypes.sol";
-import "./mock/DummyContract.sol";
-import "./mock/MockERC20Balance.sol";
+import { MockERC20Balance } from "../../mock/MockERC20Balance.sol";
+import "../../mock/DummyContract.sol";
 
-address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
-
-contract ComposabilityTestBase is Test {
+contract ComposabilityTestBase is BaseTest {
     ComposableExecutionModule internal composabilityHandler;
-    MockAccountFallback internal mockAccountFallback;
+    MockFallbackAccount internal mockFallbackAccount;
     MockAccountDelegateCaller internal mockAccountDelegateCaller;
     MockAccountCaller internal mockAccountCaller;
     MockAccountNonRevert internal mockAccountNonRevert;
-    MockAccount internal mockAccount;
+    MockAccount internal mockAccountSimple;
     MockERC20Balance internal mockERC20Balance;
 
     event MockAccountReceive(uint256 amount);
@@ -34,9 +32,12 @@ contract ComposabilityTestBase is Test {
 
     Constraint[] internal emptyConstraints = new Constraint[](0);
 
-    function setUp() public virtual {
+    function setUp() public virtual override {
+        // no need yet. May be needed in the future when/if we test via Nexus
+        // super.setUp();
+
         composabilityHandler = new ComposableExecutionModule(ENTRYPOINT_V07_ADDRESS);
-        mockAccountFallback = new MockAccountFallback({
+        mockFallbackAccount = new MockFallbackAccount({
             _validator: address(0),
             _executor: address(composabilityHandler),
             _handler: address(composabilityHandler)
@@ -48,19 +49,19 @@ contract ComposabilityTestBase is Test {
         });
         mockAccountDelegateCaller = new MockAccountDelegateCaller({ _composableModule: address(composabilityHandler) });
 
-        vm.prank(address(mockAccountFallback));
+        vm.prank(address(mockFallbackAccount));
         composabilityHandler.onInstall(abi.encodePacked(ENTRYPOINT_V07_ADDRESS));
 
-        mockAccount = new MockAccount({ _validator: address(0), _handler: address(0xa11ce) });
+        mockAccountSimple = new MockAccount({ _validator: address(0), _handler: address(0xa11ce) });
         mockAccountNonRevert = new MockAccountNonRevert({ _validator: address(0), _handler: address(0xa11ce) });
         mockERC20Balance = new MockERC20Balance();
 
         // fund accounts
-        vm.deal(address(mockAccountFallback), 100 ether);
+        vm.deal(address(mockFallbackAccount), 100 ether);
         vm.deal(address(mockAccountDelegateCaller), 100 ether);
         vm.deal(address(mockAccountCaller), 100 ether);
         vm.deal(address(mockAccountNonRevert), 100 ether);
-        vm.deal(address(mockAccount), 100 ether);
+        vm.deal(address(mockAccountSimple), 100 ether);
         vm.deal(address(ENTRYPOINT_V07_ADDRESS), 100 ether);
 
         // Deploy contracts

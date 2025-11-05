@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
-import "test/ComposabilityBase.t.sol";
+import "./ComposabilityBase.t.sol";
 import { ComposableExecutionModule } from "contracts/composability/ComposableExecutionModule.sol";
 import { IComposableExecution } from "contracts/interfaces/IComposableExecution.sol";
 import "contracts/composability/ComposableExecutionLib.sol";
@@ -17,38 +17,40 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
     }
 
     function test_inputs_With_Gte_Constraints() public {
-        _inputParamUsingGteConstraints(address(mockAccount), address(mockAccount));
-        _inputParamUsingGteConstraints(address(mockAccountFallback), address(composabilityHandler));
+        _inputParamUsingGteConstraints(address(mockAccountSimple), address(mockAccountSimple));
+        _inputParamUsingGteConstraints(address(mockFallbackAccount), address(composabilityHandler));
         _inputParamUsingGteConstraints(address(mockAccountCaller), address(composabilityHandler));
         _inputParamUsingGteConstraints(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_inputs_With_Lte_Constraints() public {
-        _inputParamUsingLteConstraints(address(mockAccount), address(mockAccount));
-        _inputParamUsingLteConstraints(address(mockAccountFallback), address(composabilityHandler));
+        _inputParamUsingLteConstraints(address(mockAccountSimple), address(mockAccountSimple));
+        _inputParamUsingLteConstraints(address(mockFallbackAccount), address(composabilityHandler));
         _inputParamUsingLteConstraints(address(mockAccountCaller), address(composabilityHandler));
         _inputParamUsingLteConstraints(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_inputs_With_In_Constraints() public {
-        _inputParamUsingInConstraints(address(mockAccount), address(mockAccount));
-        _inputParamUsingInConstraints(address(mockAccountFallback), address(composabilityHandler));
+        _inputParamUsingInConstraints(address(mockAccountSimple), address(mockAccountSimple));
+        _inputParamUsingInConstraints(address(mockFallbackAccount), address(composabilityHandler));
         _inputParamUsingInConstraints(address(mockAccountCaller), address(composabilityHandler));
         _inputParamUsingInConstraints(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_inputs_With_Eq_Constraints() public {
-        _inputParamUsingEqConstraints(address(mockAccount), address(mockAccount));
-        _inputParamUsingEqConstraints(address(mockAccountFallback), address(composabilityHandler));
+        _inputParamUsingEqConstraints(address(mockAccountSimple), address(mockAccountSimple));
+        _inputParamUsingEqConstraints(address(mockFallbackAccount), address(composabilityHandler));
         _inputParamUsingEqConstraints(address(mockAccountCaller), address(composabilityHandler));
         _inputParamUsingEqConstraints(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_read_From_Storage_Reverts_if_the_expected_slot_is_not_initialized() public {
         _read_From_Storage_Reverts_if_the_expected_slot_is_not_initialized(
-            address(mockAccountFallback), address(composabilityHandler)
+            address(mockFallbackAccount), address(composabilityHandler)
         );
-        _read_From_Storage_Reverts_if_the_expected_slot_is_not_initialized(address(mockAccount), address(mockAccount));
+        _read_From_Storage_Reverts_if_the_expected_slot_is_not_initialized(
+            address(mockAccountSimple), address(mockAccountSimple)
+        );
         _read_From_Storage_Reverts_if_the_expected_slot_is_not_initialized(
             address(mockAccountCaller), address(composabilityHandler)
         );
@@ -64,8 +66,8 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
     }
 
     function test_Balance_Fetcher_Reverts_If_Used_For_TARGET_Param() public {
-        _balance_Fetcher_Reverts_If_Used_For_TARGET_Param(address(mockAccountFallback), address(composabilityHandler));
-        _balance_Fetcher_Reverts_If_Used_For_TARGET_Param(address(mockAccount), address(mockAccount));
+        _balance_Fetcher_Reverts_If_Used_For_TARGET_Param(address(mockFallbackAccount), address(composabilityHandler));
+        _balance_Fetcher_Reverts_If_Used_For_TARGET_Param(address(mockAccountSimple), address(mockAccountSimple));
         _balance_Fetcher_Reverts_If_Used_For_TARGET_Param(address(mockAccountCaller), address(composabilityHandler));
         _balance_Fetcher_Reverts_If_Used_For_TARGET_Param(
             address(mockAccountDelegateCaller), address(mockAccountDelegateCaller)
@@ -115,9 +117,9 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
             outputParams: outputParams
         });
         bytes memory expectedRevertData;
-        if (address(account) == address(mockAccountFallback)) {
+        if (address(account) == address(mockFallbackAccount)) {
             expectedRevertData = abi.encodeWithSelector(
-                MockAccountFallback.FallbackFailed.selector,
+                MockFallbackAccount.FallbackFailed.selector,
                 abi.encodeWithSelector(ComposableExecutionLib.ConstraintNotMet.selector, ConstraintType.GTE)
             );
         } else {
@@ -179,9 +181,9 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
             outputParams: outputParams
         });
         bytes memory expectedRevertReason;
-        if (address(account) == address(mockAccountFallback)) {
+        if (address(account) == address(mockFallbackAccount)) {
             expectedRevertReason = abi.encodeWithSelector(
-                MockAccountFallback.FallbackFailed.selector,
+                MockFallbackAccount.FallbackFailed.selector,
                 abi.encodeWithSelector(ComposableExecutionLib.ConstraintNotMet.selector, ConstraintType.LTE)
             );
         } else {
@@ -260,9 +262,9 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
             outputParams: outputParams
         });
         bytes memory expectedRevertReason;
-        if (address(account) == address(mockAccountFallback)) {
+        if (address(account) == address(mockFallbackAccount)) {
             expectedRevertReason = abi.encodeWithSelector(
-                MockAccountFallback.FallbackFailed.selector,
+                MockFallbackAccount.FallbackFailed.selector,
                 abi.encodeWithSelector(ComposableExecutionLib.ConstraintNotMet.selector, ConstraintType.IN)
             );
         } else {
@@ -281,9 +283,9 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
             outputParams: outputParams
         });
 
-        if (address(account) == address(mockAccountFallback)) {
+        if (address(account) == address(mockFallbackAccount)) {
             expectedRevertReason = abi.encodeWithSelector(
-                MockAccountFallback.FallbackFailed.selector,
+                MockFallbackAccount.FallbackFailed.selector,
                 abi.encodeWithSelector(ComposableExecutionLib.ConstraintNotMet.selector, ConstraintType.IN)
             );
         } else {
@@ -341,9 +343,9 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
             outputParams: outputParams
         });
         bytes memory expectedRevertReason;
-        if (address(account) == address(mockAccountFallback)) {
+        if (address(account) == address(mockFallbackAccount)) {
             expectedRevertReason = abi.encodeWithSelector(
-                MockAccountFallback.FallbackFailed.selector,
+                MockFallbackAccount.FallbackFailed.selector,
                 abi.encodeWithSelector(ComposableExecutionLib.ConstraintNotMet.selector, ConstraintType.EQ)
             );
         } else {
@@ -397,9 +399,9 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
         });
 
         bytes memory expectedRevertReason;
-        if (address(account) == address(mockAccountFallback)) {
+        if (address(account) == address(mockFallbackAccount)) {
             expectedRevertReason = abi.encodeWithSelector(
-                MockAccountFallback.FallbackFailed.selector,
+                MockFallbackAccount.FallbackFailed.selector,
                 abi.encodePacked(ComposableExecutionLib.ComposableExecutionFailed.selector)
             );
         } else {
@@ -471,10 +473,10 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({ functionSig: "", inputParams: inputParams, outputParams: outputParams });
 
-        if (address(account) == address(mockAccountFallback)) {
+        if (address(account) == address(mockFallbackAccount)) {
             vm.expectRevert(
                 abi.encodeWithSelector(
-                    MockAccountFallback.FallbackFailed.selector,
+                    MockFallbackAccount.FallbackFailed.selector,
                     abi.encodeWithSelector(
                         InvalidParameterEncoding.selector, "BALANCE fetcher type is not supported for TARGET param type"
                     )

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
-import "test/ComposabilityBase.t.sol";
+import "./ComposabilityBase.t.sol";
 import { ComposableExecutionModule } from "contracts/composability/ComposableExecutionModule.sol";
 import { IComposableExecution } from "contracts/interfaces/IComposableExecution.sol";
 import "contracts/composability/ComposableExecutionLib.sol";
@@ -15,10 +15,10 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
     function test_inputStaticCall_OutputExecResult_Success() public {
         // via composability module
-        _inputStaticCallOutputExecResult(address(mockAccountFallback), address(composabilityHandler));
+        _inputStaticCallOutputExecResult(address(mockFallbackAccount), address(composabilityHandler));
 
         // via native executeComposable
-        _inputStaticCallOutputExecResult(address(mockAccount), address(mockAccount));
+        _inputStaticCallOutputExecResult(address(mockAccountSimple), address(mockAccountSimple));
 
         // via regular call
         _inputStaticCallOutputExecResult(address(mockAccountCaller), address(composabilityHandler));
@@ -28,65 +28,65 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
     }
 
     function test_inputRawBytes_Success() public {
-        _inputRawBytes(address(mockAccountFallback), address(composabilityHandler));
-        _inputRawBytes(address(mockAccount), address(mockAccount));
+        _inputRawBytes(address(mockFallbackAccount), address(composabilityHandler));
+        _inputRawBytes(address(mockAccountSimple), address(mockAccountSimple));
         _inputRawBytes(address(mockAccountCaller), address(composabilityHandler));
         _inputRawBytes(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_outputStaticCall_Success() public {
-        _outputStaticCall(address(mockAccountFallback), address(composabilityHandler));
-        _outputStaticCall(address(mockAccount), address(mockAccount));
+        _outputStaticCall(address(mockFallbackAccount), address(composabilityHandler));
+        _outputStaticCall(address(mockAccountSimple), address(mockAccountSimple));
         _outputStaticCall(address(mockAccountCaller), address(composabilityHandler));
         _outputStaticCall(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     // test actual composability => call executeComposable with multiple executions
     function test_useOutputAsInput_Success() public {
-        _useOutputAsInput(address(mockAccountFallback), address(composabilityHandler));
-        _useOutputAsInput(address(mockAccount), address(mockAccount));
+        _useOutputAsInput(address(mockFallbackAccount), address(composabilityHandler));
+        _useOutputAsInput(address(mockAccountSimple), address(mockAccountSimple));
         _useOutputAsInput(address(mockAccountCaller), address(composabilityHandler));
         _useOutputAsInput(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_outputExecResultAddress_Success() public {
-        _outputExecResultAddress(address(mockAccountFallback), address(composabilityHandler));
-        _outputExecResultAddress(address(mockAccount), address(mockAccount));
+        _outputExecResultAddress(address(mockFallbackAccount), address(composabilityHandler));
+        _outputExecResultAddress(address(mockAccountSimple), address(mockAccountSimple));
         _outputExecResultAddress(address(mockAccountCaller), address(composabilityHandler));
         _outputExecResultAddress(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_outputExecResultBool_Success() public {
-        _outputExecResultBool(address(mockAccountFallback), address(composabilityHandler));
-        _outputExecResultBool(address(mockAccount), address(mockAccount));
+        _outputExecResultBool(address(mockFallbackAccount), address(composabilityHandler));
+        _outputExecResultBool(address(mockAccountSimple), address(mockAccountSimple));
         _outputExecResultBool(address(mockAccountCaller), address(composabilityHandler));
         _outputExecResultBool(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_Runtime_Value_Injection_Success() public {
-        _runtime_Value_Injection(address(mockAccountFallback), address(composabilityHandler));
-        _runtime_Value_Injection(address(mockAccount), address(mockAccount));
+        _runtime_Value_Injection(address(mockFallbackAccount), address(composabilityHandler));
+        _runtime_Value_Injection(address(mockAccountSimple), address(mockAccountSimple));
         _runtime_Value_Injection(address(mockAccountCaller), address(composabilityHandler));
         _runtime_Value_Injection(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_Runtime_Target_Injection_Success() public {
-        _runtime_Target_Injection(address(mockAccountFallback), address(composabilityHandler));
-        _runtime_Target_Injection(address(mockAccount), address(mockAccount));
+        _runtime_Target_Injection(address(mockFallbackAccount), address(composabilityHandler));
+        _runtime_Target_Injection(address(mockAccountSimple), address(mockAccountSimple));
         _runtime_Target_Injection(address(mockAccountCaller), address(composabilityHandler));
         _runtime_Target_Injection(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_ERC20_Balance_Fetcher_Success() public {
-        _erc20_Balance_Fetcher(address(mockAccountFallback), address(composabilityHandler));
-        _erc20_Balance_Fetcher(address(mockAccount), address(mockAccount));
+        _erc20_Balance_Fetcher(address(mockFallbackAccount), address(composabilityHandler));
+        _erc20_Balance_Fetcher(address(mockAccountSimple), address(mockAccountSimple));
         _erc20_Balance_Fetcher(address(mockAccountCaller), address(composabilityHandler));
         _erc20_Balance_Fetcher(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_Native_Balance_Fetcher_Success() public {
-        _native_Balance_Fetcher(address(mockAccountFallback), address(composabilityHandler));
-        _native_Balance_Fetcher(address(mockAccount), address(mockAccount));
+        _native_Balance_Fetcher(address(mockFallbackAccount), address(composabilityHandler));
+        _native_Balance_Fetcher(address(mockAccountSimple), address(mockAccountSimple));
         _native_Balance_Fetcher(address(mockAccountCaller), address(composabilityHandler));
         _native_Balance_Fetcher(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
@@ -167,7 +167,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
         vm.startPrank(ENTRYPOINT_V07_ADDRESS);
 
         uint256 valueToSendExecution;
-        if (address(account) == address(mockAccountFallback)) {
+        if (address(account) == address(mockFallbackAccount)) {
             valueToSendExecution = 1e15; // make sure value is successfully sent back by compos module
         }
 
@@ -194,7 +194,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         vm.expectEmit(address(dummyContract));
         emit Uint256Emitted(1);
-        if (address(account) == address(mockAccountFallback)) {
+        if (address(account) == address(mockFallbackAccount)) {
             vm.expectEmit(address(dummyContract));
             emit Received(valueToSendExecution);
         }
@@ -324,9 +324,9 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
         uint256 expectedToStake = input1 + 1;
         uint256 messageValue;
 
-        if (address(account) == address(mockAccountFallback)) {
+        if (address(account) == address(mockFallbackAccount)) {
             messageValue = valueToSend;
-            vm.expectEmit(address(mockAccountFallback));
+            vm.expectEmit(address(mockFallbackAccount));
             emit MockAccountReceive(messageValue);
         }
 

@@ -18,9 +18,9 @@ import { LibZip } from "solady/utils/LibZip.sol";
 import { MockTarget } from "./mock/MockTarget.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 
-address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
-
 contract BaseTest is Test {
+    address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+
     struct TestTemps {
         bytes32 userOpHash;
         bytes32 contents;

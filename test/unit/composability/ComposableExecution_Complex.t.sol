@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
-import "test/ComposabilityBase.t.sol";
+import "./ComposabilityBase.t.sol";
 import { ComposableExecutionModule } from "contracts/composability/ComposableExecutionModule.sol";
 import { IComposableExecution } from "contracts/interfaces/IComposableExecution.sol";
 import "contracts/composability/ComposableExecutionLib.sol";
@@ -14,36 +14,36 @@ contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
     }
 
     function test_outputExecResultMultipleValues_Success() public {
-        _outputExecResultMultipleValues(address(mockAccountFallback), address(composabilityHandler));
-        _outputExecResultMultipleValues(address(mockAccount), address(mockAccount));
+        _outputExecResultMultipleValues(address(mockFallbackAccount), address(composabilityHandler));
+        _outputExecResultMultipleValues(address(mockAccountSimple), address(mockAccountSimple));
         _outputExecResultMultipleValues(address(mockAccountCaller), address(composabilityHandler));
         _outputExecResultMultipleValues(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_outputStaticCallMultipleValues_Success() public {
-        _outputStaticCallMultipleValues(address(mockAccountFallback), address(composabilityHandler));
-        _outputStaticCallMultipleValues(address(mockAccount), address(mockAccount));
+        _outputStaticCallMultipleValues(address(mockFallbackAccount), address(composabilityHandler));
+        _outputStaticCallMultipleValues(address(mockAccountSimple), address(mockAccountSimple));
         _outputStaticCallMultipleValues(address(mockAccountCaller), address(composabilityHandler));
         _outputStaticCallMultipleValues(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_inputStaticCallMultipleValues_Success() public {
-        _inputStaticCallMultipleValues(address(mockAccountFallback), address(composabilityHandler));
-        _inputStaticCallMultipleValues(address(mockAccount), address(mockAccount));
+        _inputStaticCallMultipleValues(address(mockFallbackAccount), address(composabilityHandler));
+        _inputStaticCallMultipleValues(address(mockAccountSimple), address(mockAccountSimple));
         _inputStaticCallMultipleValues(address(mockAccountCaller), address(composabilityHandler));
         _inputStaticCallMultipleValues(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_inputDynamicBytesArrayAsRawBytes_Success() public {
-        _inputDynamicBytesArrayAsRawBytes(address(mockAccountFallback), address(composabilityHandler));
-        _inputDynamicBytesArrayAsRawBytes(address(mockAccount), address(mockAccount));
+        _inputDynamicBytesArrayAsRawBytes(address(mockFallbackAccount), address(composabilityHandler));
+        _inputDynamicBytesArrayAsRawBytes(address(mockAccountSimple), address(mockAccountSimple));
         _inputDynamicBytesArrayAsRawBytes(address(mockAccountCaller), address(composabilityHandler));
         _inputDynamicBytesArrayAsRawBytes(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
 
     function test_structInjection_Success() public {
-        _structInjection(address(mockAccountFallback), address(composabilityHandler));
-        _structInjection(address(mockAccount), address(mockAccount));
+        _structInjection(address(mockFallbackAccount), address(composabilityHandler));
+        _structInjection(address(mockAccountSimple), address(mockAccountSimple));
         _structInjection(address(mockAccountCaller), address(composabilityHandler));
         _structInjection(address(mockAccountDelegateCaller), address(mockAccountDelegateCaller));
     }
