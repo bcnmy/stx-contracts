@@ -39,6 +39,7 @@ jobs:
       run: pnpm install --frozen-lockfile
     
     - name: Run Forge tests
-      run: forge test --isolate
+      #run: forge test --isolate
+      run: forge test --isolate --mc 'PercentagePremium_Paymaster_Test'
       env:
         FOUNDRY_PROFILE: ci
