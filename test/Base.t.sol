@@ -5,7 +5,7 @@ import { Test, Vm } from "forge-std/Test.sol";
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
-import { MockAccount } from "./mock/MockAccount.sol";
+import { MockAccount } from "./mock/accounts/MockAccount.sol";
 
 import { BaseNodePaymaster } from "../contracts/node-pm/BaseNodePaymaster.sol";
 import { NodePaymaster } from "../contracts/node-pm/NodePaymaster.sol";

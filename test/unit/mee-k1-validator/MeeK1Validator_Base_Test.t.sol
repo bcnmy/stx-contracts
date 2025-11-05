@@ -6,7 +6,7 @@ import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.s
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { BaseTest } from "../../Base.t.sol";
 import { MEEUserOpHashLib } from "../../../contracts/lib/stx-validator/MEEUserOpHashLib.sol";
-import { MockAccount } from "../../mock/MockAccount.sol";
+import { MockAccount } from "../../mock/accounts/MockAccount.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
 import "contracts/types/Constants.sol";
