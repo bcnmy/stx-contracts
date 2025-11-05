@@ -19,7 +19,6 @@ deployments
 .pnp.*
 lcov.info
 package-lock.json
-pnpm-lock.yaml
 *.bak
 
 # broadcasts
