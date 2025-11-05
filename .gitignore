@@ -6,7 +6,6 @@ node_modules
 out
 docs
 storageLayout
-.husky
 deployments
 
 # env
@@ -37,3 +36,13 @@ cache_forge/solidity-files-cache.json
 # Bash deploy helper logs
 scripts/bash-deploy/logs/*
 !scripts/bash-deploy/logs/.gitkeep
+
+# helper scripts
+scripts/viem/
+
+# Claude
+.claude
+CLAUDE.MD
+
+# Solhint
+solhint-report.txt
