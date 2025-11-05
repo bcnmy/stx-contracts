@@ -45,6 +45,7 @@ contract MockAccount is ComposableExecutionBase, IAccount {
 
         assembly {
             if missingAccountFunds {
+                // send funds to EP
                 // Ignore failure (it's EntryPoint's job to verify, not the account's).
                 pop(call(gas(), caller(), missingAccountFunds, codesize(), 0x00, codesize(), 0x00))
             }
