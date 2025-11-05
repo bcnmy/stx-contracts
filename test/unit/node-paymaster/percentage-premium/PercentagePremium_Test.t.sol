@@ -274,8 +274,6 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
             applyPremium(maxGasCost, meeNodePremiumPercentage) - actualRefund - gasSpentByExecutorEOA * actualGasPrice;
 
         assertTrue(meeNodeEarnings > 0, "MEE_NODE should have earned something");
-        console2.log("meeNodeEarnings", meeNodeEarnings);
-        console2.log("expectedNodeEar", expectedNodeEarnings);
         assertTrue(
             // solhint-disable-next-line gas-strict-inequalities
             meeNodeEarnings >= expectedNodeEarnings,

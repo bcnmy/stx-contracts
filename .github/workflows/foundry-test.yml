@@ -40,6 +40,5 @@ jobs:
     
     - name: Run Forge tests
       run: forge test --isolate --threads 1
-      #run: forge test --isolate --mc 'PercentagePremium_Paymaster_Test'
       env:
         FOUNDRY_PROFILE: ci
