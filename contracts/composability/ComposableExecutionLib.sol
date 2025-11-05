@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { Storage } from "./Storage.sol";
+import { ComposableStorage } from "./ComposableStorage.sol";
 import {
     InputParam,
     OutputParam,
@@ -214,7 +214,7 @@ library ComposableExecutionLib {
             assembly {
                 value := mload(add(returnData, add(0x20, mul(i, 0x20))))
             }
-            Storage(targetStorageContract).writeStorage({
+            ComposableStorage(targetStorageContract).writeStorage({
                 slot: keccak256(abi.encodePacked(targetStorageSlot, i)),
                 value: value,
                 account: account

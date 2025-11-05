@@ -133,7 +133,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
         inputParamsB[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_A_0))),
+            paramData: abi.encode(storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))),
             constraints: emptyConstraints
         });
 
@@ -298,13 +298,13 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
         inputParams_execution2[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_A_0))),
+            paramData: abi.encode(storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))),
             constraints: emptyConstraints
         });
         inputParams_execution2[3] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_B_0))),
+            paramData: abi.encode(storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_B_0))),
             constraints: emptyConstraints
         });
         OutputParam[] memory outputParams_execution2 = new OutputParam[](0);

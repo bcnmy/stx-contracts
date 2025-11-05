@@ -2,10 +2,10 @@
 pragma solidity ^0.8.17;
 
 /**
- * @title Storage
+ * @title ComposableStorage
  * @dev Contract to handle generic storage operations with cross-chain support
  */
-contract Storage {
+contract ComposableStorage {
     error SlotNotInitialized();
 
     // Mapping to track initialized slots

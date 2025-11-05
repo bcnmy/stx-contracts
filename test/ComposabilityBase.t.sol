@@ -8,7 +8,7 @@ import { ComposableExecutionModule } from "contracts/composability/ComposableExe
 import { MockAccountDelegateCaller } from "./mock/accounts/MockAccountDelegateCaller.sol";
 import { MockAccountCaller } from "./mock/accounts/MockAccountCaller.sol";
 import { MockAccount } from "./mock/accounts/MockAccount.sol";
-import { Storage } from "contracts/composability/Storage.sol";
+import { ComposableStorage } from "contracts/composability/ComposableStorage.sol";
 import { InputParam, Constraint, InputParamType, InputParamFetcherType } from "contracts/types/ComposabilityDataTypes.sol";
 import "./mock/DummyContract.sol";
 import "./mock/MockERC20Balance.sol";
@@ -26,7 +26,7 @@ contract ComposabilityTestBase is Test {
 
     event MockAccountReceive(uint256 amount);
 
-    Storage public storageContract;
+    ComposableStorage public storageContract;
     DummyContract public dummyContract;
 
     bytes32 public constant SLOT_A = keccak256("SLOT_A");
@@ -64,7 +64,7 @@ contract ComposabilityTestBase is Test {
         vm.deal(address(ENTRYPOINT_V07_ADDRESS), 100 ether);
 
         // Deploy contracts
-        storageContract = new Storage();
+        storageContract = new ComposableStorage();
         dummyContract = new DummyContract();
     }
 

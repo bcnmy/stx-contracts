@@ -383,7 +383,7 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
         inputParams[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_A))),
+            paramData: abi.encode(storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A))),
             constraints: emptyConstraints
         });
 
