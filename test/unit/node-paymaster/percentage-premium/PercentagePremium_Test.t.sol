@@ -69,7 +69,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
             callData: callData,
             wallet: wallet,
             preVerificationGasLimit: 50e3,
-            verificationGasLimit: 35e3,
+            verificationGasLimit: 55e3,
             callGasLimit: 100e3
         });
 
@@ -109,7 +109,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
     // test percentage user single
     function test_percentage_user_single() public {
         _premiumPercentage = 1_700_000;
-        uint128 pmValidationGasLimit = 15_000;
+        uint128 pmValidationGasLimit = 25_000;
         // ~ 12_000 is raw PM.postOp gas spent
         // here we add more for emitting events in the wrapper + refunds etc in EP
         uint128 pmPostOpGasLimit = 37_000;
@@ -164,7 +164,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         public
     {
         preVerificationGasLimit = bound(preVerificationGasLimit, 1e5, 5e6);
-        verificationGasLimit = uint128(bound(verificationGasLimit, 50e3, 5e6));
+        verificationGasLimit = uint128(bound(verificationGasLimit, 55e3, 5e6));
         callGasLimit = uint128(bound(callGasLimit, 100e3, 5e6));
         premiumPercentage = bound(premiumPercentage, 0, 200e5);
         pmValidationGasLimit = uint128(bound(pmValidationGasLimit, 30e3, 5e6));

@@ -3,14 +3,15 @@ pragma solidity ^0.8.27;
 
 /**
  * @title EtherForwarder
- * @dev A contract that forwards received Ether to a specified address
+ * @notice A contract that forwards received Ether to a specified address
+ * @author Biconomy
  */
 contract EtherForwarder {
     error ZeroAddress();
     error ForwardFailed();
 
     /**
-     * @dev Forwards the received Ether to the specified destination address
+     * @notice Forwards the received Ether to the specified destination address
      * @param destination The address to forward the Ether to
      */
     function forward(address destination) external payable {
@@ -36,7 +37,7 @@ contract EtherForwarder {
     }
 
     /**
-     * @dev Prevents accidental Ether transfers without a destination
+     * @notice Prevents accidental Ether transfers without a destination
      * intentionally using sting and not a custom error here
      */
     receive() external payable {
@@ -45,7 +46,7 @@ contract EtherForwarder {
     }
 
     /**
-     * @dev Prevents accidental Ether transfers without a destination
+     * @notice Prevents accidental Ether transfers without a destination
      * intentionally using sting and not a custom error here
      */
     fallback() external payable {
