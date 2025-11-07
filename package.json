@@ -45,7 +45,8 @@
     "solhint": "^6.0.1",
     "tsx": "^4.19.2",
     "typescript": "^5.4.0",
-    "viem": "^2.22.17"
+    "viem": "^2.22.17",
+    "solarray": "github:sablier-labs/solarray"
   },
   "pnpm": {
     "overrides": {
