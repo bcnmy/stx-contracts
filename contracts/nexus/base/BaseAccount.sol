@@ -13,7 +13,7 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
-import { IBaseAccount } from "../interfaces/base/IBaseAccount.sol";
+import { IBaseAccount } from "../../interfaces/nexus/base/IBaseAccount.sol";
 
 /// @title Nexus - BaseAccount
 /// @notice Implements ERC-4337 and ERC-7579 standards for account management and access control within the Nexus suite.

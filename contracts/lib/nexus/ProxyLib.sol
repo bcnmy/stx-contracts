@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { NexusProxy } from "../utils/NexusProxy.sol";
-import { INexus } from "../interfaces/INexus.sol";
+import { NexusProxy } from "../../nexus/utils/NexusProxy.sol";
+import { INexus } from "../../interfaces/nexus/INexus.sol";
 
 /// @title ProxyLib
 /// @notice A library for deploying NexusProxy contracts

@@ -15,17 +15,17 @@ pragma solidity ^0.8.27;
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
-import { ComposableExecutionBase, ComposableExecution } from "composability/ComposableExecutionBase.sol";
-import { Initializable } from "./lib/Initializable.sol";
+import { ComposableExecutionBase, ComposableExecution } from "../composability/ComposableExecutionBase.sol";
+import { Initializable } from "../lib/nexus/Initializable.sol";
 import { UUPSUpgradeable } from "solady/utils/UUPSUpgradeable.sol";
-import { INexus } from "./interfaces/INexus.sol";
-import { ExecLib } from "./lib/ExecLib.sol";
-import { NonceLib } from "./lib/NonceLib.sol";
+import { INexus } from "../interfaces/nexus/INexus.sol";
+import { ExecLib } from "../lib/erc-7579/ExecLib.sol";
+import { NonceLib } from "../lib/nexus/NonceLib.sol";
 import { SentinelListLib, SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
-import { EmergencyUninstall } from "./types/DataTypes.sol";
-import { LibPREP } from "./lib/local/LibPREP.sol";
+import { EmergencyUninstall } from "../types/DataTypes.sol";
+import { LibPREP } from "../lib/nexus/local/LibPREP.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
-import { IValidator } from "./interfaces/modules/IValidator.sol";
+import { IValidator } from "erc7579/interfaces/IERC7579Module.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -35,7 +35,7 @@ import {
     MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
     MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
     SUPPORTS_ERC7739
-} from "./types/Constants.sol";
+} from "../types/Constants.sol";
 import {
     ModeLib,
     ExecutionMode,
@@ -46,7 +46,7 @@ import {
     CALLTYPE_DELEGATECALL,
     EXECTYPE_DEFAULT,
     EXECTYPE_TRY
-} from "./lib/ModeLib.sol";
+} from "../lib/erc-7579/ModeLib.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 /// @title Nexus - Smart Account
@@ -146,7 +146,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param executionCalldata The encoded transaction data to execute.
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPoint` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
-    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPoint withHook {
+    function execute(
+        ExecutionMode mode,
+        bytes calldata executionCalldata
+    )
+        external
+        payable
+        onlyEntryPoint
+        withHook(msg.value)
+    {
         (CallType callType, ExecType execType) = mode.decodeBasic();
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
@@ -171,7 +179,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         external
         payable
         onlyExecutorModule
-        withHook
+        withHook(msg.value)
         returns (bytes[] memory returnData)
     {
         (CallType callType, ExecType execType) = mode.decodeBasic();
@@ -197,10 +205,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         bytes32
     )
         external
-        payable
         virtual
         onlyEntryPoint
-        withHook
+        withHook(uint256(0))
     {
         bytes calldata callData = userOp.callData[4:];
         (bool success,) = address(this).delegatecall(callData);
@@ -217,7 +224,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         payable
         override
         onlyEntryPoint
-        withHook
+        withHook(msg.value)
     {
         _executeComposable(executions);
     }
@@ -283,7 +290,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         external
         payable
         onlyEntryPointOrSelf
-        withHook
+        withHook(msg.value)
     {
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
 
@@ -501,7 +508,16 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
-    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override withHook {
+    function upgradeToAndCall(
+        address newImplementation,
+        bytes calldata data
+    )
+        public
+        payable
+        virtual
+        override
+        withHook(msg.value)
+    {
         require(newImplementation != address(0), InvalidImplementationAddress());
         bool res;
         assembly {

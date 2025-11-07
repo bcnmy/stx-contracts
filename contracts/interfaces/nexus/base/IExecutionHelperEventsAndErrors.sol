@@ -23,7 +23,7 @@ pragma solidity ^0.8.27;
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 
-import { ExecType } from "../../lib/ModeLib.sol";
+import { ExecType } from "../../../lib/erc-7579/ModeLib.sol";
 
 interface IExecutionHelperEventsAndErrors {
     /// @notice Event emitted when a transaction fails to execute successfully.

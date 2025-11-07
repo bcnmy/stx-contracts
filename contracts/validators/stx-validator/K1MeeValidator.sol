@@ -11,8 +11,8 @@ import {
     SIG_TYPE_SIMPLE,
     SIG_TYPE_ON_CHAIN,
     SIG_TYPE_ERC20_PERMIT,
-    EIP1271_SUCCESS,
-    EIP1271_FAILED,
+    ERC1271_SUCCESS,
+    ERC1271_FAILED,
     MODULE_TYPE_STATELESS_VALIDATOR,
     SIG_TYPE_MEE_FLOW
 } from "contracts/types/Constants.sol";
@@ -202,8 +202,8 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
      * @param signature The signature of the message
      *
      * @return sigValidationResult the result of the signature validation, which can be:
-     *  - EIP1271_SUCCESS if the signature is valid
-     *  - EIP1271_FAILED if the signature is invalid
+     *  - ERC1271_SUCCESS if the signature is valid
+     *  - ERC1271_FAILED if the signature is invalid
      */
     function isValidSignatureWithSender(
         address sender,
@@ -243,8 +243,8 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
                 }
             }
             return _validateSignatureForOwner(getOwner(msg.sender), dataHash, _erc1271UnwrapSignature(signature))
-                ? EIP1271_SUCCESS
-                : EIP1271_FAILED;
+                ? ERC1271_SUCCESS
+                : ERC1271_FAILED;
         }
     }
 

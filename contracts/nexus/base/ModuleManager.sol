@@ -14,16 +14,19 @@ pragma solidity ^0.8.27;
 
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { Storage } from "./Storage.sol";
-import { IHook } from "../interfaces/modules/IHook.sol";
-import { IModule } from "../interfaces/modules/IModule.sol";
-import { IPreValidationHookERC1271, IPreValidationHookERC4337 } from "../interfaces/modules/IPreValidationHook.sol";
-import { IExecutor } from "../interfaces/modules/IExecutor.sol";
-import { IFallback } from "../interfaces/modules/IFallback.sol";
-import { IValidator } from "../interfaces/modules/IValidator.sol";
-import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../lib/ModeLib.sol";
-import { ExecLib } from "../lib/ExecLib.sol";
-import { LocalCallDataParserLib } from "../lib/local/LocalCallDataParserLib.sol";
-import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
+import {
+    IModule,
+    IValidator,
+    IExecutor,
+    IHook,
+    IPreValidationHookERC1271,
+    IPreValidationHookERC4337,
+    IFallback
+} from "erc7579/interfaces/IERC7579Module.sol";
+import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../../lib/erc-7579/ModeLib.sol";
+import { ExecLib } from "../../lib/erc-7579/ExecLib.sol";
+import { LocalCallDataParserLib } from "../../lib/nexus/local/LocalCallDataParserLib.sol";
+import { IModuleManager } from "../../interfaces/nexus/base/IModuleManager.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -34,12 +37,12 @@ import {
     MODULE_TYPE_MULTI,
     MODULE_ENABLE_MODE_TYPE_HASH,
     EMERGENCY_UNINSTALL_TYPE_HASH,
-    ERC1271_MAGICVALUE
-} from "../types/Constants.sol";
+    ERC1271_SUCCESS
+} from "../../types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
-import { EmergencyUninstall } from "../types/DataTypes.sol";
+import { EmergencyUninstall } from "../../types/DataTypes.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 
 /// @title Nexus - ModuleManager
@@ -70,12 +73,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
 
     /// @notice Does pre-checks and post-checks using an installed hook on the account.
     /// @dev sender, msg.data and msg.value is passed to the hook to implement custom flows.
-    modifier withHook() {
+    modifier withHook(uint256 messageValue) {
         address hook = _getHook();
         if (hook == address(0)) {
             _;
         } else {
-            bytes memory hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
+            bytes memory hookData = IHook(hook).preCheck(msg.sender, messageValue, msg.data);
             _;
             IHook(hook).postCheck(hookData);
         }
@@ -239,7 +242,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     /// @dev Installs a new validator module after checking if it matches the required module type.
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
-    function _installValidator(address validator, bytes calldata data) internal virtual withHook {
+    function _installValidator(address validator, bytes calldata data) internal virtual withHook(msg.value) {
         if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId();
         if (validator == _DEFAULT_VALIDATOR) {
             revert DefaultValidatorAlreadyInstalled();
@@ -267,7 +270,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
-    function _installExecutor(address executor, bytes calldata data) internal virtual withHook {
+    function _installExecutor(address executor, bytes calldata data) internal virtual withHook(msg.value) {
         if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId();
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
@@ -287,7 +290,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
-    function _installHook(address hook, bytes calldata data) internal virtual withHook {
+    function _installHook(address hook, bytes calldata data) internal virtual withHook(msg.value) {
         if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId();
         address currentHook = _getHook();
         require(currentHook == address(0), HookAlreadyInstalled(currentHook));
@@ -319,7 +322,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     /// @dev Installs a fallback handler for a given selector with initialization data.
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
-    function _installFallbackHandler(address handler, bytes calldata params) internal virtual withHook {
+    function _installFallbackHandler(address handler, bytes calldata params) internal virtual withHook(msg.value) {
         if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId();
         // Extract the function selector from the provided parameters.
         bytes4 selector = bytes4(params[0:4]);
@@ -379,7 +382,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     )
         internal
         virtual
-        withHook
+        withHook(msg.value)
     {
         if (!IModule(preValidationHook).isModuleType(preValidationHookType)) revert MismatchModuleTypeId();
         address currentPreValidationHook = _getPreValidationHook(preValidationHookType);
@@ -468,7 +471,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
         _getAccountStorage().nonces[data.nonce] = true;
         // Check if the signature is valid
         require(
-            (IValidator(validator).isValidSignatureWithSender(address(this), hash, signature[20:]) == ERC1271_MAGICVALUE),
+            (IValidator(validator).isValidSignatureWithSender(address(this), hash, signature[20:]) == ERC1271_SUCCESS),
             EmergencyUninstallSigError()
         );
     }
@@ -550,7 +553,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
         // as eip712digest is already built based on 712Domain of this Smart Account
         // This interface should always be exposed by validators as per ERC-7579
         try IValidator(validator).isValidSignatureWithSender(address(this), eip712Digest, sig) returns (bytes4 res) {
-            return res == ERC1271_MAGICVALUE;
+            return res == ERC1271_SUCCESS;
         } catch {
             return false;
         }

@@ -90,7 +90,7 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
             assertTrue(
                 mockAccount.isValidSignature(
                     nonUserOpEntryDatas[i].entryHash, nonUserOpEntryDatas[i].packedSignatureForEntry
-                ) == EIP1271_SUCCESS
+                ) == ERC1271_SUCCESS
             );
         }
     }

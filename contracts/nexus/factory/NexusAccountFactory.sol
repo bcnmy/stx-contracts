@@ -13,7 +13,7 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { Stakeable } from "./Stakeable.sol";
-import { ProxyLib } from "../lib/ProxyLib.sol";
+import { ProxyLib } from "../../lib/nexus/ProxyLib.sol";
 
 /// @title Nexus Account Factory
 /// @notice Manages the creation of Modular Smart Accounts compliant with ERC-7579 and ERC-4337 using a factory pattern.
@@ -23,6 +23,15 @@ import { ProxyLib } from "../lib/ProxyLib.sol";
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract NexusAccountFactory is Stakeable {
+    /// @notice Error thrown when the implementation address is zero.
+    error ImplementationAddressCanNotBeZero();
+
+    /// @notice Error thrown when zero address is not allowed.
+    error ZeroAddressNotAllowed();
+
+    /// @notice Emitted when a new account is created.
+    event AccountCreated(address indexed account, bytes initData, bytes32 indexed salt);
+
     /// @notice Address of the implementation contract used to create new Nexus instances.
     /// @dev This address is immutable and set upon deployment, ensuring the implementation cannot be changed.
     address public immutable ACCOUNT_IMPLEMENTATION;
@@ -40,7 +49,7 @@ contract NexusAccountFactory is Stakeable {
     /// @param initData Initialization data to be called on the new Smart Account.
     /// @param salt Unique salt for the Smart Account creation.
     /// @return The address of the newly created Nexus account.
-    function createAccount(bytes calldata initData, bytes32 salt) external payable override returns (address payable) {
+    function createAccount(bytes calldata initData, bytes32 salt) external payable returns (address payable) {
         // Deploy the Nexus account using the ProxyLib
         (bool alreadyDeployed, address payable account) = ProxyLib.deployProxy(ACCOUNT_IMPLEMENTATION, salt, initData);
         if (!alreadyDeployed) {
@@ -60,7 +69,6 @@ contract NexusAccountFactory is Stakeable {
     )
         external
         view
-        override
         returns (address payable expectedAddress)
     {
         // Return the expected address of the Nexus account using the provided initialization data and salt

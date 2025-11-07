@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.27;
 
-interface IStatelessValidator {
+import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
+
+interface IStatelessValidator is IModule {
     /**
      * Validates a signature given some data
      *
@@ -21,13 +23,4 @@ interface IStatelessValidator {
         external
         view
         returns (bool);
-
-    /**
-     * Returns boolean value if module is a certain type
-     *
-     * @param moduleTypeId the module type ID according the ERC-7579 spec
-     *
-     * MUST return true if the module is of the given type and false otherwise
-     */
-    function isModuleType(uint256 moduleTypeId) external view returns (bool);
 }

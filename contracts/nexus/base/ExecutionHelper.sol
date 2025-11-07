@@ -12,10 +12,10 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { Execution } from "../types/DataTypes.sol";
-import { IExecutionHelperEventsAndErrors } from "../interfaces/base/IExecutionHelper.sol";
-import { ExecType, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "../lib/ModeLib.sol";
-import { ExecLib } from "../lib/ExecLib.sol";
+import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
+import { IExecutionHelperEventsAndErrors } from "../../interfaces/nexus/base/IExecutionHelper.sol";
+import { ExecType, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "../../lib/erc-7579/ModeLib.sol";
+import { ExecLib } from "../../lib/erc-7579/ExecLib.sol";
 
 /// @title Nexus - ExecutionHelper
 /// @notice Implements execution management within the Nexus suite, facilitating transaction execution strategies and

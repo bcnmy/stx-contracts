@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Execution } from "../types/DataTypes.sol";
+import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
 
 /// @title ExecutionLib
 /// @author zeroknots.eth | rhinestone.wtf

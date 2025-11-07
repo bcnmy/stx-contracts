@@ -13,10 +13,10 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. For security issues, contact: security@biconomy.io
 
 import { ModuleManager } from "../base/ModuleManager.sol";
-import { IModule } from "../interfaces/modules/IModule.sol";
+import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
 import {
     MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK
-} from "../types/Constants.sol";
+} from "../../types/Constants.sol";
 
 /// @title NexusBootstrap Configuration for Nexus
 /// @notice Provides configuration and initialization for Nexus smart accounts.

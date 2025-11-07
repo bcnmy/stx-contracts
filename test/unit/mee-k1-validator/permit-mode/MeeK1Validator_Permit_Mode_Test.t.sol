@@ -6,7 +6,7 @@ import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { ERC20 } from "solady/tokens/ERC20.sol";
 import { MockERC20PermitToken } from "../../../mock/MockERC20PermitToken.sol";
-import { EIP1271_SUCCESS } from "contracts/types/Constants.sol";
+import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
 
 import { EcdsaHelperLib } from "contracts/lib/util/EcdsaHelperLib.sol";
@@ -84,7 +84,7 @@ contract MeeK1Validator_Permit_Mode_Test is MeeK1Validator_Base_Test {
                     mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr))
                 );
             } else {
-                assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == EIP1271_SUCCESS);
+                assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == ERC1271_SUCCESS);
             }
         }
     }

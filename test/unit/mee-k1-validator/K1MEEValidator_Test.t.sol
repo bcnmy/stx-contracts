@@ -6,7 +6,7 @@ import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/
 import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { MockTarget } from "../../mock/MockTarget.sol";
-import { EIP1271_SUCCESS } from "contracts/types/Constants.sol";
+import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 
 contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
     using UserOperationLib for PackedUserOperation;
@@ -64,7 +64,7 @@ contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
         bytes4 ret = mockAccount.isValidSignature(toContentsHash(t.contents), signature);
-        assertEq(ret, bytes4(EIP1271_SUCCESS));
+        assertEq(ret, bytes4(ERC1271_SUCCESS));
     }
 
     // ================================

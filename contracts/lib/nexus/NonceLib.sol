@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 // solhint-disable-next-line no-unused-import
-import { MODE_MODULE_ENABLE, MODE_PREP, MODE_VALIDATION } from "../types/Constants.sol";
+import { MODE_MODULE_ENABLE, MODE_PREP, MODE_VALIDATION } from "../../types/Constants.sol";
 
 /**
  * Nonce structure
