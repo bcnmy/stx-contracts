@@ -2,11 +2,13 @@
 cache
 cache_forge
 coverage
-node_modules
 out
-docs
 storageLayout
 deployments
+
+# dependencies
+node_modules/
+/lib/
 
 # env
 *.env

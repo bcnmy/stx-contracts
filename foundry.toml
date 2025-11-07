@@ -16,7 +16,7 @@
   src = "contracts"
   test = "test"
   cache_path  = "cache_forge"
-  libs = ["node_modules", "lib"]
+  libs = ["node_modules"]
   gas_reports_ignore = ["MockToken"]
   fs_permissions = [{ access = "read", path = "scripts/bash-deploy/artifacts"}]
 

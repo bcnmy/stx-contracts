@@ -3,7 +3,7 @@
 pragma solidity ^0.8.27;
 
 import { IValidator, MODULE_TYPE_VALIDATOR } from "erc7579/interfaces/IERC7579Module.sol";
-import { ISessionValidator } from "contracts/interfaces/ISessionValidator.sol";
+import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { EnumerableSet } from "EnumerableSet4337/EnumerableSet4337.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
@@ -41,7 +41,7 @@ import { EcdsaHelperLib } from "../../lib/util/EcdsaHelperLib.sol";
  *        In future full scale 7739 will replace it when superTx hash is 712 and transparent.
  *
  */
-contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
+contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
     using EnumerableSet for EnumerableSet.AddressSet;
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
@@ -248,7 +248,7 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
         }
     }
 
-    /// @notice ISessionValidator interface for smart session
+    /// @notice IStatelessValidator interface
     /// @param hash The hash of the data to validate
     /// @param sig The signature data
     /// @param data The data to validate against (owner address in this case)
