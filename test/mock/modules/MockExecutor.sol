@@ -1,16 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IModule } from "../interfaces/modules/IModule.sol";
-import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
-import { INexus } from "../interfaces/INexus.sol";
-import { MODULE_TYPE_EXECUTOR } from "../types/Constants.sol";
-import { ModeLib, ExecutionMode, ExecType, CallType, CALLTYPE_BATCH, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, EXECTYPE_TRY } from "../lib/ModeLib.sol";
-import { ExecLib } from "../lib/ExecLib.sol";
-import { MODE_DEFAULT, ModePayload } from "../lib/ModeLib.sol";
-
-import { IExecutor } from "../interfaces/modules/IExecutor.sol";
-import "../types/DataTypes.sol";
+import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
+import { EncodedModuleTypes } from "contracts/lib/erc-7579/ModuleTypeLib.sol";
+import { INexus } from "contracts/interfaces/nexus/INexus.sol";
+import { MODULE_TYPE_EXECUTOR } from "contracts/types/Constants.sol";
+import {
+    ModeLib,
+    ExecutionMode,
+    ExecType,
+    CallType,
+    CALLTYPE_BATCH,
+    CALLTYPE_SINGLE,
+    CALLTYPE_DELEGATECALL,
+    EXECTYPE_DEFAULT,
+    EXECTYPE_TRY
+} from "contracts/lib/erc-7579/ModeLib.sol";
+import { ExecLib } from "contracts/lib/erc-7579/ExecLib.sol";
+import { MODE_DEFAULT, ModePayload } from "contracts/lib/erc-7579/ModeLib.sol";
+import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
+import { IExecutor } from "erc7579/interfaces/IERC7579Module.sol";
+import "contracts/types/DataTypes.sol";
 
 contract MockExecutor is IExecutor {
     event ExecutorOnInstallCalled(bytes32 dataFirstWord);
@@ -21,17 +31,33 @@ contract MockExecutor is IExecutor {
         }
     }
 
-    function onUninstall(bytes calldata data) external override {}
+    function onUninstall(bytes calldata data) external override { }
 
-    function executeViaAccount(INexus account, address target, uint256 value, bytes calldata callData) external returns (bytes[] memory returnData) {
+    function executeViaAccount(
+        INexus account,
+        address target,
+        uint256 value,
+        bytes calldata callData
+    )
+        external
+        returns (bytes[] memory returnData)
+    {
         return account.executeFromExecutor(ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(target, value, callData));
     }
 
     function execDelegatecall(INexus account, bytes calldata callData) external returns (bytes[] memory returnData) {
-        return account.executeFromExecutor(ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)), callData);
+        return account.executeFromExecutor(
+            ModeLib.encode(CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)), callData
+        );
     }
 
-    function executeBatchViaAccount(INexus account, Execution[] calldata execs) external returns (bytes[] memory returnData) {
+    function executeBatchViaAccount(
+        INexus account,
+        Execution[] calldata execs
+    )
+        external
+        returns (bytes[] memory returnData)
+    {
         return account.executeFromExecutor(ModeLib.encodeSimpleBatch(), ExecLib.encodeBatch(execs));
     }
 
@@ -40,11 +66,20 @@ contract MockExecutor is IExecutor {
         address target,
         uint256 value,
         bytes calldata callData
-    ) external returns (bytes[] memory returnData) {
+    )
+        external
+        returns (bytes[] memory returnData)
+    {
         return account.executeFromExecutor(ModeLib.encodeTrySingle(), ExecLib.encodeSingle(target, value, callData));
     }
 
-    function tryExecuteBatchViaAccount(INexus account, Execution[] calldata execs) external returns (bytes[] memory returnData) {
+    function tryExecuteBatchViaAccount(
+        INexus account,
+        Execution[] calldata execs
+    )
+        external
+        returns (bytes[] memory returnData)
+    {
         return account.executeFromExecutor(ModeLib.encodeTryBatch(), ExecLib.encodeBatch(execs));
     }
 
@@ -54,8 +89,11 @@ contract MockExecutor is IExecutor {
         address target,
         uint256 value,
         bytes calldata callData
-    ) external returns (bytes[] memory) {
-        (CallType callType, ) = ModeLib.decodeBasic(mode);
+    )
+        external
+        returns (bytes[] memory)
+    {
+        (CallType callType,) = ModeLib.decodeBasic(mode);
         bytes memory executionCallData;
         if (callType == CALLTYPE_SINGLE) {
             executionCallData = ExecLib.encodeSingle(target, value, callData);
@@ -74,11 +112,11 @@ contract MockExecutor is IExecutor {
         return moduleTypeId == MODULE_TYPE_EXECUTOR;
     }
 
-    function getModuleTypes() external view returns (EncodedModuleTypes) {}
+    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address) external pure override returns (bool) {
         return false;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

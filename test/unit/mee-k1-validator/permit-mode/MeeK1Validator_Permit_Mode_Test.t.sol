@@ -5,7 +5,7 @@ import { MeeK1Validator_Base_Test } from "../MeeK1Validator_Base_Test.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { ERC20 } from "solady/tokens/ERC20.sol";
-import { MockERC20PermitToken } from "../../../mock/MockERC20PermitToken.sol";
+import { MockERC20PermitToken } from "test/mock/tokens/MockERC20PermitToken.sol";
 import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
 

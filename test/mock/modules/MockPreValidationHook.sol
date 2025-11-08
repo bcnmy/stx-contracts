@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IPreValidationHookERC1271, IPreValidationHookERC4337, PackedUserOperation } from "../interfaces/modules/IPreValidationHook.sol";
-import { EncodedModuleTypes } from "../lib/ModuleTypeLib.sol";
-import "../types/Constants.sol";
+import {
+    IPreValidationHookERC1271,
+    IPreValidationHookERC4337,
+    PackedUserOperation
+} from "erc7579/interfaces/IERC7579Module.sol";
+import { EncodedModuleTypes } from "contracts/lib/erc-7579/ModuleTypeLib.sol";
+import "contracts/types/Constants.sol";
 
 contract MockPreValidationHook is IPreValidationHookERC1271, IPreValidationHookERC4337 {
     event PreCheckCalled();
@@ -18,14 +22,23 @@ contract MockPreValidationHook is IPreValidationHookERC1271, IPreValidationHookE
     function onUninstall(bytes calldata) external override { }
 
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
-        return moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271;
+        return moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+            || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271;
     }
 
     function isInitialized(address) external pure returns (bool) {
         return true;
     }
 
-    function preValidationHookERC1271(address, bytes32 hash, bytes calldata data) external pure returns (bytes32 hookHash, bytes memory hookSignature) {
+    function preValidationHookERC1271(
+        address,
+        bytes32 hash,
+        bytes calldata data
+    )
+        external
+        pure
+        returns (bytes32 hookHash, bytes memory hookSignature)
+    {
         return (hash, data);
     }
 

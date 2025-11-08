@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IModule } from "../interfaces/modules/IModule.sol";
+import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
+
 contract MockInvalidModule is IModule {
     function onInstall(bytes calldata data) external pure {
         data;

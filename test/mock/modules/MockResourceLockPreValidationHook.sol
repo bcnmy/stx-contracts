@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IPreValidationHookERC1271, IPreValidationHookERC4337, PackedUserOperation } from "../interfaces/modules/IPreValidationHook.sol";
-import { MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, MODULE_TYPE_HOOK, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 } from "../types/Constants.sol";
+import {
+    IPreValidationHookERC1271,
+    IPreValidationHookERC4337,
+    PackedUserOperation
+} from "erc7579/interfaces/IERC7579Module.sol";
+import {
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
+} from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 
 interface IAccountLocker {
@@ -10,7 +18,14 @@ interface IAccountLocker {
 }
 
 interface IAccount {
-    function isModuleInstalled(uint256 moduleTypeId, address module, bytes calldata additionalContext) external view returns (bool installed);
+    function isModuleInstalled(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata additionalContext
+    )
+        external
+        view
+        returns (bool installed);
 }
 
 contract MockResourceLockPreValidationHook is IPreValidationHookERC4337, IPreValidationHookERC1271 {
@@ -49,16 +64,21 @@ contract MockResourceLockPreValidationHook is IPreValidationHookERC4337, IPreVal
 
     function onInstall(bytes calldata) external view override {
         address sender = _msgSender();
-        require(IAccount(sender).isModuleInstalled(MODULE_TYPE_HOOK, address(resourceLocker), ""), ResourceLockerNotInstalled());
+        require(
+            IAccount(sender).isModuleInstalled(MODULE_TYPE_HOOK, address(resourceLocker), ""), ResourceLockerNotInstalled()
+        );
     }
 
     function onUninstall(bytes calldata) external view override {
         address sender = _msgSender();
-        require(!IAccount(sender).isModuleInstalled(MODULE_TYPE_HOOK, address(resourceLocker), ""), ResourceLockerInstalled());
+        require(
+            !IAccount(sender).isModuleInstalled(MODULE_TYPE_HOOK, address(resourceLocker), ""), ResourceLockerInstalled()
+        );
     }
 
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
-        return moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271;
+        return moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+            || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271;
     }
 
     function isInitialized(address) external pure returns (bool) {

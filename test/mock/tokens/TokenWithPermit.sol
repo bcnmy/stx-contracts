@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.27;
+
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 /// @dev Interface of the ERC1271 standard signature validation method for
@@ -14,7 +15,8 @@ interface IERC1271 {
 contract TokenWithPermit is ERC20Permit {
     error ERC1271InvalidSigner(address signer);
 
-    bytes32 public constant PERMIT_TYPEHASH_LOCAL = keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
+    bytes32 public constant PERMIT_TYPEHASH_LOCAL =
+        keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
     constructor(string memory name, string memory symbol) ERC20Permit(name) ERC20(name, symbol) {
         _mint(msg.sender, 10_000_000 * 10 ** decimals());
@@ -28,12 +30,22 @@ contract TokenWithPermit is ERC20Permit {
         return 18;
     }
 
-    function permitWith1271(address owner, address spender, uint256 value, uint256 deadline, bytes calldata signature) public virtual {
+    function permitWith1271(
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        bytes calldata signature
+    )
+        public
+        virtual
+    {
         if (block.timestamp > deadline) {
             revert ERC2612ExpiredSignature(deadline);
         }
 
-        bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH_LOCAL, owner, spender, value, _useNonce(owner), deadline));
+        bytes32 structHash =
+            keccak256(abi.encode(PERMIT_TYPEHASH_LOCAL, owner, spender, value, _useNonce(owner), deadline));
 
         bytes32 childHash = _hashTypedDataV4(structHash);
 

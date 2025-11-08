@@ -1,8 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IPreValidationHookERC1271, IPreValidationHookERC4337, PackedUserOperation, IModule } from "../interfaces/modules/IPreValidationHook.sol";
-import { MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 } from "../types/Constants.sol";
+import {
+    IPreValidationHookERC1271,
+    IPreValidationHookERC4337,
+    PackedUserOperation,
+    IModule
+} from "erc7579/interfaces/IERC7579Module.sol";
+import {
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+} from "contracts/types/Constants.sol";
 
 contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreValidationHookERC4337 {
     struct HookConfig {
@@ -13,22 +20,23 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
     // Separate configurations for each hook type
     mapping(uint256 hookType => mapping(address account => HookConfig)) internal accountConfig;
 
-    error AlreadyInitialized(uint256 hookType);
-    error NotInitialized(uint256 hookType);
     error InvalidHookType(uint256 hookType);
     error OnInstallFailed(address hook);
     error OnUninstallFailed(address hook);
     error SubHookFailed(address hook);
+    error AlreadyInitializedAsType(uint256 hookType);
+    error NotInitializedAsType(uint256 hookType);
 
     function onInstall(bytes calldata data) external {
-        (uint256 moduleType, address[] memory hooks, bytes[] memory hookData) = abi.decode(data, (uint256, address[], bytes[]));
+        (uint256 moduleType, address[] memory hooks, bytes[] memory hookData) =
+            abi.decode(data, (uint256, address[], bytes[]));
 
         if (!isValidModuleType(moduleType)) {
             revert InvalidHookType(moduleType);
         }
 
         if (accountConfig[moduleType][msg.sender].initialized) {
-            revert AlreadyInitialized(moduleType);
+            revert AlreadyInitializedAsType(moduleType);
         }
 
         accountConfig[moduleType][msg.sender].hooks = hooks;
@@ -71,7 +79,7 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
         HookConfig storage config = accountConfig[MODULE_TYPE_PREVALIDATION_HOOK_ERC4337][msg.sender];
 
         if (!config.initialized) {
-            revert NotInitialized(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337);
+            revert NotInitializedAsType(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337);
         }
 
         hookHash = userOpHash;
@@ -79,7 +87,9 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
         PackedUserOperation memory op = userOp;
 
         for (uint256 i = 0; i < config.hooks.length; i++) {
-            bytes memory subHookData = abi.encodeWithSelector(IPreValidationHookERC4337.preValidationHookERC4337.selector, op, missingAccountFunds, hookHash);
+            bytes memory subHookData = abi.encodeWithSelector(
+                IPreValidationHookERC4337.preValidationHookERC4337.selector, op, missingAccountFunds, hookHash
+            );
             (bool success, bytes memory result) = config.hooks[i].staticcall(abi.encodePacked(subHookData, msg.sender));
             if (!success) {
                 assembly {
@@ -105,14 +115,16 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
         HookConfig storage config = accountConfig[MODULE_TYPE_PREVALIDATION_HOOK_ERC1271][msg.sender];
 
         if (!config.initialized) {
-            revert NotInitialized(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271);
+            revert NotInitializedAsType(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271);
         }
 
         hookHash = hash;
         hookSignature = signature;
 
         for (uint256 i = 0; i < config.hooks.length; i++) {
-            bytes memory subHookData = abi.encodeWithSelector(IPreValidationHookERC1271.preValidationHookERC1271.selector, sender, hookHash, hookSignature);
+            bytes memory subHookData = abi.encodeWithSelector(
+                IPreValidationHookERC1271.preValidationHookERC1271.selector, sender, hookHash, hookSignature
+            );
             (bool success, bytes memory result) = config.hooks[i].staticcall(abi.encodePacked(subHookData, msg.sender));
             if (!success) {
                 assembly {
@@ -140,6 +152,7 @@ contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreVali
     }
 
     function isValidModuleType(uint256 moduleTypeId) internal pure returns (bool) {
-        return moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271;
+        return moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+            || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271;
     }
 }

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.27;
 
-import { IFallback } from "../interfaces/modules/IFallback.sol";
-import { MODULE_TYPE_FALLBACK } from "..//types/Constants.sol";
+import { IFallback } from "erc7579/interfaces/IERC7579Module.sol";
+import { MODULE_TYPE_FALLBACK } from "contracts/types/Constants.sol";
 
 contract MockHandler is IFallback {
     uint256 public count;
@@ -24,7 +24,14 @@ contract MockHandler is IFallback {
         return this.onGenericFallback.selector;
     }
 
-    function complexReturnData(string memory input, bytes4 selector) external view returns (uint256, bytes memory, address, uint64, address) {
+    function complexReturnData(
+        string memory input,
+        bytes4 selector
+    )
+        external
+        view
+        returns (uint256, bytes memory, address, uint64, address)
+    {
         return (
             uint256(block.timestamp),
             abi.encode(input, NAME, VERSION, selector),
@@ -44,7 +51,7 @@ contract MockHandler is IFallback {
         }
     }
 
-    function onUninstall(bytes calldata data) external override {}
+    function onUninstall(bytes calldata data) external override { }
 
     function isModuleType(uint256 moduleTypeId) external pure override returns (bool) {
         return moduleTypeId == MODULE_TYPE_FALLBACK;

@@ -10,7 +10,7 @@ import { MockAccountCaller } from "../../mock/accounts/MockAccountCaller.sol";
 import { MockAccount } from "../../mock/accounts/MockAccount.sol";
 import { ComposableStorage } from "contracts/composability/ComposableStorage.sol";
 import { InputParam, Constraint, InputParamType, InputParamFetcherType } from "contracts/types/ComposabilityDataTypes.sol";
-import { MockERC20Balance } from "../../mock/MockERC20Balance.sol";
+import { MockERC20Balance } from "test/mock/tokens/MockERC20Balance.sol";
 import "../../mock/DummyContract.sol";
 
 contract ComposabilityTestBase is BaseTest {

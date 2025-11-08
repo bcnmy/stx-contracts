@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IHook } from "../interfaces/modules/IHook.sol";
-import { MODULE_TYPE_HOOK } from "../types/Constants.sol";
+import { IHook } from "erc7579/interfaces/IERC7579Module.sol";
+import { MODULE_TYPE_HOOK } from "contracts/types/Constants.sol";
 
 contract MockAccountLocker is IHook {
     mapping(address => mapping(address => uint256)) lockedAmount;
@@ -25,7 +25,15 @@ contract MockAccountLocker is IHook {
 
     function isInitialized(address smartAccount) external view override returns (bool) { }
 
-    function preCheck(address msgSender, uint256 msgValue, bytes calldata msgData) external override returns (bytes memory hookData) { }
+    function preCheck(
+        address msgSender,
+        uint256 msgValue,
+        bytes calldata msgData
+    )
+        external
+        override
+        returns (bytes memory hookData)
+    { }
 
     function postCheck(bytes calldata hookData) external override { }
 }

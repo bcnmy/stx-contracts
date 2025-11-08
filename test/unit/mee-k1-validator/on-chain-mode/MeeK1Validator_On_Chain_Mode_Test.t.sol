@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import { MeeK1Validator_Base_Test } from "../MeeK1Validator_Base_Test.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
-import { MockERC20PermitToken } from "../../../mock/MockERC20PermitToken.sol";
+import { MockERC20PermitToken } from "test/mock/tokens/MockERC20PermitToken.sol";
 import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 import { CopyUserOpLib } from "../../../util/CopyUserOpLib.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";

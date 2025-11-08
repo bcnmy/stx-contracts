@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IModule } from "../interfaces/modules/IModule.sol";
-import { IModuleManager } from "../interfaces/base/IModuleManager.sol";
-import { VALIDATION_SUCCESS, VALIDATION_FAILED, MODULE_TYPE_VALIDATOR, ERC1271_MAGICVALUE, ERC1271_INVALID } from "../types/Constants.sol";
+import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
+import { IModuleManager } from "contracts/interfaces/nexus/base/IModuleManager.sol";
+import {
+    VALIDATION_SUCCESS,
+    VALIDATION_FAILED,
+    MODULE_TYPE_VALIDATOR,
+    ERC1271_SUCCESS,
+    ERC1271_FAILED
+} from "contracts/types/Constants.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
@@ -13,7 +19,14 @@ import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
 contract MockValidator_7739v2 is ERC7739Validator {
     mapping(address => address) public smartAccountOwners;
 
-    function validateUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external view returns (uint256 validation) {
+    function validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    )
+        external
+        view
+        returns (uint256 validation)
+    {
         address owner = smartAccountOwners[msg.sender];
         return _validateSignatureForOwner(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
@@ -22,21 +35,46 @@ contract MockValidator_7739v2 is ERC7739Validator {
         address sender,
         bytes32 hash,
         bytes calldata signature
-    ) external view virtual returns (bytes4) {
+    )
+        external
+        view
+        virtual
+        returns (bytes4)
+    {
         return 0x77390002;
     }
 
     // ISessionValidator interface for smart session
-    function validateSignatureWithData(bytes32 hash, bytes calldata sig, bytes calldata data) external view returns (bool validSig) {
+    function validateSignatureWithData(
+        bytes32 hash,
+        bytes calldata sig,
+        bytes calldata data
+    )
+        external
+        view
+        returns (bool validSig)
+    {
         address owner = address(bytes20(data[0:20]));
         return _validateSignatureForOwner(owner, hash, sig);
     }
 
-    function _validateSignatureForOwner(address owner, bytes32 hash, bytes calldata signature) internal view returns (bool) {
+    function _validateSignatureForOwner(
+        address owner,
+        bytes32 hash,
+        bytes calldata signature
+    )
+        internal
+        view
+        returns (bool)
+    {
         if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature)) {
             return true;
         }
-        if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, MessageHashUtils.toEthSignedMessageHash(hash), signature)) {
+        if (
+            SignatureCheckerLib.isValidSignatureNowCalldata(
+                owner, MessageHashUtils.toEthSignedMessageHash(hash), signature
+            )
+        ) {
             return true;
         }
         return false;
@@ -46,7 +84,15 @@ contract MockValidator_7739v2 is ERC7739Validator {
     ///      Obtains the authorized signer's credentials and calls some
     ///      module's specific internal function to validate the signature
     ///      against credentials.
-    function _erc1271IsValidSignatureNowCalldata(bytes32 hash, bytes calldata signature) internal view override returns (bool) {
+    function _erc1271IsValidSignatureNowCalldata(
+        bytes32 hash,
+        bytes calldata signature
+    )
+        internal
+        view
+        override
+        returns (bool)
+    {
         // obtain credentials
         address owner = smartAccountOwners[msg.sender];
 
@@ -62,18 +108,26 @@ contract MockValidator_7739v2 is ERC7739Validator {
     // msg.sender = Smart Account
     // sender = 1271 og request sender
     function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool) {
-        return (sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c || // MulticallerWithSigner
-            sender == msg.sender);
+        return (
+            sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
+                || sender == msg.sender
+        );
     }
 
     function onInstall(bytes calldata data) external {
-        require(IModuleManager(msg.sender).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(this), ""), "Validator is still installed");
+        require(
+            IModuleManager(msg.sender).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(this), ""),
+            "Validator is still installed"
+        );
         smartAccountOwners[msg.sender] = address(bytes20(data));
     }
 
     function onUninstall(bytes calldata data) external {
         data;
-        require(!IModuleManager(msg.sender).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(this), ""), "Validator is still installed");
+        require(
+            !IModuleManager(msg.sender).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(this), ""),
+            "Validator is still installed"
+        );
         delete smartAccountOwners[msg.sender];
     }
 

@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { IPreValidationHookERC1271 } from "../interfaces/modules/IPreValidationHook.sol";
-import { MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 } from "../types/Constants.sol";
+import { IPreValidationHookERC1271 } from "erc7579/interfaces/IERC7579Module.sol";
+import {
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+} from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
@@ -30,7 +32,15 @@ contract Mock7739PreValidationHook is IPreValidationHookERC1271 {
         return forwarder == prevalidationHookMultiplexer;
     }
 
-    function preValidationHookERC1271(address, bytes32 hash, bytes calldata data) external view returns (bytes32 hookHash, bytes memory hookSignature) {
+    function preValidationHookERC1271(
+        address,
+        bytes32 hash,
+        bytes calldata data
+    )
+        external
+        view
+        returns (bytes32 hookHash, bytes memory hookSignature)
+    {
         address account = _msgSender();
         // Check flag in first byte
         if (data[0] == 0x00) {
@@ -39,7 +49,16 @@ contract Mock7739PreValidationHook is IPreValidationHookERC1271 {
         return (hash, data[1:]);
     }
 
-    function wrapFor7739Validation(address account, bytes32 hash, bytes calldata signature) internal view virtual returns (bytes32, bytes calldata) {
+    function wrapFor7739Validation(
+        address account,
+        bytes32 hash,
+        bytes calldata signature
+    )
+        internal
+        view
+        virtual
+        returns (bytes32, bytes calldata)
+    {
         bytes32 t = _typedDataSignFieldsForAccount(account);
         /// @solidity memory-safe-assembly
         assembly {
@@ -69,7 +88,9 @@ contract Mock7739PreValidationHook is IPreValidationHookERC1271 {
                 // `d & 1 == 1` means that `contentsName` is invalid.
                 let d := shr(byte(0, mload(p)), 0x7fffffe000000000000010000000000) // Starts with `[a-z(]`.
                 // Store the end sentinel '(', and advance `p` until we encounter a '(' byte.
-                for { mstore(add(p, c), 40) } iszero(eq(byte(0, mload(p)), 40)) { p := add(p, 1) } { d := or(shr(byte(0, mload(p)), 0x120100000001), d) } // Has
+                for { mstore(add(p, c), 40) } iszero(eq(byte(0, mload(p)), 40)) { p := add(p, 1) } {
+                    d := or(shr(byte(0, mload(p)), 0x120100000001), d)
+                } // Has
                 // a byte in ", )\x00".
 
                 mstore(p, " contents,bytes1 fields,string n") // Store the rest of the encoding.
@@ -115,8 +136,15 @@ contract Mock7739PreValidationHook is IPreValidationHookERC1271 {
 
     /// @dev For use in `_erc1271IsValidSignatureViaNestedEIP712`,
     function _typedDataSignFieldsForAccount(address account) private view returns (bytes32 m) {
-        (bytes1 fields, string memory name, string memory version, uint256 chainId, address verifyingContract, bytes32 salt, uint256[] memory extensions) =
-            EIP712(account).eip712Domain();
+        (
+            bytes1 fields,
+            string memory name,
+            string memory version,
+            uint256 chainId,
+            address verifyingContract,
+            bytes32 salt,
+            uint256[] memory extensions
+        ) = EIP712(account).eip712Domain();
         /// @solidity memory-safe-assembly
         assembly {
             m := mload(0x40) // Grab the free memory pointer.
@@ -173,7 +201,8 @@ contract Mock7739PreValidationHook is IPreValidationHookERC1271 {
     function onUninstall(bytes calldata data) external override { }
 
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
-        return moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337;
+        return moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
+            || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337;
     }
 
     function isInitialized(address) external pure returns (bool) {
