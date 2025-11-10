@@ -524,7 +524,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             res := gt(extcodesize(newImplementation), 0)
         }
         require(res, InvalidImplementationAddress());
-        // update the address() storage slot as well.
+        // update the address() storage slot as well
+        // This is needed in case the og proxy is Nexus v2 proxy which
+        // reads the implementation from the slot defined by its address
         assembly {
             sstore(address(), newImplementation)
         }

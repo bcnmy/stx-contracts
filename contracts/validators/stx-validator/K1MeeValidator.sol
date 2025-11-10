@@ -216,7 +216,10 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
         override
         returns (bytes4 sigValidationResult)
     {
-        if (bytes3(signature[0:3]) != SIG_TYPE_MEE_FLOW) {
+        if (
+            signature.length == 0 // for erc7739 detection
+                || bytes3(signature[0:3]) != SIG_TYPE_MEE_FLOW // non-mee flow
+        ) {
             // Non MEE flow => uses 7739
             // goes to ERC7739Validator to apply 7739 magic and then returns back
             // to this contract's _erc1271IsValidSignatureNowCalldata() method.
