@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "../utils/Imports.sol";
-import "../utils/NexusTest_Base.t.sol";
+import "../util/Imports.sol";
+import "../NexusTestBase.t.sol";
 
 event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
 
 /// @title Base Contract for Account Execution Tests
 /// @notice Provides shared setup and utility functions for account execution tests
-abstract contract TestAccountExecution_Base is NexusTest_Base {
+abstract contract TestAccountExecution_Base is NexusTestBase {
     ExecutionMode public singleMode;
     ExecutionMode public batchMode;
     ExecutionMode public unsupportedMode;

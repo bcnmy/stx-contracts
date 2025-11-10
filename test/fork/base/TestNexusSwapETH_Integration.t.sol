@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import "./BaseSettings.t.sol";
-import "../../utils/Imports.sol";
+import "../../util/Imports.sol";
 import "../../shared/interfaces/IERC20.t.sol";
 import "../../shared/interfaces/IUniswapV2Router02.t.sol";
 
@@ -47,11 +47,11 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         vm.deal(swapper, 100 ether);
 
         // Initialize Nexus
-        startPrank(swapper);
+        vm.startPrank(swapper);
         paymaster = new MockPaymaster(address(ENTRYPOINT), BUNDLER_ADDRESS);
         ENTRYPOINT.depositTo{ value: 2 ether }(address(paymaster));
         paymaster.addStake{ value: 2 ether }(10 days);
-        stopPrank();
+        vm.stopPrank();
         // vm.deal(address(paymaster), 100 ether);
         preComputedAddress = payable(calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
 
@@ -69,7 +69,9 @@ contract TestNexusSwapETH_Integration is BaseSettings {
             "41::UniswapV2::swapExactETHForTokens::EOA::ETHtoUSDC::N/A",
             address(uniswapV2Router),
             SWAP_AMOUNT,
-            abi.encodeWithSignature("swapExactETHForTokens(uint256,address[],address,uint256)", 0, path, swapper, block.timestamp)
+            abi.encodeWithSignature(
+                "swapExactETHForTokens(uint256,address[],address,uint256)", 0, path, swapper, block.timestamp
+            )
         );
 
         vm.stopPrank();
@@ -91,7 +93,8 @@ contract TestNexusSwapETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         measureAndLogGas("42::UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A", userOps);
     }
@@ -158,12 +161,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         );
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
+            user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
 
         userOps[0].initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
@@ -196,12 +194,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
 
         // Build user operation with initCode and callData
         PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
+            user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
         userOps[0].initCode = initCode;
         // Sign the user operation

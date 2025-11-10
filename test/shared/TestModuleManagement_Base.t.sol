@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "../utils/Imports.sol";
-import "../utils/NexusTest_Base.t.sol";
+import "../util/Imports.sol";
+import "../NexusTestBase.t.sol";
 
 /// @title Base Test Contract for Module Management
 /// @notice Contains setup and shared functions for testing module management
-abstract contract TestModuleManagement_Base is NexusTest_Base {
+abstract contract TestModuleManagement_Base is NexusTestBase {
     MockValidator public mockValidator;
     MockExecutor public mockExecutor;
     MockHandler public mockHandler;
@@ -35,11 +35,19 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
     /// @param moduleTypeId The type ID of the module
     /// @param moduleAddress The address of the module
     /// @param execType The execution type for the operation
-    function installModule(bytes memory callData, uint256 moduleTypeId, address moduleAddress, ExecType execType) internal {
+    function installModule(
+        bytes memory callData,
+        uint256 moduleTypeId,
+        address moduleAddress,
+        ExecType execType
+    )
+        internal
+    {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE), 0);
 
         vm.expectEmit(true, true, true, true);
         emit ModuleInstalled(moduleTypeId, moduleAddress);
@@ -54,7 +62,8 @@ abstract contract TestModuleManagement_Base is NexusTest_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }

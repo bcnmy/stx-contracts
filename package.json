@@ -8,7 +8,7 @@
     "url": "https://github.com/bcnmy"
   },
   "scripts": {
-    "test": "forge test --isolate",
+    "test": "forge test --match-contract 'PercentagePremium_Paymaster_Test' --isolate && forge test --no-match-contract 'PercentagePremium_Paymaster_Test'",
     "lint:prod": "solhint 'contracts/**/*.sol'",
     "lint:prod:strict": "solhint 'contracts/**/*.sol' --max-warnings 0",
     "lint:both": "forge lint --force contracts/ --severity high --severity gas --severity med && solhint 'contracts/**/*.sol' 'test/**/*.sol'",

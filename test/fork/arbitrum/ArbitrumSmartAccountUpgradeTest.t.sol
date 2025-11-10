@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "../../utils/Imports.sol";
+import "../../util/Imports.sol";
 import { ArbitrumSettings } from "./ArbitrumSettings.t.sol";
-import { NexusTest_Base } from "../../utils/NexusTest_Base.t.sol";
+import { NexusTestBase } from "../../NexusTestBase.t.sol";
 import { UserOperation } from "../../shared/interfaces/UserOperation.t.sol";
 import { IEntryPointV_0_6 } from "../../shared/interfaces/IEntryPointV_0_6.t.sol";
 import { IBiconomySmartAccountV2 } from "../../shared/interfaces/IBiconomySmartAccountV2.t.sol";
 
 /// @title ArbitrumSmartAccountUpgradeTest
 /// @notice Tests the upgrade process from Biconomy Smart Account V2 to Nexus and validates the upgrade process.
-contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
+contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
     Vm.Wallet internal signer;
     Nexus public newImplementation;
     uint256 internal signerPrivateKey;
@@ -28,7 +28,8 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         smartAccountV2 = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS);
         ENTRYPOINT_V_0_6 = IEntryPointV_0_6(ENTRYPOINT_ADDRESS);
         ENTRYPOINT_V_0_7 = ENTRYPOINT;
-        newImplementation = new Nexus(_ENTRYPOINT, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
+        newImplementation =
+            new Nexus(_ENTRYPOINT, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
         // /!\ The private key is for testing purposes only and should not be used in production.
         signerPrivateKey = 0x2924d554c046e633f658427df4d0e7726487b1322bd16caaf24a53099f1cda85;
         signer = vm.createWallet(signerPrivateKey);
@@ -53,11 +54,17 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
     /// @notice Validates the Account implementation address after the upgrade process.
     function test_AccountImplementationAddress() public {
         address beforeUpgradeImplementation = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS).getImplementation();
-        assertNotEq(beforeUpgradeImplementation, address(newImplementation), "Implementation address does not match before upgrade.");
+        assertNotEq(
+            beforeUpgradeImplementation,
+            address(newImplementation),
+            "Implementation address does not match before upgrade."
+        );
         test_UpgradeV2ToV3AndInitialize();
         address afterUpgradeImplementation = Nexus(payable(SMART_ACCOUNT_V2_ADDRESS)).getImplementation();
         address expectedImplementation = address(newImplementation);
-        assertEq(afterUpgradeImplementation, expectedImplementation, "Implementation address does not match after upgrade.");
+        assertEq(
+            afterUpgradeImplementation, expectedImplementation, "Implementation address does not match after upgrade."
+        );
     }
 
     /// @notice Tests USDC transfer functionality after the upgrade.
@@ -69,8 +76,14 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         bytes memory callData = abi.encodeWithSelector(usdc.transfer.selector, recipient, amount);
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(usdc), 0, callData);
-        PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, Nexus(payable(address(SMART_ACCOUNT_V2_ADDRESS))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+            BOB,
+            Nexus(payable(address(SMART_ACCOUNT_V2_ADDRESS))),
+            EXECTYPE_DEFAULT,
+            execution,
+            address(VALIDATOR_MODULE),
+            0
+        );
         ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
         assertEq(usdc.balanceOf(recipient), amount, "USDC transfer failed");
     }
@@ -83,8 +96,9 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         vm.deal(address(smartAccountV2), amount + 1 ether);
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(recipient, amount, "");
-        PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, Nexus(payable(address(smartAccountV2))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+            BOB, Nexus(payable(address(smartAccountV2))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0
+        );
         ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
         assertEq(address(recipient).balance, amount, "ETH transfer failed");
     }
@@ -112,26 +126,20 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTest_Base, ArbitrumSettings {
         values[0] = 0;
         calldatas[0] = abi.encodeWithSelector(IBiconomySmartAccountV2.updateImplementation.selector, newImplementation);
 
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), abi.encodePacked(BOB.addr));
+        BootstrapConfig[] memory validators =
+            BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), abi.encodePacked(BOB.addr));
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
 
         // Create initcode and salt to be sent to Factory
-        bytes memory _initData = abi.encode(
-            address(BOOTSTRAPPER),
-            abi.encodeCall(
-                BOOTSTRAPPER.initNexusScoped,
-                (
-                    validators,
-                    hook
-                )
-            )
-        );
+        bytes memory _initData =
+            abi.encode(address(BOOTSTRAPPER), abi.encodeCall(BOOTSTRAPPER.initNexusScoped, (validators, hook)));
 
         dest[1] = address(smartAccountV2);
         values[1] = 0;
         calldatas[1] = abi.encodeWithSelector(Nexus.initializeAccount.selector, _initData);
 
-        bytes memory batchCallData = abi.encodeWithSelector(IBiconomySmartAccountV2.executeBatch.selector, dest, values, calldatas);
+        bytes memory batchCallData =
+            abi.encodeWithSelector(IBiconomySmartAccountV2.executeBatch.selector, dest, values, calldatas);
 
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = buildUserOperation(address(smartAccountV2), batchCallData);
