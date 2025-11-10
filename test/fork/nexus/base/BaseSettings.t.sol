@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "../../NexusTestBase.t.sol";
+import "../../../NexusTestBase.t.sol";
 
 /// @title BaseSettings
 /// @notice This contract sets up the constants required for Base fork tests

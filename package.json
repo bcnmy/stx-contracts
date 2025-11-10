@@ -8,7 +8,12 @@
     "url": "https://github.com/bcnmy"
   },
   "scripts": {
-    "test": "forge test --match-contract 'PercentagePremium_Paymaster_Test' --isolate && forge test --no-match-contract 'PercentagePremium_Paymaster_Test'",
+    "test": "forge test --match-path 'test/unit/node-paymaster/**' --isolate && forge test --no-match-path 'test/unit/node-paymaster/**'",
+    "test:nexus": "forge test --match-path 'test/*/nexus/**'",
+    "test:fork": "forge test --match-path 'test/fork/**'",
+    "test:node-paymaster": "forge test --match-path 'test/*/node-paymaster/**' --isolate",
+    "test:mee-k1-validator": "forge test --match-path 'test/*/mee-k1-validator/**'",
+    "test:composability": "forge test --match-path 'test/*/composability/**'",
     "lint:prod": "solhint 'contracts/**/*.sol'",
     "lint:prod:strict": "solhint 'contracts/**/*.sol' --max-warnings 0",
     "lint:both": "forge lint --force contracts/ --severity high --severity gas --severity med && solhint 'contracts/**/*.sol' 'test/**/*.sol'",

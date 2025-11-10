@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { NexusTestBase } from "../../NexusTestBase.t.sol";
+import { NexusTestBase } from "../../../NexusTestBase.t.sol";
 
 /// @title ArbitrumSettings
 /// @notice This contract sets up the constants required for Arbitrum fork tests

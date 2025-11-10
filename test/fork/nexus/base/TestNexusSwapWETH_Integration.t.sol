@@ -2,9 +2,9 @@
 pragma solidity ^0.8.27;
 
 import "./BaseSettings.t.sol";
-import "../../util/Imports.sol";
-import "../../shared/interfaces/IERC20.t.sol";
-import "../../shared/interfaces/IUniswapV2Router02.t.sol";
+import "../../../util/Imports.sol";
+import "../../../shared/interfaces/IERC20.t.sol";
+import "../../../shared/interfaces/IUniswapV2Router02.t.sol";
 
 /// @title TestNexusSwapWETH_Integration
 /// @notice Tests Nexus smart account functionalities with Uniswap V2 swaps using WETH
