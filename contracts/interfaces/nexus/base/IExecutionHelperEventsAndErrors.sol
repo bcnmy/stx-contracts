@@ -14,7 +14,8 @@ pragma solidity ^0.8.27;
 
 /// @title Execution Manager Events and Errors Interface
 /// @notice Interface for defining events and errors related to transaction execution processes within smart accounts.
-/// @dev This interface defines events and errors used by execution manager to handle and report the operational status of
+/// @dev This interface defines events and errors used by execution manager to handle and report the operational status
+/// of
 /// smart account transactions.
 /// It is a part of the Nexus suite of contracts aimed at implementing flexible and secure smart account operations.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io

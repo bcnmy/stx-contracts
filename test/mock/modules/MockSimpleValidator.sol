@@ -16,7 +16,15 @@ contract MockSimpleValidator is IValidator {
         return verify(owner, userOpHash, userOp.signature) ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
-    function isValidSignatureWithSender(address, bytes32 hash, bytes calldata signature) external view returns (bytes4) {
+    function isValidSignatureWithSender(
+        address,
+        bytes32 hash,
+        bytes calldata signature
+    )
+        external
+        view
+        returns (bytes4)
+    {
         address owner = smartAccountOwners[msg.sender];
         return verify(owner, hash, signature) ? bytes4(0x1626ba7e) : bytes4(0xffffffff);
     }

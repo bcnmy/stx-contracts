@@ -134,7 +134,8 @@ contract ExecutionHelper is IExecutionHelperEventsAndErrors {
 
     /// @notice Executes a batch of calls.
     /// @param executions An array of Execution structs each containing target, value, and calldata.
-    /// @return result An array of bytes returned from each executed call, corresponding to the returndata from each target
+    /// @return result An array of bytes returned from each executed call, corresponding to the returndata from each
+    /// target
     /// address.
     function _executeBatch(Execution[] calldata executions) internal returns (bytes[] memory result) {
         result = new bytes[](executions.length);

@@ -213,7 +213,8 @@ contract MeeK1Validator_Base_Test is BaseTest {
         bytes32[] memory itemHashes = new bytes32[](userOps.length);
         for (uint256 i; i < userOps.length; ++i) {
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[i]);
-            itemHashes[i] = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+            itemHashes[i] =
+                MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
         }
         return itemHashes;
     }
@@ -244,7 +245,8 @@ contract MeeK1Validator_Base_Test is BaseTest {
      * @dev Format: SuperTx(Type1 entry1,Type2 entry2,...TypeN entryN)‖Type1Definition‖Type2Definition‖...
      * @param entryTypeNames Array of entry type names in order (e.g., ["MeeUserOp", "EntryTypeA", "MeeUserOp"])
      * @param meeUserOpDefinition The MeeUserOp type definition string
-     * @param otherTypeDefinitions Array of other type definitions (e.g., EntryTypeA, EntryTypeB, EntryTypeC definitions)
+     * @param otherTypeDefinitions Array of other type definitions (e.g., EntryTypeA, EntryTypeB, EntryTypeC
+     * definitions)
      * @return dynamicStructDefinition The complete EIP-712 struct definition string
      */
     function _buildDynamicStxStructDefinition(

@@ -224,7 +224,8 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         // deposit decrease = refund to sponsor (if any) + gas cost refund to beneficiary (EXECUTOR_EOA) =>
         actualRefund = (nodePMDepositBefore - getDeposit(address(EMITTING_NODE_PAYMASTER))) - actualGasCostFromEP;
 
-        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by executor
+        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by
+        // executor
         // EOA)
         meeNodeEarnings = (maxGasCost + _premium) - (actualRefund + gasSpentByExecutorEOA * actualGasPrice);
 

@@ -83,7 +83,9 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
 
         // Expect revert due to insufficient unlocked ETH
         vm.expectRevert(
-            abi.encodeWithSelector(MockResourceLockPreValidationHook.InsufficientUnlockedETH.selector, missingAccountFunds)
+            abi.encodeWithSelector(
+                MockResourceLockPreValidationHook.InsufficientUnlockedETH.selector, missingAccountFunds
+            )
         );
 
         // Attempt to validate the user operation

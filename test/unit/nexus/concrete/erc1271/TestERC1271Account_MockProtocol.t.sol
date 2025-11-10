@@ -5,7 +5,8 @@ import "../../../../util/Imports.sol";
 import "../../../../NexusTestBase.t.sol";
 import { TokenWithPermit } from "test/mock/tokens/TokenWithPermit.sol";
 import {
-    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
 } from "contracts/types/Constants.sol";
 import { MockPreValidationHook } from "test/mock/modules/MockPreValidationHook.sol";
 import { K1MeeValidator } from "contracts/validators/stx-validator/K1MeeValidator.sol";
@@ -200,7 +201,10 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
     function installPrevalidationHook(Nexus account, Vm.Wallet memory user) internal {
         // Prepare call data for installing the validator module
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+            address(preValidationHook),
+            ""
         );
 
         // Prepare execution array

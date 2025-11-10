@@ -18,8 +18,9 @@ contract TestFuzz_ExecuteFromExecutor is NexusTestBase {
         token = new MockToken("Test Token", "TST");
 
         // Install MockExecutor as an executor module on BOB_ACCOUNT
-        bytes memory installExecModuleData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), "");
+        bytes memory installExecModuleData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), ""
+        );
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: installExecModuleData });

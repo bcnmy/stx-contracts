@@ -177,7 +177,14 @@ contract TestHelper is Test, EventsAndErrors {
     /// @param owner The address of the owner
     /// @param validator The address of the validator
     /// @return account The calculated account address
-    function calculateAccountAddress(address owner, address validator) internal view returns (address payable account) {
+    function calculateAccountAddress(
+        address owner,
+        address validator
+    )
+        internal
+        view
+        returns (address payable account)
+    {
         bytes memory moduleInstallData = abi.encodePacked(owner);
 
         BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(validator, moduleInstallData);
@@ -299,7 +306,14 @@ contract TestHelper is Test, EventsAndErrors {
     /// @param wallet The wallet to sign the operation
     /// @param userOp The user operation to sign
     /// @return The signed user operation
-    function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal view returns (bytes memory) {
+    function signUserOp(
+        Vm.Wallet memory wallet,
+        PackedUserOperation memory userOp
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         bytes32 opHash = ENTRYPOINT.getUserOpHash(userOp);
         return signMessage(wallet, opHash);
     }

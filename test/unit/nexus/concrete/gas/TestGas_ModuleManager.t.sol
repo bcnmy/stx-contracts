@@ -28,8 +28,9 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
     }
 
     function test_Gas_InstallExecutorModule() public {
-        bytes memory callData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), "");
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), ""
+        );
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -112,8 +113,9 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
 
     function test_Gas_UninstallExecutorModule() public {
         // Install module first
-        bytes memory installCallData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), "");
+        bytes memory installCallData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), ""
+        );
         Execution[] memory installExecution = new Execution[](1);
         installExecution[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
         PackedUserOperation[] memory installUserOps =

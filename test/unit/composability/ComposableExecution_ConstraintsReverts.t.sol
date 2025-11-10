@@ -218,7 +218,8 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.RAW_BYTES,
             paramData: abi.encode(40),
-            //constraints: abi.encodePacked(ConstraintType.IN, abi.encode(bytes32(uint256(41)), bytes32(uint256(43)))) //
+            //constraints: abi.encodePacked(ConstraintType.IN, abi.encode(bytes32(uint256(41)), bytes32(uint256(43))))
+            // //
             // value must be between 41 & 43
             constraints: constraints
         });
@@ -231,7 +232,8 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.RAW_BYTES,
             paramData: abi.encode(44),
-            //constraints: abi.encodePacked(ConstraintType.IN, abi.encode(bytes32(uint256(41)), bytes32(uint256(43)))) //
+            //constraints: abi.encodePacked(ConstraintType.IN, abi.encode(bytes32(uint256(41)), bytes32(uint256(43))))
+            // //
             // value must be between 41 & 43
             constraints: constraints
         });
@@ -244,7 +246,8 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.RAW_BYTES,
             paramData: abi.encode(42),
-            //constraints: abi.encodePacked(ConstraintType.IN, abi.encode(bytes32(uint256(41)), bytes32(uint256(43)))) //
+            //constraints: abi.encodePacked(ConstraintType.IN, abi.encode(bytes32(uint256(41)), bytes32(uint256(43))))
+            // //
             // value must be between 41 & 43
             constraints: constraints
         });
@@ -253,7 +256,8 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
 
         OutputParam[] memory outputParams = new OutputParam[](0);
 
-        // Call empty function and it should revert because dynamic param value doesnt meet constraints (value below lower
+        // Call empty function and it should revert because dynamic param value doesnt meet constraints (value below
+        // lower
         // bound)
         ComposableExecution[] memory failingExecutionsA = new ComposableExecution[](1);
         failingExecutionsA[0] = ComposableExecution({
@@ -274,7 +278,8 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
         vm.expectRevert(expectedRevertReason);
         IComposableExecution(address(account)).executeComposable(failingExecutionsA);
 
-        // Call empty function and it should revert because dynamic param value doesnt meet constraints (value below lower
+        // Call empty function and it should revert because dynamic param value doesnt meet constraints (value below
+        // lower
         // bound)
         ComposableExecution[] memory failingExecutionsB = new ComposableExecution[](1);
         failingExecutionsB[0] = ComposableExecution({
@@ -307,7 +312,8 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
 
     function _inputParamUsingEqConstraints(address account, address caller) internal {
         Constraint[] memory constraints = new Constraint[](1);
-        constraints[0] = Constraint({ constraintType: ConstraintType.EQ, referenceData: abi.encode(bytes32(uint256(42))) });
+        constraints[0] =
+            Constraint({ constraintType: ConstraintType.EQ, referenceData: abi.encode(bytes32(uint256(42))) });
 
         vm.startPrank(ENTRYPOINT_V07_ADDRESS);
 

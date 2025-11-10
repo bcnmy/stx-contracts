@@ -5,7 +5,8 @@ pragma solidity ^0.8.27;
 bytes32 constant INIT_SLOT = 0x90b772c2cb8a51aa7a8a65fc23543c6d022d5b3f8e2b92eed79fba7eef829300;
 
 /// @title Initializable
-/// @dev This library provides a way to set a transient flag on a contract to ensure that it is only initialized during the
+/// @dev This library provides a way to set a transient flag on a contract to ensure that it is only initialized during
+/// the
 /// constructor execution. This is useful to prevent a contract from being initialized multiple times.
 library Initializable {
     /// @dev Thrown when an attempt to initialize an already initialized contract is made

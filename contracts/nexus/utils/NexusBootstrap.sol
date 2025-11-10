@@ -15,7 +15,10 @@ pragma solidity ^0.8.27;
 import { ModuleManager } from "../base/ModuleManager.sol";
 import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
 import {
-    MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_FALLBACK, MODULE_TYPE_HOOK
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_HOOK
 } from "../../types/Constants.sol";
 
 /// @title NexusBootstrap Configuration for Nexus
@@ -139,7 +142,14 @@ contract NexusBootstrap is ModuleManager {
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validator The address of the validator module. Should not be the default validator.
     /// @param data The initialization data for the validator module.
-    function initNexusWithSingleValidator(address validator, bytes calldata data) public payable _withInitSentinelLists {
+    function initNexusWithSingleValidator(
+        address validator,
+        bytes calldata data
+    )
+        public
+        payable
+        _withInitSentinelLists
+    {
         _installValidator(validator, data);
         emit ModuleInstalled(MODULE_TYPE_VALIDATOR, validator);
     }
@@ -270,7 +280,15 @@ contract NexusBootstrap is ModuleManager {
         // do nothing
     }
 
-    function uninstallModule(uint256 moduleTypeId, address module, bytes calldata deInitData) external payable override {
+    function uninstallModule(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata deInitData
+    )
+        external
+        payable
+        override
+    {
         // do nothing
     }
 

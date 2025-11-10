@@ -61,7 +61,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     using ECDSA for bytes32;
 
     /// @dev The default validator address.
-    /// @notice To explicitly initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should be
+    /// @notice To explicitly initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should
+    /// be
     /// called.
     address internal immutable _DEFAULT_VALIDATOR;
 
@@ -371,7 +372,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
         );
     }
 
-    /// @dev Installs a pre-validation hook module, ensuring no other pre-validation hooks are installed before proceeding.
+    /// @dev Installs a pre-validation hook module, ensuring no other pre-validation hooks are installed before
+    /// proceeding.
     /// @param preValidationHookType The type of the pre-validation hook.
     /// @param preValidationHook The address of the pre-validation hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
@@ -499,7 +501,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
         }
         // Otherwise, call the pre-validation hook and return the updated hash and signature
         else {
-            return IPreValidationHookERC4337(preValidationHook).preValidationHookERC4337(userOp, missingAccountFunds, hash);
+            return
+                IPreValidationHookERC4337(preValidationHook).preValidationHookERC4337(userOp, missingAccountFunds, hash);
         }
     }
 
@@ -560,7 +563,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     }
 
     /// @notice Builds the emergency uninstall data hash as per eip712
-    /// @param hookType Type of the hook (4 for Hook, 8 for ERC-1271 Prevalidation Hook, 9 for ERC-4337 Prevalidation Hook)
+    /// @param hookType Type of the hook (4 for Hook, 8 for ERC-1271 Prevalidation Hook, 9 for ERC-4337 Prevalidation
+    /// Hook)
     /// @param hook address of the hook being uninstalled
     /// @param data De-initialization data to configure the hook upon uninstallation.
     /// @param nonce Unique nonce for the operation
@@ -575,7 +579,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
         view
         returns (bytes32)
     {
-        return _hashTypedData(keccak256(abi.encode(EMERGENCY_UNINSTALL_TYPE_HASH, hook, hookType, keccak256(data), nonce)));
+        return
+            _hashTypedData(keccak256(abi.encode(EMERGENCY_UNINSTALL_TYPE_HASH, hook, hookType, keccak256(data), nonce)));
     }
 
     /// @notice Checks if a module is installed on the smart account.

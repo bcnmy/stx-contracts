@@ -21,7 +21,8 @@ import { CallType } from "../../../lib/erc-7579/ModeLib.sol";
 /// ERC-4337.
 /// @dev Manages structured storage using SentinelListLib for validators and executors, and a mapping for fallback
 /// handlers.
-/// This interface utilizes ERC-7201 storage location practices to ensure isolated and collision-resistant storage spaces
+/// This interface utilizes ERC-7201 storage location practices to ensure isolated and collision-resistant storage
+/// spaces
 /// within smart contracts.
 /// It is designed to support dynamic execution and modular management strategies essential for advanced smart account
 /// architectures.

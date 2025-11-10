@@ -117,13 +117,16 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTestBase {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         uint256 depositAfter = BOB_ACCOUNT.getDeposit();
-        assertApproxEqAbs(depositAfter, depositBefore - 0.5 ether, 0.0001 ether, "Deposit should be reduced by 0.5 ether");
+        assertApproxEqAbs(
+            depositAfter, depositBefore - 0.5 ether, 0.0001 ether, "Deposit should be reduced by 0.5 ether"
+        );
     }
 
     /// @notice Tests installation of a module from the EntryPoint via user operations.
     function test_InstallModuleWithUserOpsFromEntryPoint_Success() public {
         Execution[] memory executions = new Execution[](1);
-        bytes memory callData = abi.encodeWithSelector(BOB_ACCOUNT.installModule.selector, 2, address(EXECUTOR_MODULE), "");
+        bytes memory callData =
+            abi.encodeWithSelector(BOB_ACCOUNT.installModule.selector, 2, address(EXECUTOR_MODULE), "");
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =

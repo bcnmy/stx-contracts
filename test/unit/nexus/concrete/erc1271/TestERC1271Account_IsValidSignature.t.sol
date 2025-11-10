@@ -55,7 +55,8 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, hashToSign);
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
         assertEq(
-            ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(validator), signature)), bytes4(0x1626ba7e)
+            ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(validator), signature)),
+            bytes4(0x1626ba7e)
         );
     }
 

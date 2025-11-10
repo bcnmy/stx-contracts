@@ -32,7 +32,8 @@ contract TestAccountConfig_SupportsExecutionMode is NexusTestBase {
             CALLTYPE_SINGLE, ExecType.wrap(0x10), ModeSelector.wrap(0x00000000), ModePayload.wrap(bytes22(0x00))
         );
         assertFalse(
-            accountConfig.supportsExecutionMode(unsupportedMode), "AccountConfig should not support this execution mode."
+            accountConfig.supportsExecutionMode(unsupportedMode),
+            "AccountConfig should not support this execution mode."
         );
     }
 }

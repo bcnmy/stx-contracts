@@ -17,7 +17,8 @@ import { IStorage } from "../../interfaces/nexus/base/IStorage.sol";
 /// @title Nexus - Storage
 /// @notice Manages isolated storage spaces for Modular Smart Account in compliance with ERC-7201 standard to ensure
 /// collision-resistant storage.
-/// @dev Implements the ERC-7201 namespaced storage pattern to maintain secure and isolated storage sections for different
+/// @dev Implements the ERC-7201 namespaced storage pattern to maintain secure and isolated storage sections for
+/// different
 /// states within Nexus suite.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io

@@ -72,7 +72,9 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         PackedUserOperation[] memory userOps =
             buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
-        assertEq(receiver.balance, valueToSend * numberOfExecutions, "Receiver should have received proper amount of ETH");
+        assertEq(
+            receiver.balance, valueToSend * numberOfExecutions, "Receiver should have received proper amount of ETH"
+        );
     }
 
     /// @notice Tests batch execution with token transfers
@@ -109,8 +111,9 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         );
 
         // Prepare UserOperation for approval
-        PackedUserOperation[] memory approvalUserOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory approvalUserOps = buildPackedUserOperation(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution, address(VALIDATOR_MODULE), 0
+        );
 
         // Execution for transferFrom
         Execution[] memory transferExecution = new Execution[](1);
@@ -133,7 +136,8 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         combinedUserOps[1] = transferUserOps[0];
 
         combinedUserOps[0].nonce = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
-        combinedUserOps[1].nonce = getNonce(address(ALICE_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
+        combinedUserOps[1].nonce =
+            getNonce(address(ALICE_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
 
         combinedUserOps[0].signature = signUserOp(BOB, combinedUserOps[0]);
         combinedUserOps[1].signature = signUserOp(ALICE, combinedUserOps[1]);

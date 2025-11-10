@@ -200,7 +200,8 @@ contract TestEIP7702 is NexusTestBase {
         Execution[] memory executions = new Execution[](2);
         executions[0] = Execution({ target: address(target), value: 0, callData: setValueOnTarget });
         executions[1] = Execution({ target: address(target), value: 0, callData: setValueOnTarget });
-        bytes[] memory ret = mockExecutor.executeBatchViaAccount({ account: INexus(address(account)), execs: executions });
+        bytes[] memory ret =
+            mockExecutor.executeBatchViaAccount({ account: INexus(address(account)), execs: executions });
 
         assertEq(ret.length, 2);
         assertEq(abi.decode(ret[0], (uint256)), 1338);

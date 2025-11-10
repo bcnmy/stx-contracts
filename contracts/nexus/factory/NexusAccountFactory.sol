@@ -58,7 +58,8 @@ contract NexusAccountFactory is Stakeable {
         return account;
     }
 
-    /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment algorithm.
+    /// @notice Computes the expected address of a Nexus contract using the factory's deterministic deployment
+    /// algorithm.
     /// @param initData - Initialization data to be called on the new Smart Account.
     /// @param salt - Unique salt for the Smart Account creation.
     /// @return expectedAddress The expected address at which the Nexus contract will be deployed if the provided

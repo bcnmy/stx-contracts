@@ -12,7 +12,9 @@ contract EventsAndErrors {
     event Deposited(address indexed account, uint256 totalDeposit);
     event ModuleInstalled(uint256 moduleTypeId, address module);
     event ModuleUninstalled(uint256 moduleTypeId, address module);
-    event UserOperationRevertReason(bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason);
+    event UserOperationRevertReason(
+        bytes32 indexed userOpHash, address indexed sender, uint256 nonce, bytes revertReason
+    );
     event PreCheckCalled();
     event PostCheckCalled();
     event TryExecuteUnsuccessful(bytes callData, bytes result);

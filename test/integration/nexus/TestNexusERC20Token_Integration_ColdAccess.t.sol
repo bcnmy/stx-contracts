@@ -93,7 +93,10 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTestBase {
 
     /// @notice Test deploying Nexus and transferring ERC20 tokens using deposited funds without a paymaster with cold
     /// access
-    function test_Gas_ERC20Token_DeployUsingDeposit_Transfer_Cold() public checkERC20TokenBalanceCold(recipient, amount) {
+    function test_Gas_ERC20Token_DeployUsingDeposit_Transfer_Cold()
+        public
+        checkERC20TokenBalanceCold(recipient, amount)
+    {
         uint256 depositAmount = 1 ether;
 
         // Add deposit to the precomputed address

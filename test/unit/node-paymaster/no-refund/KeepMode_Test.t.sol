@@ -64,7 +64,8 @@ contract KeepMode_Paymaster_Test is BaseTest {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // parse UserOperationEvent
-        (,, uint256 actualGasCostFromEP,) = abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
+        (,, uint256 actualGasCostFromEP,) =
+            abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
 
         assertEq(mockTarget.value(), valueToSet);
         // refund receiver balance is same as before

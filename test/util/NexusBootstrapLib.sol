@@ -15,7 +15,14 @@ library NexusBootstrapLib {
     /// @param module The address of the module.
     /// @param data The initialization data for the module.
     /// @return config A BootstrapConfig structure containing the module and its data.
-    function createSingleConfig(address module, bytes memory data) internal pure returns (BootstrapConfig memory config) {
+    function createSingleConfig(
+        address module,
+        bytes memory data
+    )
+        internal
+        pure
+        returns (BootstrapConfig memory config)
+    {
         config.module = module;
         config.data = data;
     }

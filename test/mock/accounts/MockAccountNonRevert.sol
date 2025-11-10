@@ -45,8 +45,11 @@ contract MockAccountNonRevert is ComposableExecutionBase, IAccount {
     }
 
     function isValidSignature(bytes32 hash, bytes calldata signature) external view returns (bytes4) {
-        return
-            IValidator(address(validator)).isValidSignatureWithSender({ sender: msg.sender, hash: hash, data: signature });
+        return IValidator(address(validator)).isValidSignatureWithSender({
+            sender: msg.sender,
+            hash: hash,
+            data: signature
+        });
     }
 
     function validateSignatureWithData(

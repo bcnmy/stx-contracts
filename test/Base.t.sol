@@ -164,7 +164,8 @@ contract BaseTest is Test {
             nonce: nonce,
             initCode: "",
             callData: "",
-            accountGasLimits: bytes32(abi.encodePacked(verificationGasLimit, callGasLimit)), // verification and call gas
+            accountGasLimits: bytes32(abi.encodePacked(verificationGasLimit, callGasLimit)), // verification and call
+                // gas
                 // limit
             preVerificationGas: preVerificationGasLimit, // Adjusted preVerificationGas
             gasFees: bytes32(abi.encodePacked(uint128(11e9), uint128(1e9))), // maxFeePerGas = 11gwei and
@@ -174,7 +175,14 @@ contract BaseTest is Test {
         });
     }
 
-    function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal view returns (bytes memory) {
+    function signUserOp(
+        Vm.Wallet memory wallet,
+        PackedUserOperation memory userOp
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         bytes32 opHash = ECDSA.toEthSignedMessageHash(_getUserOpHash(userOp));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, opHash);
         return abi.encodePacked(r, s, v);

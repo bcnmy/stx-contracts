@@ -35,7 +35,8 @@ import { IAccountExecute } from "account-abstraction/interfaces/IAccountExecute.
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 interface INexus is IAccountConfig, IExecutionHelper, IERC1271, IAccount, IAccountExecute, INexusEventsAndErrors {
     /// @notice Initializes the smart account with a validator and custom data.
-    /// @dev This method sets up the account for operation, linking it with a validator and initializing it with specific
+    /// @dev This method sets up the account for operation, linking it with a validator and initializing it with
+    /// specific
     /// data.
     /// Can be called directly or via a factory.
     /// @param initData Encoded data used for the account's configuration during initialization.

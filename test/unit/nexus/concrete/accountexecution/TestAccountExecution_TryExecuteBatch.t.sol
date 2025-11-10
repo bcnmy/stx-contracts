@@ -52,7 +52,9 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertEq(
-            counter.getNumber(), 2, "Counter should have been incremented even after revert operation in batch execution"
+            counter.getNumber(),
+            2,
+            "Counter should have been incremented even after revert operation in batch execution"
         );
     }
 
@@ -76,7 +78,9 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         BOB_ACCOUNT.execute(ModeLib.encodeTryBatch(), abi.encode(executions));
 
         assertEq(
-            counter.getNumber(), 2, "Counter should have been incremented even after revert operation in batch execution"
+            counter.getNumber(),
+            2,
+            "Counter should have been incremented even after revert operation in batch execution"
         );
     }
 
@@ -191,8 +195,9 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         );
 
         // Prepare UserOperation for transferFrom
-        PackedUserOperation[] memory transferUserOps =
-            buildPackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_TRY, transferExecution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory transferUserOps = buildPackedUserOperation(
+            ALICE, ALICE_ACCOUNT, EXECTYPE_TRY, transferExecution, address(VALIDATOR_MODULE), 0
+        );
 
         // Combine both user operations into a single array for the EntryPoint to handle
         PackedUserOperation[] memory combinedUserOps = new PackedUserOperation[](2);
@@ -200,7 +205,8 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         combinedUserOps[1] = transferUserOps[0];
 
         combinedUserOps[0].nonce = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
-        combinedUserOps[1].nonce = getNonce(address(ALICE_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
+        combinedUserOps[1].nonce =
+            getNonce(address(ALICE_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
 
         combinedUserOps[0].signature = signUserOp(BOB, combinedUserOps[0]);
         combinedUserOps[1].signature = signUserOp(ALICE, combinedUserOps[1]);

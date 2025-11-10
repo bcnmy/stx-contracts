@@ -33,7 +33,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Check if the module is installed
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed"
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
+            "Module should be installed"
         );
     }
 
@@ -74,7 +75,10 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Prepare call data for uninstalling the module
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), abi.encode(prev, "")
+            IModuleManager.uninstallModule.selector,
+            MODULE_TYPE_VALIDATOR,
+            address(VALIDATOR_MODULE),
+            abi.encode(prev, "")
         );
 
         uninstallModule(callData, EXECTYPE_DEFAULT);
@@ -113,7 +117,10 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Prepare call data for uninstalling the module
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector, MODULE_TYPE_VALIDATOR, address(newMockValidator), abi.encode(prev, "")
+            IModuleManager.uninstallModule.selector,
+            MODULE_TYPE_VALIDATOR,
+            address(newMockValidator),
+            abi.encode(prev, "")
         );
 
         uninstallModule(callData, EXECTYPE_DEFAULT);
@@ -163,7 +170,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
             "Module should not be installed anymore"
         );
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""), "Module should be installed"
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""),
+            "Module should be installed"
         );
     }
 
@@ -185,7 +193,10 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Prepare call data for uninstalling the module with incorrect type
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector, MODULE_TYPE_EXECUTOR, address(VALIDATOR_MODULE), abi.encode(prev, "")
+            IModuleManager.uninstallModule.selector,
+            MODULE_TYPE_EXECUTOR,
+            address(VALIDATOR_MODULE),
+            abi.encode(prev, "")
         );
 
         // Define expected revert reason
@@ -244,8 +255,9 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Define expected revert reason
-        bytes memory expectedRevertReason =
-            abi.encodeWithSignature("ModuleNotInstalled(uint256,address)", MODULE_TYPE_VALIDATOR, address(mockValidator));
+        bytes memory expectedRevertReason = abi.encodeWithSignature(
+            "ModuleNotInstalled(uint256,address)", MODULE_TYPE_VALIDATOR, address(mockValidator)
+        );
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
@@ -285,7 +297,8 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Verify the module is installed
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""), "Module should be installed"
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(newMockExecutor), ""),
+            "Module should be installed"
         );
 
         // Find the previous module for uninstallation
@@ -295,7 +308,10 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Prepare call data for uninstalling the module
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.uninstallModule.selector, MODULE_TYPE_EXECUTOR, address(newMockExecutor), abi.encode(prev, "")
+            IModuleManager.uninstallModule.selector,
+            MODULE_TYPE_EXECUTOR,
+            address(newMockExecutor),
+            abi.encode(prev, "")
         );
 
         Execution[] memory execution = new Execution[](1);
@@ -395,8 +411,9 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         Execution[] memory executionUninstall = new Execution[](1);
         executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataUninstall);
 
-        PackedUserOperation[] memory userOpsUninstall =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOpsUninstall = buildPackedUserOperation(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall, address(VALIDATOR_MODULE), 0
+        );
 
         ENTRYPOINT.handleOps(userOpsUninstall, payable(address(BOB.addr)));
 
@@ -418,8 +435,9 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         Execution[] memory executionUninstall = new Execution[](1);
         executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataUninstall);
 
-        PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall, address(VALIDATOR_MODULE), 0
+        );
 
         bytes memory expectedRevertReason =
             abi.encodeWithSignature("ModuleNotInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(mockHandler));

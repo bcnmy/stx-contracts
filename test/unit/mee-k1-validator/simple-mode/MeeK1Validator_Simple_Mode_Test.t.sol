@@ -318,8 +318,9 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
 
                 // Hash as per EIP-712: for array types, we hash the array first
                 // encodeData for EntryTypeC = encode(keccak256(encodeData(waldo)), grault)
-                stxItemHashes[i] =
-                    keccak256(abi.encodePacked(entryTypeCTypeHash, abi.encode(keccak256(abi.encodePacked(waldo)), grault)));
+                stxItemHashes[i] = keccak256(
+                    abi.encodePacked(entryTypeCTypeHash, abi.encode(keccak256(abi.encodePacked(waldo)), grault))
+                );
                 entryCCounter++;
             }
         }
@@ -417,8 +418,11 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
                 );
 
                 // Store in NonUserOpEntryData array
-                nonUserOpEntryDatas[nonUserOpDataCounter] =
-                    NonUserOpEntryData({ entryHash: stxItemHashes[i], entryIndex: i, packedSignatureForEntry: signature });
+                nonUserOpEntryDatas[nonUserOpDataCounter] = NonUserOpEntryData({
+                    entryHash: stxItemHashes[i],
+                    entryIndex: i,
+                    packedSignatureForEntry: signature
+                });
                 nonUserOpDataCounter++;
             }
         }

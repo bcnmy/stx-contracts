@@ -18,7 +18,8 @@ import { IExecutionHelperEventsAndErrors } from "./IExecutionHelperEventsAndErro
 
 /// @title Nexus - IExecutionHelper
 /// @notice Interface for executing transactions on behalf of smart accounts within the Nexus system.
-/// @dev Extends functionality for transaction execution with error handling as defined in IExecutionHelperEventsAndErrors.
+/// @dev Extends functionality for transaction execution with error handling as defined in
+/// IExecutionHelperEventsAndErrors.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io

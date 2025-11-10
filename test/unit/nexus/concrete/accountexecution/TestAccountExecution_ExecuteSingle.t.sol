@@ -139,8 +139,9 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
             Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount));
 
         // Prepare and execute the approve UserOperation
-        PackedUserOperation[] memory approveOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory approveOps = buildPackedUserOperation(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution, address(VALIDATOR_MODULE), 0
+        );
 
         ENTRYPOINT.handleOps(approveOps, payable(BOB.addr));
 

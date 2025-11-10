@@ -16,7 +16,8 @@ import { CallType } from "../../../lib/erc-7579/ModeLib.sol";
 
 /// @title ERC-7579 Module Manager Events and Errors Interface
 /// @notice Provides event and error definitions for actions related to module management in smart accounts.
-/// @dev Used by IModuleManager to define the events and errors associated with the installation and management of modules.
+/// @dev Used by IModuleManager to define the events and errors associated with the installation and management of
+/// modules.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
@@ -100,7 +101,8 @@ interface IModuleManagerEventsAndErrors {
     /// @dev Thrown when there is an attempt to install a forbidden selector as a fallback handler.
     error FallbackSelectorForbidden();
 
-    /// @dev Thrown when there is an attempt to install a fallback handler with an invalid calltype for a given selector.
+    /// @dev Thrown when there is an attempt to install a fallback handler with an invalid calltype for a given
+    /// selector.
     error FallbackCallTypeInvalid();
 
     /// @notice Error thrown when an execution with an unsupported CallType was made.

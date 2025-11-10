@@ -141,7 +141,8 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTestBase {
         measureAndLogGas("22::ERC721::transferFrom::Setup And Call::Using Pre-Funded Ether::WarmAccess", userOps);
     }
 
-    /// @notice Tests gas consumption for transferring ERC721 tokens from an already deployed Nexus smart account using a
+    /// @notice Tests gas consumption for transferring ERC721 tokens from an already deployed Nexus smart account using
+    /// a
     /// paymaster
     function test_Gas_ERC721NFT_DeployedNexus_Transfer_WithPaymaster_Warm()
         public

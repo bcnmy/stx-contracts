@@ -3,13 +3,15 @@ pragma solidity ^0.8.27;
 
 import { IPreValidationHookERC1271 } from "erc7579/interfaces/IERC7579Module.sol";
 import {
-    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
 } from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 contract Mock7739PreValidationHook is IPreValidationHookERC1271 {
-    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH = 0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
+    bytes32 internal constant _PERSONAL_SIGN_TYPEHASH =
+        0x983e65e5148e570cd828ead231ee759a8d7958721a768f93bc4483ba005c32de;
     bytes32 internal constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
 
     address public immutable prevalidationHookMultiplexer;

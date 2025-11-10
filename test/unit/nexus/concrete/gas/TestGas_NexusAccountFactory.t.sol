@@ -12,8 +12,9 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
     /// @notice Tests gas usage for deploying a new account
     function test_Gas_DeployAccount() public {
         uint256 initialGas = gasleft();
-        address payable newAccount =
-            FACTORY.createAccount(getInitData(address(VALIDATOR_MODULE), address(this)), keccak256("deploy_account_test"));
+        address payable newAccount = FACTORY.createAccount(
+            getInitData(address(VALIDATOR_MODULE), address(this)), keccak256("deploy_account_test")
+        );
         uint256 gasUsed = initialGas - gasleft();
         console.log("Gas used for deploying a new account: ", gasUsed);
 

@@ -28,7 +28,8 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_DEFAULT);
 
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed"
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
+            "Module should be installed"
         );
     }
 
@@ -46,7 +47,8 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         installModule(callData, MODULE_TYPE_VALIDATOR, address(mockValidator), EXECTYPE_TRY);
 
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""), "Module should be installed"
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(mockValidator), ""),
+            "Module should be installed"
         );
     }
 
@@ -169,7 +171,8 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         );
 
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(mockMulti), ""), "Module should be installed as hook"
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(mockMulti), ""),
+            "Module should be installed as hook"
         );
         assertEq(
             mockMulti.getConfig(address(BOB_ACCOUNT), MODULE_TYPE_HOOK),
@@ -238,8 +241,9 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
 
     /// @notice Tests reversion when trying to install an incompatible module as an executor
     function test_RevertIf_IncompatibleModuleAsExecutor() public {
-        bytes memory callData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockValidator), "");
+        bytes memory callData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockValidator), ""
+        );
 
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -371,8 +375,9 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         Execution[] memory executionReinstall = new Execution[](1);
         executionReinstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataReinstall);
 
-        PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall, address(VALIDATOR_MODULE), 0
+        );
 
         bytes memory expectedRevertReason =
             abi.encodeWithSignature("FallbackAlreadyInstalledForSelector(bytes4)", bytes4(GENERIC_FALLBACK_SELECTOR));
@@ -424,8 +429,9 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         Execution[] memory executionReinstall = new Execution[](1);
         executionReinstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataReinstall);
 
-        PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall, address(VALIDATOR_MODULE), 0
+        );
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("HookAlreadyInstalled(address)", address(mockHook));
 

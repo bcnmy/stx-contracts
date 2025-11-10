@@ -226,7 +226,8 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
         bytes memory incrementCallData = abi.encodeWithSelector(Counter.incrementNumber.selector);
 
         // Perform the try execution via MockExecutor
-        bytes[] memory returnData = mockExecutor.tryExecuteViaAccount(BOB_ACCOUNT, address(counter), 0, incrementCallData);
+        bytes[] memory returnData =
+            mockExecutor.tryExecuteViaAccount(BOB_ACCOUNT, address(counter), 0, incrementCallData);
 
         // Verify the return data and counter state
         assertEq(counter.getNumber(), 1, "Counter should have incremented");

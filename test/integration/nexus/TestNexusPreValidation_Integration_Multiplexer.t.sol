@@ -10,7 +10,8 @@ import { MockSimpleValidator } from "../../mock/modules/MockSimpleValidator.sol"
 import { K1MeeValidator } from "../../../contracts/validators/stx-validator/K1MeeValidator.sol";
 
 /// @title TestNexusPreValidation_Integration_HookMultiplexer
-/// @notice This contract tests the integration of the PreValidation hook multiplexer with the PreValidation resource lock
+/// @notice This contract tests the integration of the PreValidation hook multiplexer with the PreValidation resource
+/// lock
 /// hooks
 
 contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagement_Base {
@@ -57,7 +58,10 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         // Install the K1 validator
         bytes memory k1ValidatorInstallData = abi.encodePacked(BOB_ADDRESS);
         bytes memory k1ValidatorInstallCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(K1_MEE_VALIDATOR), k1ValidatorInstallData
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_VALIDATOR,
+            address(K1_MEE_VALIDATOR),
+            k1ValidatorInstallData
         );
         installModule(k1ValidatorInstallCallData, MODULE_TYPE_VALIDATOR, address(K1_MEE_VALIDATOR), EXECTYPE_DEFAULT);
     }

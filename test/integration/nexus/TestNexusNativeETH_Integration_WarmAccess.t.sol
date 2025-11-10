@@ -153,7 +153,8 @@ contract TestNexusNativeETH_Integration_WarmAccess is NexusTestBase {
         measureAndLogGas("38::ETH::transfer::Setup And Call::Using Pre-Funded Ether::WarmAccess", userOps);
     }
 
-    /// @notice Tests gas consumption for transferring ETH from an already deployed Nexus smart account using a paymaster
+    /// @notice Tests gas consumption for transferring ETH from an already deployed Nexus smart account using a
+    /// paymaster
     function test_Gas_NativeETH_DeployedNexus_Transfer_WithPaymaster_Warm()
         public
         checkETHBalanceWarm(recipient, transferAmount)

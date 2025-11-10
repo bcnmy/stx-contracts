@@ -142,7 +142,8 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         } else {
             ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
             assertTrue(
-                BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Initial installation should succeed"
+                BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData),
+                "Initial installation should succeed"
             );
 
             // Attempt to reinstall the same module should fail
@@ -221,7 +222,9 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         // Verify that the module is uninstalled
-        assertFalse(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module should be uninstalled");
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module should be uninstalled"
+        );
     }
 
     /// @notice Fuzz test for uninstalling a previously installed module
@@ -238,7 +241,8 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         );
         installModule(installExecutorCallData, MODULE_TYPE_EXECUTOR, address(EXECUTOR_MODULE), EXECTYPE_DEFAULT);
 
-        bytes memory initData = (moduleTypeId == MODULE_TYPE_FALLBACK) ? abi.encode(bytes4(funcSig)) : abi.encodePacked("");
+        bytes memory initData =
+            (moduleTypeId == MODULE_TYPE_FALLBACK) ? abi.encode(bytes4(funcSig)) : abi.encodePacked("");
         vm.assume(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData));
 
         // Ensure the modules are installed
@@ -246,7 +250,9 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
             "Validator module should be installed"
         );
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(2, address(EXECUTOR_MODULE), ""), "Executor module should be installed");
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(2, address(EXECUTOR_MODULE), ""), "Executor module should be installed"
+        );
         assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module should be installed");
 
         bytes memory callData;
@@ -318,10 +324,14 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         bytes memory installValidatorCallData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, address(mockValidator), ""
         );
-        bytes memory installExecutorCallData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), "");
+        bytes memory installExecutorCallData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_EXECUTOR, address(mockExecutor), ""
+        );
         bytes memory installHandlerCallData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(mockHandler), abi.encode(bytes4(funcSig))
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_FALLBACK,
+            address(mockHandler),
+            abi.encode(bytes4(funcSig))
         );
         bytes memory installHookCallData =
             abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(mockHook), "");
@@ -373,7 +383,9 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
             ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         } else {
-            assertTrue(BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module should be installed");
+            assertTrue(
+                BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module should be installed"
+            );
             ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
             assertFalse(
                 BOB_ACCOUNT.isModuleInstalled(moduleTypeId, moduleAddress, initData), "Module should be uninstalled"

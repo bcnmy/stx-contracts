@@ -156,7 +156,8 @@ contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
             constraintType: ConstraintType.EQ,
             referenceData: abi.encode(bytes32(uint256(keccak256("DUMMY"))))
         });
-        constraints[3] = Constraint({ constraintType: ConstraintType.EQ, referenceData: abi.encode(bytes32(uint256(1))) });
+        constraints[3] =
+            Constraint({ constraintType: ConstraintType.EQ, referenceData: abi.encode(bytes32(uint256(1))) });
 
         vm.startPrank(ENTRYPOINT_V07_ADDRESS);
 
@@ -166,7 +167,9 @@ contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
         inputParams[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(address(dummyContract), abi.encodeWithSelector(DummyContract.returnMultipleValues.selector)),
+            paramData: abi.encode(
+                address(dummyContract), abi.encodeWithSelector(DummyContract.returnMultipleValues.selector)
+            ),
             constraints: constraints
         });
 

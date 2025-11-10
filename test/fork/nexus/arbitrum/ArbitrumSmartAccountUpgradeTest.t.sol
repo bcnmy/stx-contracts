@@ -155,7 +155,9 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
         address newEntryPoint = Nexus(payable(address(smartAccountV2))).entryPoint();
         assertEq(newEntryPoint, address(ENTRYPOINT_V_0_7), "Entry point should change after upgrade.");
         assertTrue(
-            Nexus(payable(address(smartAccountV2))).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            Nexus(payable(address(smartAccountV2))).isModuleInstalled(
+                MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""
+            ),
             "Validator module should be installed after upgrade."
         );
     }

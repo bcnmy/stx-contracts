@@ -76,8 +76,9 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     /// @notice Tests that handleOps triggers the generic fallback handler.
     function test_HandleOpsTriggersGenericFallback(bool skip) public {
         // Prepare the operation that triggers the fallback handler
-        bytes memory dataToTriggerFallback =
-            abi.encodeWithSelector(MockHandler(address(0)).onGenericFallback.selector, address(this), 123, "Example data");
+        bytes memory dataToTriggerFallback = abi.encodeWithSelector(
+            MockHandler(address(0)).onGenericFallback.selector, address(this), 123, "Example data"
+        );
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, dataToTriggerFallback);
 
@@ -174,8 +175,9 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
 
         // Expected UserOperationRevertReason event due to function selector not used by this handler
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
-        bytes memory expectedRevertReason =
-            abi.encodeWithSignature("ModuleNotInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(HANDLER_MODULE));
+        bytes memory expectedRevertReason = abi.encodeWithSignature(
+            "ModuleNotInstalled(uint256,address)", MODULE_TYPE_FALLBACK, address(HANDLER_MODULE)
+        );
 
         vm.expectEmit(true, true, true, true);
         emit UserOperationRevertReason(userOpHash, address(BOB_ACCOUNT), userOps[0].nonce, expectedRevertReason);
@@ -307,7 +309,9 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
         //ERC-721
         (bool success, bytes memory data) = address(BOB_ACCOUNT).call{ value: 0 }(hex"150b7a02");
         assertTrue(success);
-        assertTrue(keccak256(data) == keccak256((hex"150b7a0200000000000000000000000000000000000000000000000000000000")));
+        assertTrue(
+            keccak256(data) == keccak256((hex"150b7a0200000000000000000000000000000000000000000000000000000000"))
+        );
         //ERC-1155
         (success, data) = address(BOB_ACCOUNT).call{ value: 0 }(hex"f23a6e61");
         assertTrue(success);

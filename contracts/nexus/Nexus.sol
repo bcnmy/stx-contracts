@@ -50,9 +50,11 @@ import {
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 /// @title Nexus - Smart Account
-/// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579 and
+/// @notice This contract integrates various functionalities to handle modular smart accounts compliant with ERC-7579
+/// and
 /// ERC-4337 standards.
-/// @dev Comprehensive suite of methods for managing smart accounts, integrating module management, execution management,
+/// @dev Comprehensive suite of methods for managing smart accounts, integrating module management, execution
+/// management,
 /// and upgradability via UUPS.
 /// @author @livingrockrises | Biconomy | chirag@biconomy.io
 /// @author @aboudjem | Biconomy | adam.boudjemaa@biconomy.io

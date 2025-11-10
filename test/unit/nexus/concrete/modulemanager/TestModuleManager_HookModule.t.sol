@@ -66,7 +66,8 @@ contract TestModuleManager_HookModule is TestModuleManagement_Base {
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
-        bytes memory expectedRevertReason = abi.encodeWithSignature("HookAlreadyInstalled(address)", address(HOOK_MODULE));
+        bytes memory expectedRevertReason =
+            abi.encodeWithSignature("HookAlreadyInstalled(address)", address(HOOK_MODULE));
 
         // Expect the UserOperationRevertReason event
         vm.expectEmit(true, true, true, true);
@@ -92,7 +93,8 @@ contract TestModuleManager_HookModule is TestModuleManagement_Base {
 
         // Verify hook module is uninstalled
         assertFalse(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""), "Hook module should be uninstalled"
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), ""),
+            "Hook module should be uninstalled"
         );
     }
 

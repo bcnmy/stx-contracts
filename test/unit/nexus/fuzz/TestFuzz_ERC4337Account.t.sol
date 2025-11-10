@@ -42,7 +42,9 @@ contract TestFuzz_ERC4337Account is NexusTestBase {
         // Check if the deposit balance is updated correctly within the tolerance
         bool isWithinTolerance = (balanceAfter >= balanceBefore + depositAmount - tolerance)
             && (balanceAfter <= balanceBefore + depositAmount + tolerance);
-        assertTrue(isWithinTolerance, "Deposit balance should correctly reflect the new deposit amount within tolerance");
+        assertTrue(
+            isWithinTolerance, "Deposit balance should correctly reflect the new deposit amount within tolerance"
+        );
     }
 
     /// @notice Fuzz testing for ensuring nonce behavior across various operations.
@@ -80,8 +82,11 @@ contract TestFuzz_ERC4337Account is NexusTestBase {
 
         // Deposit the amount to EntryPoint
         Execution[] memory depositExecutions = new Execution[](1);
-        depositExecutions[0] =
-            Execution({ target: address(BOB_ACCOUNT), value: amount, callData: abi.encodeWithSignature("addDeposit()") });
+        depositExecutions[0] = Execution({
+            target: address(BOB_ACCOUNT),
+            value: amount,
+            callData: abi.encodeWithSignature("addDeposit()")
+        });
         executeBatch(BOB, BOB_ACCOUNT, depositExecutions, EXECTYPE_DEFAULT);
 
         // Capture the balance before withdrawal
@@ -112,8 +117,9 @@ contract TestFuzz_ERC4337Account is NexusTestBase {
             callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", address(this), amount)
         });
 
-        PackedUserOperation[] memory withdrawUserOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, withdrawExecutions, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory withdrawUserOps = buildPackedUserOperation(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, withdrawExecutions, address(VALIDATOR_MODULE), 0
+        );
         ENTRYPOINT.handleOps(withdrawUserOps, payable(BOB.addr));
     }
 }

@@ -8,7 +8,8 @@ import {
     IModule
 } from "erc7579/interfaces/IERC7579Module.sol";
 import {
-    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
 } from "contracts/types/Constants.sol";
 
 contract MockPreValidationHookMultiplexer is IPreValidationHookERC1271, IPreValidationHookERC4337 {

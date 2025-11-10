@@ -421,13 +421,20 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
     function test_EmergencyUninstallHook_1271_DirectCall_Success() public {
         // 1. Install the 1271 hook
         MockPreValidationHook preValidationHook = new MockPreValidationHook();
-        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""));
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), "")
+        );
 
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+            address(preValidationHook),
+            ""
         );
         installModule(callData, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), EXECTYPE_DEFAULT);
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""));
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), "")
+        );
 
         // 2. Sign and request emergency uninstall
         EmergencyUninstall memory emergencyUninstall = EmergencyUninstall({
@@ -457,19 +464,28 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
         emit EmergencyHookUninstallRequest(address(preValidationHook), block.timestamp);
         BOB_ACCOUNT.emergencyUninstallHook(emergencyUninstall, signature);
 
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""));
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), "")
+        );
     }
 
     function test_EmergencyUninstallHook_4337_DirectCall_Success() public {
         // 1. Install the 4337 hook
         MockPreValidationHook preValidationHook = new MockPreValidationHook();
-        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""));
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), "")
+        );
 
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
+            address(preValidationHook),
+            ""
         );
         installModule(callData, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), EXECTYPE_DEFAULT);
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""));
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), "")
+        );
 
         // 2. Sign and request emergency uninstall
         EmergencyUninstall memory emergencyUninstall = EmergencyUninstall({
@@ -499,14 +515,19 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
         emit EmergencyHookUninstallRequest(address(preValidationHook), block.timestamp);
         BOB_ACCOUNT.emergencyUninstallHook(emergencyUninstall, signature);
 
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""));
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), "")
+        );
     }
 
     function test_EmergencyUninstallHook_1271_DirectCall_Fail_WrongSigner() public {
         // 1. Install the 1271 hook
         MockPreValidationHook preValidationHook = new MockPreValidationHook();
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+            address(preValidationHook),
+            ""
         );
         installModule(callData, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), EXECTYPE_DEFAULT);
 
@@ -545,7 +566,10 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
         // 1. Install the 4337 hook
         MockPreValidationHook preValidationHook = new MockPreValidationHook();
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
+            address(preValidationHook),
+            ""
         );
         installModule(callData, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), EXECTYPE_DEFAULT);
 
@@ -583,13 +607,20 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
     function test_EmergencyUninstallHook_PreValidation1271_Uninstall() public {
         // 1. Install the 1271 hook
         MockPreValidationHook preValidationHook = new MockPreValidationHook();
-        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""));
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), "")
+        );
 
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+            address(preValidationHook),
+            ""
         );
         installModule(callData, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), EXECTYPE_DEFAULT);
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), ""));
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(preValidationHook), "")
+        );
 
         // 2. Sign and request emergency uninstall
         EmergencyUninstall memory emergencyUninstall = EmergencyUninstall({
@@ -653,13 +684,20 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
     function test_EmergencyUninstallHook_PreValidation4337_Uninstall() public {
         // 1. Install the 4337 hook
         MockPreValidationHook preValidationHook = new MockPreValidationHook();
-        assertFalse(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""));
+        assertFalse(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), "")
+        );
 
         bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""
+            IModuleManager.installModule.selector,
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
+            address(preValidationHook),
+            ""
         );
         installModule(callData, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), EXECTYPE_DEFAULT);
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), ""));
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(preValidationHook), "")
+        );
 
         // 2. Sign and request emergency uninstall
         EmergencyUninstall memory emergencyUninstall = EmergencyUninstall({

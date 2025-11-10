@@ -31,7 +31,8 @@ contract TestPREP is NexusTestBase {
     function _getInitData() internal view returns (bytes memory) {
         // Create config for initial modules
         BootstrapConfig[] memory validators =
-            BootstrapLib.createArrayConfig(address(mockValidator), abi.encodePacked(BOB_ADDRESS)); // set BOB as signer in the
+            BootstrapLib.createArrayConfig(address(mockValidator), abi.encodePacked(BOB_ADDRESS)); // set BOB as signer in
+            // the
             // validator
         BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(mockExecutor), "");
         BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
@@ -161,7 +162,15 @@ contract TestPREP is NexusTestBase {
         assertEq(s, signedDelegation.s);
     }
 
-    function _rlpEncodeAuth(uint256 chainId, address implementation, uint64 nonce) internal view returns (bytes memory) {
+    function _rlpEncodeAuth(
+        uint256 chainId,
+        address implementation,
+        uint64 nonce
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         return abi.encodePacked(hex"05", LibRLP.p(chainId).p(implementation).p(nonce).encode());
     }
 }

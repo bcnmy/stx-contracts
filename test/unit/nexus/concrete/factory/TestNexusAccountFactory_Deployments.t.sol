@@ -125,7 +125,9 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
         address payable accountAddress2 = FACTORY.createAccount(_initData, keccak256("1"));
 
         // Validate that the deployed addresses are different
-        assertTrue(accountAddress1 != accountAddress2, "Accounts with different indexes should have different addresses");
+        assertTrue(
+            accountAddress1 != accountAddress2, "Accounts with different indexes should have different addresses"
+        );
     }
 
     /// @notice Tests creating accounts with an invalid validator module.
@@ -174,7 +176,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
         new Nexus(zeroAddress, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
     }
 
-    /// @notice Tests BootstrapLib.createArrayConfig function for multiple modules and data in BootstrapLib and uses it to
+    /// @notice Tests BootstrapLib.createArrayConfig function for multiple modules and data in BootstrapLib and uses it
+    /// to
     /// deploy an account.
     function test_createArrayConfig_MultipleModules_DeployAccount() public {
         address[] memory modules = new address[](2);
@@ -217,7 +220,9 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
 
         // Verify that the validators and hook were installed
         assertTrue(
-            IModuleManager(deployedAccountAddress).isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
+            IModuleManager(deployedAccountAddress).isModuleInstalled(
+                MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""
+            ),
             "Validator should be installed"
         );
         assertTrue(
