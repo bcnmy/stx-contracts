@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "../utils/Imports.sol";
-import "../utils/NexusTest_Base.t.sol";
+import "../../util/Imports.sol";
+import "../../NexusTestBase.t.sol";
 
 /// @title TestNexusERC20Token_Integration_WarmAccess
 /// @notice Tests Nexus smart account functionalities with ERC20 token transfers (Warm Access)
-contract TestNexusERC20Token_Integration_WarmAccess is NexusTest_Base {
+contract TestNexusERC20Token_Integration_WarmAccess is NexusTestBase {
     Vm.Wallet private user;
     MockToken private ERC20Token;
     MockPaymaster private paymaster;
@@ -55,12 +55,11 @@ contract TestNexusERC20Token_Integration_WarmAccess is NexusTest_Base {
 
         assertEq(address(deployedNexus), calculateAccountAddress(user.addr, address(VALIDATOR_MODULE)));
         Execution[] memory executions = prepareSingleExecution(
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
+            address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         measureAndLogGas("4::ERC20::transfer::Nexus::Deployed::WarmAccess", userOps);
     }
@@ -74,14 +73,14 @@ contract TestNexusERC20Token_Integration_WarmAccess is NexusTest_Base {
         bytes memory initCode = buildInitCode(user.addr, address(VALIDATOR_MODULE));
 
         Execution[] memory executions = prepareSingleExecution(
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
+            address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
         );
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
 
-        userOps = buildPackedUserOperation(user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+        userOps = buildPackedUserOperation(
+            user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
+        );
 
         userOps[0].initCode = initCode;
 
@@ -93,7 +92,8 @@ contract TestNexusERC20Token_Integration_WarmAccess is NexusTest_Base {
         measureAndLogGas("6::ERC20::transfer::Setup And Call::WithPaymaster::WarmAccess", userOps);
     }
 
-    /// @notice Test deploying Nexus and transferring ERC20 tokens using deposited funds without a paymaster with warm access
+    /// @notice Test deploying Nexus and transferring ERC20 tokens using deposited funds without a paymaster with warm
+    /// access
     function test_Gas_ERC20Token_DeployUsingDeposit_Transfer_Warm() public checkERC20TokenBalanceWarm(recipient, amount) {
         uint256 depositAmount = 1 ether;
 
@@ -108,19 +108,12 @@ contract TestNexusERC20Token_Integration_WarmAccess is NexusTest_Base {
 
         // Prepare execution to transfer ERC20 tokens
         Execution[] memory executions = prepareSingleExecution(
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
+            address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
         );
 
         // Build user operation with initCode and callData
         PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
+            user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
         userOps[0].initCode = initCode;
         // Sign the user operation
@@ -139,19 +132,12 @@ contract TestNexusERC20Token_Integration_WarmAccess is NexusTest_Base {
 
         // Prepare execution to transfer ERC20 tokens
         Execution[] memory executions = prepareSingleExecution(
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
+            address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
         );
 
         // Build user operation with initCode and callData
         PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
+            user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
         userOps[0].initCode = initCode;
         // Sign the user operation
@@ -160,7 +146,8 @@ contract TestNexusERC20Token_Integration_WarmAccess is NexusTest_Base {
         measureAndLogGas("10::ERC20::transfer::Setup And Call::Using Pre-Funded Ether::WarmAccess", userOps);
     }
 
-    /// @notice Tests gas consumption for transferring ERC20 tokens from an already deployed Nexus smart account using a paymaster
+    /// @notice Tests gas consumption for transferring ERC20 tokens from an already deployed Nexus smart account using a
+    /// paymaster
     function test_Gas_ERC20Token_DeployedNexus_Transfer_WithPaymaster_Warm()
         public
         checkERC20TokenBalanceWarm(recipient, amount)
@@ -175,13 +162,12 @@ contract TestNexusERC20Token_Integration_WarmAccess is NexusTest_Base {
 
         // Prepare the execution for ERC20 token transfer
         Execution[] memory executions = prepareSingleExecution(
-            address(ERC20Token),
-            0,
-            abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
+            address(ERC20Token), 0, abi.encodeWithSignature("transfer(address,uint256)", recipient, amount)
         );
 
         // Build the PackedUserOperation array
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Generate and sign paymaster data
         userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);

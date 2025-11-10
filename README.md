@@ -52,5 +52,5 @@ $ forge build
 ### Test
 
 ```shell
-$ forge test --isolate
+$ pnpm test
 ```

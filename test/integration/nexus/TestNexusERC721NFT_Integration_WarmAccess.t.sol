@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "../utils/Imports.sol";
-import "../utils/NexusTest_Base.t.sol";
+import "../../util/Imports.sol";
+import "../../NexusTestBase.t.sol";
 
 /// @title TestNexusERC721NFT_Integration_WarmAccess
 /// @notice Tests Nexus smart account functionalities with ERC721 token transfers (Warm Access)
-contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
+contract TestNexusERC721NFT_Integration_WarmAccess is NexusTestBase {
     MockNFT ERC721NFT;
     MockPaymaster private paymaster;
     Vm.Wallet private user;
@@ -55,7 +55,8 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
             0,
             abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
         );
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         measureAndLogGas("16::ERC721::transferFrom::Nexus::Deployed::WarmAccess", userOps);
     }
 
@@ -74,12 +75,7 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
             abi.encodeWithSignature("transferFrom(address,address,uint256)", preComputedAddress, recipient, tokenId)
         );
         PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
+            user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
         userOps[0].initCode = initCode;
         userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);
@@ -88,7 +84,8 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
         measureAndLogGas("18::ERC721::transferFrom::Setup And Call::WithPaymaster::WarmAccess", userOps);
     }
 
-    /// @notice Tests deploying Nexus and transferring ERC721 tokens using deposited funds without a paymaster with warm access
+    /// @notice Tests deploying Nexus and transferring ERC721 tokens using deposited funds without a paymaster with warm
+    /// access
     function test_Gas_ERC721NFT_DeployUsingDeposit_Transfer_Warm() public checkERC721NFTBalanceWarm(recipient) {
         ERC721NFT.mint(preComputedAddress, tokenId);
 
@@ -107,12 +104,7 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
         );
 
         PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
+            user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
         userOps[0].initCode = initCode;
         userOps[0].signature = signUserOp(user, userOps[0]);
@@ -140,12 +132,7 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
 
         // Build user operation with initCode and callData
         PackedUserOperation[] memory userOps = buildPackedUserOperation(
-            user,
-            Nexus(preComputedAddress),
-            EXECTYPE_DEFAULT,
-            executions,
-            address(VALIDATOR_MODULE),
-            0
+            user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
         userOps[0].initCode = initCode;
         // Sign the user operation
@@ -154,7 +141,8 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
         measureAndLogGas("22::ERC721::transferFrom::Setup And Call::Using Pre-Funded Ether::WarmAccess", userOps);
     }
 
-    /// @notice Tests gas consumption for transferring ERC721 tokens from an already deployed Nexus smart account using a paymaster
+    /// @notice Tests gas consumption for transferring ERC721 tokens from an already deployed Nexus smart account using a
+    /// paymaster
     function test_Gas_ERC721NFT_DeployedNexus_Transfer_WithPaymaster_Warm()
         public
         checkERC721NFTBalanceWarm(recipient)
@@ -174,7 +162,8 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTest_Base {
         );
 
         // Build the PackedUserOperation array
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps =
+            buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Generate and sign paymaster data
         userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);

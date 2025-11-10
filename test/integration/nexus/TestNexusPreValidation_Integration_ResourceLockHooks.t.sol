@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "../shared/TestModuleManagement_Base.t.sol";
-import { MockResourceLockPreValidationHook } from "../../../contracts/mocks/MockResourceLockPreValidationHook.sol";
-import { MockAccountLocker } from "../../../contracts/mocks/MockAccountLocker.sol";
+import "../../shared/TestModuleManagement_Base.t.sol";
+import { MockResourceLockPreValidationHook } from "../../mock/modules/MockResourceLockPreValidationHook.sol";
+import { MockAccountLocker } from "../../mock/accounts/MockAccountLocker.sol";
 
 /// @title TestNexusPreValidation_Integration_ResourceLockHooks
 /// @notice This contract tests the integration of ResourceLock hook with the PreValidation resource lock hooks
@@ -34,18 +34,28 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
         installResourceLockHooks();
         // Verify hooks are installed
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(resourceLockHook), ""), "Resource lock 4337 hook should be installed"
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(resourceLockHook), ""),
+            "Resource lock 4337 hook should be installed"
         );
         assertTrue(
-            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(resourceLockHook), ""), "Resource lock 1271 hook should be installed"
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(resourceLockHook), ""),
+            "Resource lock 1271 hook should be installed"
         );
-        assertTrue(BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(accountLocker), ""), "Account locker should be installed");
+        assertTrue(
+            BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_HOOK, address(accountLocker), ""),
+            "Account locker should be installed"
+        );
     }
 
     /// @notice Fuzz test for pre-validation hook when ETH is locked
     /// @param lockedAmount Amount of ETH to lock
     /// @param missingAccountFunds Funds missing from the account
-    function testFuzz_4337_PreValidationHook_RevertsWhen_InsufficientUnlockedETH(uint256 lockedAmount, uint256 missingAccountFunds) public {
+    function testFuzz_4337_PreValidationHook_RevertsWhen_InsufficientUnlockedETH(
+        uint256 lockedAmount,
+        uint256 missingAccountFunds
+    )
+        public
+    {
         // Constrain inputs to reasonable ranges
         vm.assume(lockedAmount > 0);
         vm.assume(missingAccountFunds > 0);
@@ -72,12 +82,14 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
         userOps[0].signature = signMessage(BOB, userOpHash);
 
         // Expect revert due to insufficient unlocked ETH
-        vm.expectRevert(abi.encodeWithSelector(MockResourceLockPreValidationHook.InsufficientUnlockedETH.selector, missingAccountFunds));
+        vm.expectRevert(
+            abi.encodeWithSelector(MockResourceLockPreValidationHook.InsufficientUnlockedETH.selector, missingAccountFunds)
+        );
 
         // Attempt to validate the user operation
-        startPrank(address(ENTRYPOINT));
+        vm.startPrank(address(ENTRYPOINT));
         BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, missingAccountFunds);
-        stopPrank();
+        vm.stopPrank();
     }
 
     /// @notice Fuzz test for pre-validation hook when sufficient ETH is unlocked
@@ -111,10 +123,10 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
 
         // Attempt to validate the user operation when unlocked balance is sufficient
         vm.assume(totalBalance - lockedAmount >= 0);
-        startPrank(address(ENTRYPOINT));
+        vm.startPrank(address(ENTRYPOINT));
         uint256 result = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         assertTrue(result == 0, "Validation should succeed");
-        stopPrank();
+        vm.stopPrank();
     }
 
     /// @notice Tests signature validation succeeds when resource is not locked
@@ -163,18 +175,31 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
 
     function installResourceLockHooks() internal {
         // Install account locker first
-        bytes memory accountLockerInstallCallData = abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(accountLocker), "");
+        bytes memory accountLockerInstallCallData =
+            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(accountLocker), "");
         installModule(accountLockerInstallCallData, MODULE_TYPE_HOOK, address(accountLocker), EXECTYPE_DEFAULT);
 
         // Install resource lock pre-validation 4337 hook
-        bytes memory resourceLockHook4337InstallCallData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(resourceLockHook), "");
-        installModule(resourceLockHook4337InstallCallData, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(resourceLockHook), EXECTYPE_DEFAULT);
+        bytes memory resourceLockHook4337InstallCallData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(resourceLockHook), ""
+        );
+        installModule(
+            resourceLockHook4337InstallCallData,
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
+            address(resourceLockHook),
+            EXECTYPE_DEFAULT
+        );
 
         // Install resource lock pre-validation 1271 hook
-        bytes memory resourceLockHook1271InstallCallData =
-            abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(resourceLockHook), "");
-        installModule(resourceLockHook1271InstallCallData, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(resourceLockHook), EXECTYPE_DEFAULT);
+        bytes memory resourceLockHook1271InstallCallData = abi.encodeWithSelector(
+            IModuleManager.installModule.selector, MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, address(resourceLockHook), ""
+        );
+        installModule(
+            resourceLockHook1271InstallCallData,
+            MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+            address(resourceLockHook),
+            EXECTYPE_DEFAULT
+        );
     }
 
     /// @notice Generates an ERC-1271 hash for personal sign.
@@ -182,7 +207,8 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
     /// @return The ERC-1271 hash for personal sign.
     function toERC1271HashPersonalSign(bytes32 childHash, address account) internal view returns (bytes32) {
         AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) = EIP712(account).eip712Domain();
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
+            EIP712(account).eip712Domain();
         bytes32 domainSeparator = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
