@@ -27,11 +27,8 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
 
         validator = new K1MeeValidator();
         preValidationHook = new MockPreValidationHook();
-        installK1Validator(BOB_ACCOUNT, BOB); // TODO: remove this?
-        installK1Validator(ALICE_ACCOUNT, ALICE); // TODO: remove this? and never use the validator that was installed
-            // there
-        installPrevalidationHook(BOB_ACCOUNT, BOB);
-        installPrevalidationHook(ALICE_ACCOUNT, ALICE);
+        _installPrevalidationHook(BOB_ACCOUNT, BOB);
+        _installPrevalidationHook(ALICE_ACCOUNT, ALICE);
         permitToken = new TokenWithPermit("TestToken", "TST");
         domainSepB = permitToken.DOMAIN_SEPARATOR();
     }
@@ -153,34 +150,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         );
     }
 
-    /// @notice Helper function to install a validator module to a specific deployed Smart Account.
-    /// @param account The Smart Account to which the validator will be installed.
-    /// @param user The wallet executing the operation.
-    function installK1Validator(Nexus account, Vm.Wallet memory user) internal {
-        // Prepare call data for installing the validator module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, validator, abi.encodePacked(user.addr)
-        );
-
-        // Prepare execution array
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(account), 0, callData);
-
-        // Build the packed user operation
-        PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(user, account, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
-
-        // Handle the user operation through the entry point
-        ENTRYPOINT.handleOps(userOps, payable(user.addr));
-
-        // Assert that the validator module is installed
-        assertTrue(
-            account.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validator), ""),
-            "Validator module should be installed"
-        );
-    }
-
-    function installPrevalidationHook(Nexus account, Vm.Wallet memory user) internal {
+    function _installPrevalidationHook(Nexus account, Vm.Wallet memory user) internal {
         // Prepare call data for installing the validator module
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
@@ -194,8 +164,14 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         execution[0] = Execution(address(account), 0, callData);
 
         // Build the packed user operation
-        PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(user, account, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps = buildPackedUserOperation({
+            signer: user,
+            account: account,
+            execType: EXECTYPE_DEFAULT,
+            executions: execution,
+            validator: address(0), // default validator
+            nonce: 0
+        });
 
         // Handle the user operation through the entry point
         ENTRYPOINT.handleOps(userOps, payable(user.addr));

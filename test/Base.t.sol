@@ -129,48 +129,23 @@ contract BaseTest is Test {
         returns (PackedUserOperation memory userOp)
     {
         uint256 nonce = ENTRYPOINT.getNonce(account, 0);
-        userOp = buildPackedUserOp({
+        userOp = PackedUserOperation({
             sender: account,
-            nonce: nonce,
-            verificationGasLimit: verificationGasLimit,
-            callGasLimit: callGasLimit,
-            preVerificationGasLimit: preVerificationGasLimit
-        });
-        userOp.callData = callData;
-
-        bytes memory signature = signUserOp(wallet, userOp);
-        userOp.signature = signature;
-    }
-
-    /// @notice Builds a user operation struct for account abstraction tests
-    /// @param sender The sender address
-    /// @param nonce The nonce
-    /// @return userOp The built user operation
-    function buildPackedUserOp(
-        address sender,
-        uint256 nonce,
-        uint128 verificationGasLimit,
-        uint128 callGasLimit,
-        uint256 preVerificationGasLimit
-    )
-        internal
-        pure
-        returns (PackedUserOperation memory)
-    {
-        return PackedUserOperation({
-            sender: sender,
             nonce: nonce,
             initCode: "",
             callData: "",
             accountGasLimits: bytes32(abi.encodePacked(verificationGasLimit, callGasLimit)), // verification and call
-                // gas
-                // limit
+                // gas limit
             preVerificationGas: preVerificationGasLimit, // Adjusted preVerificationGas
             gasFees: bytes32(abi.encodePacked(uint128(11e9), uint128(1e9))), // maxFeePerGas = 11gwei and
                 // maxPriorityFeePerGas = 1gwei
             paymasterAndData: "",
             signature: ""
         });
+        userOp.callData = callData;
+
+        bytes memory signature = signUserOp(wallet, userOp);
+        userOp.signature = signature;
     }
 
     /// @notice Signs a user operation
@@ -199,25 +174,6 @@ contract BaseTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, messageHash);
         signature = abi.encodePacked(r, s, v);
     }
-
-    /*
-    function signUserOp(
-        Vm.Wallet memory wallet,
-        PackedUserOperation memory userOp
-    )
-        internal
-        view
-        returns (bytes memory)
-    {
-        bytes32 opHash = ECDSA.toEthSignedMessageHash(_getUserOpHash(userOp));
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, opHash);
-        return abi.encodePacked(r, s, v);
-    }
-
-    function _getUserOpHash(PackedUserOperation memory userOp) internal view returns (bytes32) {
-        return ENTRYPOINT.getUserOpHash(userOp);
-    }
-    */
 
     // ============ WALLET UTILS ============
 
