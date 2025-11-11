@@ -8,7 +8,7 @@ import "../../../shared/TestModuleManagement_Base.t.sol";
 /// @notice This contract inherits from TestModuleManagement_Base to provide common setup and utilities for fuzz testing
 contract TestFuzz_ModuleManager is TestModuleManagement_Base {
     /// @notice Initializes the testing environment
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
         fixtureModuleAddress();
         fixtureModuleTypeId();

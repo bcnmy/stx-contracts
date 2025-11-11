@@ -13,7 +13,7 @@ contract TestERC4337Account_OnlyEntryPoint is NexusTestBase {
     address public userAddress;
 
     /// @notice Sets up the environment for each test case.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         BOB_ACCOUNT.addDeposit{ value: 1 ether }(); // Fund the account to cover potential transaction fees
     }

@@ -25,7 +25,7 @@ contract TestNexusERC721NFT_Integration_WarmAccess is NexusTestBase {
     }
 
     /// @notice Sets up the initial state for the tests
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         user = createAndFundWallet("user", 1 ether);
         ERC721NFT = new MockNFT("Mock NFT", "MNFT");

@@ -25,7 +25,7 @@ contract TestNexusERC20Token_Integration_ColdAccess is NexusTestBase {
     }
 
     /// @notice Sets up the initial state for the tests
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         user = createAndFundWallet("user", 1 ether);
         ERC20Token = new MockToken("Mock ERC20Token", "MOCK");

@@ -11,7 +11,7 @@ contract TestFuzz_ExecuteFromExecutor is NexusTestBase {
     MockToken public token;
 
     /// @notice Sets up the environment before each test
-    function setUp() public {
+    function setUp() public virtual override {
         init(); // Initializes all required contracts and wallets
         mockExecutor = new MockExecutor();
         counter = new Counter();

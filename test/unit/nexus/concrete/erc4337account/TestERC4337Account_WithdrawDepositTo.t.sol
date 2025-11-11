@@ -10,7 +10,7 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTestBase {
     uint256 private defaultTolerance;
 
     /// @notice Sets up the testing environment.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         BOB_ACCOUNT = BOB_ACCOUNT;
         defaultDepositAmount = 1 ether;

@@ -7,7 +7,7 @@ import "../../../NexusTestBase.t.sol";
 /// @notice This contract inherits from NexusTestBase to provide common setup and utilities for fuzz testing
 contract TestFuzz_ValidateUserOp is NexusTestBase {
     /// @notice Initializes the testing environment and sets the user address
-    function setUp() public {
+    function setUp() public virtual override {
         init(); // Initializes all required contracts and wallets
     }
 

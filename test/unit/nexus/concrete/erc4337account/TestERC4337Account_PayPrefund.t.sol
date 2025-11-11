@@ -11,7 +11,7 @@ contract TestERC4337Account_PayPrefund is NexusTestBase {
     Nexus internal account;
 
     /// @notice Sets up the testing environment.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         signer = createAndFundWallet("Signer", 0.0001 ether);
         account = deployNexus(signer, 0.0001 ether, address(VALIDATOR_MODULE));

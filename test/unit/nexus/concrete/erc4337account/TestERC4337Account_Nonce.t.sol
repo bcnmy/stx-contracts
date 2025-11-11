@@ -12,7 +12,7 @@ contract TestERC4337Account_Nonce is NexusTestBase {
     bytes1 vMode = MODE_VALIDATION;
 
     /// @notice Sets up the testing environment.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         counter = new Counter();
     }

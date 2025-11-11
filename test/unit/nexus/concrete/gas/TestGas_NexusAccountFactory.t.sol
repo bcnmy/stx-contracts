@@ -5,7 +5,7 @@ import "../../../../shared/TestModuleManagement_Base.t.sol";
 
 /// @title Gas benchmark tests for NexusAccountFactory
 contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
-    function setUp() public {
+    function setUp() public virtual override {
         init();
     }
 
@@ -69,8 +69,8 @@ contract TestGas_NexusAccountFactory is TestModuleManagement_Base {
 
     /// @notice Helper function to get the initialization data for account creation
     function getInitData(address validator, address owner) internal view returns (bytes memory) {
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(validator, abi.encodePacked(owner));
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(validator, abi.encodePacked(owner));
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         return abi.encode(address(BOOTSTRAPPER), abi.encodeCall(BOOTSTRAPPER.initNexusScoped, (validators, hook)));
     }
 

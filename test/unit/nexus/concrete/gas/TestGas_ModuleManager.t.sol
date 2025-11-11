@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import "../../../../shared/TestModuleManagement_Base.t.sol";
 
 contract TestGas_ModuleManager is TestModuleManagement_Base {
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
     }
 

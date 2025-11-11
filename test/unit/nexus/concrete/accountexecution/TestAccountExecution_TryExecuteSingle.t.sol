@@ -7,7 +7,7 @@ import "../../../../shared/TestAccountExecution_Base.t.sol";
 /// @notice This contract tests single execution attempts using the try method in the account execution system.
 contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
     /// @notice Sets up the testing environment.
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
     }
 

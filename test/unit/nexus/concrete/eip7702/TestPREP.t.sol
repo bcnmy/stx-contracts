@@ -20,8 +20,8 @@ contract TestPREP is NexusTestBase {
     MockExecutor public mockExecutor;
     MockPreValidationHook public mockPreValidationHook;
 
-    function setUp() public {
-        setupTestEnvironment();
+    function setUp() public virtual override {
+        init();
         target = new MockTarget();
         mockValidator = new MockValidator();
         mockExecutor = new MockExecutor();
@@ -31,15 +31,15 @@ contract TestPREP is NexusTestBase {
     function _getInitData() internal view returns (bytes memory) {
         // Create config for initial modules
         BootstrapConfig[] memory validators =
-            BootstrapLib.createArrayConfig(address(mockValidator), abi.encodePacked(BOB_ADDRESS)); // set BOB as signer in
+            NexusBootstrapLib.createArrayConfig(address(mockValidator), abi.encodePacked(BOB_ADDRESS)); // set BOB as signer
+            // in
             // the
             // validator
-        BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(mockExecutor), "");
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
-        BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(0), "");
-        BootstrapPreValidationHookConfig[] memory preValidationHooks = BootstrapLib.createArrayPreValidationHookConfig(
-            MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(mockPreValidationHook), ""
-        );
+        BootstrapConfig[] memory executors = NexusBootstrapLib.createArrayConfig(address(mockExecutor), "");
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory fallbacks = NexusBootstrapLib.createArrayConfig(address(0), "");
+        BootstrapPreValidationHookConfig[] memory preValidationHooks = NexusBootstrapLib
+            .createArrayPreValidationHookConfig(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(mockPreValidationHook), "");
 
         return abi.encode(
             address(BOOTSTRAPPER),

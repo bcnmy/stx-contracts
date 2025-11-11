@@ -10,7 +10,7 @@ import "../../../../shared/TestModuleManagement_Base.t.sol";
 /// @notice Tests for installing and managing modules in a smart account
 contract TestModuleManager_InstallModule is TestModuleManagement_Base {
     /// @notice Sets up the base environment for the module management tests
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
     }
 

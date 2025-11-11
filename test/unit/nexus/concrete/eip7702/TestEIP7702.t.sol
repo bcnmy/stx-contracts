@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { NexusTestBase } from "../../../../NexusTestBase.t.sol";
 import "../../../../util/Imports.sol";
+import { NexusTestBase } from "../../../../NexusTestBase.t.sol";
 import { MockTarget } from "../../../../mock/MockTarget.sol";
 import { IExecutionHelper } from "contracts/interfaces/nexus/base/IExecutionHelper.sol";
 import { IHook, IPreValidationHookERC1271, IPreValidationHookERC4337 } from "erc7579/interfaces/IERC7579Module.sol";
@@ -18,8 +18,8 @@ contract TestEIP7702 is NexusTestBase {
     MockExecutor public mockExecutor;
     MockPreValidationHook public mockPreValidationHook;
 
-    function setUp() public {
-        setupTestEnvironment();
+    function setUp() public virtual override {
+        init();
         delegateTarget = new MockDelegateTarget();
         target = new MockTarget();
         mockValidator = new MockValidator();
@@ -29,13 +29,12 @@ contract TestEIP7702 is NexusTestBase {
 
     function _getInitData() internal view returns (bytes memory) {
         // Create config for initial modules
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(mockValidator), "");
-        BootstrapConfig[] memory executors = BootstrapLib.createArrayConfig(address(mockExecutor), "");
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
-        BootstrapConfig[] memory fallbacks = BootstrapLib.createArrayConfig(address(0), "");
-        BootstrapPreValidationHookConfig[] memory preValidationHooks = BootstrapLib.createArrayPreValidationHookConfig(
-            MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(mockPreValidationHook), ""
-        );
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(address(mockValidator), "");
+        BootstrapConfig[] memory executors = NexusBootstrapLib.createArrayConfig(address(mockExecutor), "");
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory fallbacks = NexusBootstrapLib.createArrayConfig(address(0), "");
+        BootstrapPreValidationHookConfig[] memory preValidationHooks = NexusBootstrapLib
+            .createArrayPreValidationHookConfig(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(mockPreValidationHook), "");
 
         return abi.encode(
             address(BOOTSTRAPPER),

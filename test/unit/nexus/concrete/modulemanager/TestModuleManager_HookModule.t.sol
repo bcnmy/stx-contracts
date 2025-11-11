@@ -9,7 +9,7 @@ import "../../../../shared/TestModuleManagement_Base.t.sol";
 /// @notice Tests for installing and uninstalling the hook module in a smart account.
 contract TestModuleManager_HookModule is TestModuleManagement_Base {
     /// @notice Sets up the base module management environment.
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
     }
 

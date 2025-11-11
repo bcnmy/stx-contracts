@@ -14,16 +14,7 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
     address internal constant NATIVE_TOKEN = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
-    struct TestTemps {
-        bytes32 contents;
-        address signer;
-        uint256 privateKey;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-    }
-
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
         accountLocker = new MockAccountLocker();
         resourceLockHook = new MockResourceLockPreValidationHook(address(accountLocker), address(0));
@@ -222,15 +213,5 @@ contract TestNexusPreValidation_Integration_ResourceLockHooks is TestModuleManag
         );
         bytes32 parentStructHash = keccak256(abi.encode(keccak256("PersonalSign(bytes prefixed)"), childHash));
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
-    }
-
-    struct AccountDomainStruct {
-        bytes1 fields;
-        string name;
-        string version;
-        uint256 chainId;
-        address verifyingContract;
-        bytes32 salt;
-        uint256[] extensions;
     }
 }

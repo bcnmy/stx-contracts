@@ -9,7 +9,7 @@ contract TestFuzz_ERC4337Account is NexusTestBase {
     address public userAddress = address(BOB.addr);
 
     /// @notice Initializes the test environment.
-    function setUp() public {
+    function setUp() public virtual override {
         init(); // Initializes all required contracts and wallets
     }
 

@@ -7,29 +7,16 @@ import "../../../../shared/TestModuleManagement_Base.t.sol";
 import "test/mock/Counter.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import {
-    MODE_VALIDATION,
     MODE_MODULE_ENABLE,
     MODULE_TYPE_MULTI,
     MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR,
-    MODULE_ENABLE_MODE_TYPE_HASH
+    MODULE_TYPE_EXECUTOR
 } from "contracts/types/Constants.sol";
 import { MockResourceLockPreValidationHook } from "test/mock/modules/MockResourceLockPreValidationHook.sol";
 import { MockAccountLocker } from "test/mock/accounts/MockAccountLocker.sol";
 import { EmittingHook } from "test/mock/modules/EmittingHook.sol";
 
 contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
-    struct TestTemps {
-        bytes32 userOpHash;
-        bytes32 contents;
-        address signer;
-        uint256 privateKey;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-        uint256 missingAccountFunds;
-    }
-
     MockMultiModule mockMultiModule;
     Counter public counter;
     MockResourceLockPreValidationHook private resourceLockHook;
@@ -38,7 +25,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
     string constant MODULE_ENABLE_MODE_NOTATION =
         "ModuleEnableMode(address module,uint256 moduleType,bytes32 userOpHash,bytes initData)";
 
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
         mockMultiModule = new MockMultiModule();
         counter = new Counter();
@@ -657,20 +644,12 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         return keccak256(abi.encodePacked("\x19\x01", appDomainSeparator, parentStructHash));
     }
 
-    struct AccountDomainStruct {
-        string name;
-        string version;
-        uint256 chainId;
-        address verifyingContract;
-        bytes32 salt;
-    }
-
     /// @notice Retrieves the EIP-712 domain struct fields.
     /// @param account The account address.
     /// @return The encoded EIP-712 domain struct fields.
     function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        ( /*t.fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*t.extensions*/ ) =
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
             EIP712(account).eip712Domain();
 
         return abi.encode(

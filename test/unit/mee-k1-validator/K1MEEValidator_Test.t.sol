@@ -101,7 +101,7 @@ contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
     /// @return The encoded EIP-712 domain struct fields.
     function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        ( /*fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*extensions*/ ) =
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
             EIP712(account).eip712Domain();
 
         return abi.encode(

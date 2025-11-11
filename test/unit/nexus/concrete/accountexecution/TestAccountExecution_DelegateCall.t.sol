@@ -9,7 +9,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
     MockDelegateTarget delegateTarget;
     /// @notice Sets up the testing environment.
 
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
         delegateTarget = new MockDelegateTarget();
     }

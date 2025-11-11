@@ -7,7 +7,7 @@ import "../../../../shared/TestAccountExecution_Base.t.sol";
 contract TestGas_ExecutionHelper is TestAccountExecution_Base {
     MockExecutor public mockExecutor;
 
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
 
         mockExecutor = new MockExecutor();

@@ -21,7 +21,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     MockERC1155 internal erc1155;
     Counter internal counter;
 
-    function setUp() public {
+    function setUp() public virtual override {
         init();
 
         counter = new Counter();

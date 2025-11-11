@@ -7,7 +7,7 @@ import "account-abstraction/interfaces/IAccountExecute.sol";
 /// @title TestAccountExecution_ExecuteUserOp
 /// @notice Unit tests for the executeUserOp function in the Account contract
 contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
     }
 

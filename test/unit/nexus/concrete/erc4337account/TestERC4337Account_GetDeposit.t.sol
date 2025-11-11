@@ -11,7 +11,7 @@ contract TestERC4337Account_GetDeposit is NexusTestBase {
     uint256 defaultMaxPercentDelta;
 
     /// @notice Sets up the testing environment.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         initialDeposit = BOB_ACCOUNT.getDeposit();
         defaultMaxPercentDelta = 100_000_000_000;

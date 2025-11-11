@@ -11,7 +11,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     MockHandler private mockFallbackHandler;
 
     /// @notice Sets up the base environment for fallback function tests.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         mockFallbackHandler = new MockHandler();
         vm.label(address(mockFallbackHandler), "MockFallbackHandler");

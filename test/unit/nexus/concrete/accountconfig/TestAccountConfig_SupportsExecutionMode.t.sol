@@ -9,7 +9,7 @@ contract TestAccountConfig_SupportsExecutionMode is NexusTestBase {
     Nexus public accountConfig;
 
     /// @notice Initialize the testing environment
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         accountConfig = Nexus(BOB_ACCOUNT);
     }

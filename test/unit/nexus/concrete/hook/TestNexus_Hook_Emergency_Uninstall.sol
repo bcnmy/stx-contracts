@@ -14,7 +14,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
     MockSimpleValidator SIMPLE_VALIDATOR_MODULE;
 
     /// @notice Sets up the base module management environment.
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
         // Deploy  simple validator
         SIMPLE_VALIDATOR_MODULE = new MockSimpleValidator();

@@ -31,7 +31,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
     }
 
     /// @notice Sets up the initial state for the tests
-    function setUp() public {
+    function setUp() public virtual override {
         // Fork the Base network
         uint256 baseFork = vm.createFork(getBaseRpcUrl());
         vm.selectFork(baseFork);

@@ -6,7 +6,7 @@ import "../../../../shared/TestAccountExecution_Base.t.sol";
 /// @title TestAccountExecution_ExecuteSingle
 /// @notice Tests for single execution in the account execution module
 contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
     }
 

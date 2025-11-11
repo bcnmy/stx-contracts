@@ -5,7 +5,7 @@ import "../../util/Imports.sol";
 import "../../NexusTestBase.t.sol";
 
 contract UpgradeSmartAccountTest is NexusTestBase {
-    function setUp() public {
+    function setUp() public virtual override {
         init();
     }
 

@@ -16,30 +16,20 @@ import { K1MeeValidator } from "contracts/validators/stx-validator/K1MeeValidato
 contract TestERC1271Account_MockProtocol is NexusTestBase {
     K1MeeValidator private validator;
 
-    struct TestTemps {
-        bytes32 userOpHash;
-        bytes32 contents;
-        address signer;
-        uint256 privateKey;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-        uint256 missingAccountFunds;
-    }
-
     bytes32 internal constant PARENT_TYPEHASH = 0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
     bytes32 internal domainSepB;
     TokenWithPermit public permitToken;
     MockPreValidationHook preValidationHook;
 
     /// @notice Sets up the testing environment and initializes the permit token.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
 
         validator = new K1MeeValidator();
         preValidationHook = new MockPreValidationHook();
-        installK1Validator(BOB_ACCOUNT, BOB);
-        installK1Validator(ALICE_ACCOUNT, ALICE);
+        installK1Validator(BOB_ACCOUNT, BOB); // TODO: remove this?
+        installK1Validator(ALICE_ACCOUNT, ALICE); // TODO: remove this? and never use the validator that was installed
+            // there
         installPrevalidationHook(BOB_ACCOUNT, BOB);
         installPrevalidationHook(ALICE_ACCOUNT, ALICE);
         permitToken = new TokenWithPermit("TestToken", "TST");
@@ -120,14 +110,6 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         assertEq(permitToken.allowance(address(ALICE_ACCOUNT), address(0x69)), 0);
     }
 
-    struct AccountDomainStruct {
-        string name;
-        string version;
-        uint256 chainId;
-        address verifyingContract;
-        bytes32 salt;
-    }
-
     /// @notice Converts the contents hash to an EIP-712 hash.
     /// @param contents The contents hash.
     /// @return digest The EIP-712 hash.
@@ -159,7 +141,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
     /// @return The EIP-712 domain struct fields encoded.
     function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        ( /*t.fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*t.extensions*/ ) =
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
             EIP712(account).eip712Domain();
 
         return abi.encode(

@@ -5,7 +5,7 @@ import { MODE_VALIDATION } from "contracts/types/Constants.sol";
 import "../../../../shared/TestAccountExecution_Base.t.sol";
 
 contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
     }
 

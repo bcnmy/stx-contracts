@@ -10,7 +10,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
     MockDelegateTarget delegateTarget;
 
     /// @notice Sets up the testing environment and installs the MockExecutor module
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
 
         mockExecutor = new MockExecutor();

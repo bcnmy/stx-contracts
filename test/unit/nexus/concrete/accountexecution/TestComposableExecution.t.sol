@@ -31,7 +31,7 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
     uint256 input1 = 2517;
     uint256 input2 = 7579;
 
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
         storageContract = new ComposableStorage();
         dummyContract = new DummyContract();
