@@ -14,7 +14,7 @@ import { K1MeeValidator } from "contracts/validators/stx-validator/K1MeeValidato
 /// @title TestERC1271Account_MockProtocol
 /// @notice This contract tests the ERC1271 signature validation with a mock protocol and mock validator.
 contract TestERC1271Account_MockProtocol is NexusTestBase {
-    K1MeeValidator private validator;
+    address private validatorAddress;
 
     bytes32 internal constant PARENT_TYPEHASH = 0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
     bytes32 internal domainSepB;
@@ -25,10 +25,23 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
     function setUp() public virtual override {
         init();
 
-        validator = new K1MeeValidator();
+        validatorAddress = BOB_ACCOUNT.getDefaultValidator();
+        assertEq(validatorAddress, ALICE_ACCOUNT.getDefaultValidator());
+
+        K1MeeValidator validator = K1MeeValidator(validatorAddress);
+        // initialize the default module
+        vm.startPrank(address(BOB_ACCOUNT));
+        validator.onInstall(abi.encodePacked(BOB.addr));
+        vm.stopPrank();
+
+        vm.startPrank(address(ALICE_ACCOUNT));
+        validator.onInstall(abi.encodePacked(ALICE.addr));
+        vm.stopPrank();
+
         preValidationHook = new MockPreValidationHook();
         _installPrevalidationHook(BOB_ACCOUNT, BOB);
         _installPrevalidationHook(ALICE_ACCOUNT, ALICE);
+
         permitToken = new TokenWithPermit("TestToken", "TST");
         domainSepB = permitToken.DOMAIN_SEPARATOR();
     }
@@ -50,7 +63,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
-        bytes memory completeSignature = abi.encodePacked(address(validator), signature);
+        bytes memory completeSignature = abi.encodePacked(address(0), signature);
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), completeSignature);
         assertEq(ret, bytes4(0x1626ba7e));
         permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
@@ -74,7 +87,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
-        bytes memory completeSignature = abi.encodePacked(address(validator), signature);
+        bytes memory completeSignature = abi.encodePacked(address(0), signature);
 
         vm.expectRevert(abi.encodeWithSelector(ERC1271InvalidSigner.selector, address(ALICE_ACCOUNT)));
         permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
@@ -99,7 +112,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
-        bytes memory completeSignature = abi.encodePacked(address(validator), signature);
+        bytes memory completeSignature = abi.encodePacked(address(0), signature);
 
         vm.expectRevert(abi.encodeWithSelector(ERC1271InvalidSigner.selector, address(ALICE_ACCOUNT)));
         permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
@@ -164,7 +177,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         execution[0] = Execution(address(account), 0, callData);
 
         // Build the packed user operation
-        PackedUserOperation[] memory userOps = buildPackedUserOperation({
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp({
             signer: user,
             account: account,
             execType: EXECTYPE_DEFAULT,

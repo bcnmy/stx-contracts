@@ -228,7 +228,7 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
     {
         address payable account = calculateAccountAddress(wallet.addr, validator);
         uint256 nonce = getNonce(account, MODE_VALIDATION, validator, bytes3(0));
-        userOp = buildPackedUserOp(account, nonce);
+        userOp = buildTemplatePackedUserOp(account, nonce);
         userOp.callData = callData;
 
         bytes memory signature = signUserOp(wallet, userOp);
@@ -282,7 +282,14 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
     /// @param sender The sender address
     /// @param nonce The nonce
     /// @return userOp The built user operation
-    function buildPackedUserOp(address sender, uint256 nonce) internal pure returns (PackedUserOperation memory) {
+    function buildTemplatePackedUserOp(
+        address sender,
+        uint256 nonce
+    )
+        internal
+        pure
+        returns (PackedUserOperation memory)
+    {
         return PackedUserOperation({
             sender: sender,
             nonce: nonce,
@@ -355,7 +362,7 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
     /// @param execType The execution type
     /// @param executions The executions to include
     /// @return userOps The prepared packed user operations
-    function buildPackedUserOperation(
+    function buildAndSignPackedUserOp(
         Vm.Wallet memory signer,
         Nexus account,
         ExecType execType,
@@ -381,7 +388,7 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
         }
 
         // Build the UserOperation
-        userOps[0] = buildPackedUserOp(address(account), nonceToUse);
+        userOps[0] = buildTemplatePackedUserOp(address(account), nonceToUse);
         userOps[0].callData = prepareERC7579ExecuteCallData(execType, executions);
 
         // Sign the operation
@@ -528,7 +535,7 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
         executions[0] = Execution({ target: target, value: value, callData: callData });
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(user, userAccount, execType, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 
@@ -542,7 +549,7 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
         internal
     {
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(user, userAccount, execType, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(user, userAccount, execType, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(user.addr));
     }
 

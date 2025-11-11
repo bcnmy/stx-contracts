@@ -26,7 +26,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Prepare the user operation for installing the module
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Execute the user operation
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
@@ -208,7 +208,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Prepare the user operation for uninstalling the module
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         // Expect the UserOperationRevertReason event
@@ -250,7 +250,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Prepare the user operation for uninstalling the module
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -319,7 +319,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Prepare the user operation for uninstalling the module
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Execute the user operation
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
@@ -356,7 +356,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
 
         // Prepare the user operation for uninstalling the module
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -411,7 +411,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         Execution[] memory executionUninstall = new Execution[](1);
         executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataUninstall);
 
-        PackedUserOperation[] memory userOpsUninstall = buildPackedUserOperation(
+        PackedUserOperation[] memory userOpsUninstall = buildAndSignPackedUserOp(
             BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall, address(VALIDATOR_MODULE), 0
         );
 
@@ -435,7 +435,7 @@ contract TestModuleManager_UninstallModule is TestModuleManagement_Base {
         Execution[] memory executionUninstall = new Execution[](1);
         executionUninstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataUninstall);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionUninstall, address(VALIDATOR_MODULE), 0
         );
 

@@ -70,7 +70,7 @@ contract TestPREP is NexusTestBase {
         uint256 nonce = getNonce(prep, MODE_PREP, address(mockValidator), 0);
 
         // Create the userOp and add the data
-        PackedUserOperation memory userOp = buildPackedUserOp(address(prep), nonce);
+        PackedUserOperation memory userOp = buildTemplatePackedUserOp(address(prep), nonce);
         userOp.callData = abi.encodeCall(
             IExecutionHelper.execute,
             (ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(address(target), uint256(0), setValueOnTarget))
@@ -111,7 +111,7 @@ contract TestPREP is NexusTestBase {
         // Initialize PREP with the first userOp
         uint256 nonce = getNonce(prep, MODE_PREP, address(0), 0);
 
-        PackedUserOperation memory userOp = buildPackedUserOp(address(prep), nonce);
+        PackedUserOperation memory userOp = buildTemplatePackedUserOp(address(prep), nonce);
         userOp.callData = abi.encodeCall(
             IExecutionHelper.execute,
             (ModeLib.encodeSimpleSingle(), ExecLib.encodeSingle(address(target), uint256(0), setValueOnTarget))

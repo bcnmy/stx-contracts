@@ -66,7 +66,7 @@ contract TestEIP7702 is NexusTestBase {
         uint256 nonce = getNonce(account, MODE_VALIDATION, address(0), 0);
 
         // Create the userOp and add the data
-        PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
+        PackedUserOperation memory userOp = buildTemplatePackedUserOp(address(account), nonce);
         userOp.callData = userOpCalldata;
 
         userOp.signature = _getSignature(eoaKey, userOp);
@@ -121,7 +121,7 @@ contract TestEIP7702 is NexusTestBase {
         uint256 nonce = getNonce(account, MODE_VALIDATION, address(0), 0);
 
         // Create the userOp and add the data
-        PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
+        PackedUserOperation memory userOp = buildTemplatePackedUserOp(address(account), nonce);
         userOp.callData = userOpCalldata;
 
         userOp.signature = _getSignature(eoaKey, userOp);
@@ -162,7 +162,7 @@ contract TestEIP7702 is NexusTestBase {
         uint256 nonce = getNonce(account, MODE_VALIDATION, address(0), 0);
 
         // Create the userOp and add the data
-        PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
+        PackedUserOperation memory userOp = buildTemplatePackedUserOp(address(account), nonce);
         userOp.callData = userOpCalldata;
         userOp.callData = userOpCalldata;
 
@@ -229,7 +229,7 @@ contract TestEIP7702 is NexusTestBase {
         uint256 nonce = getNonce(account, MODE_VALIDATION, address(0), 0);
 
         // Create the userOp and add the data
-        PackedUserOperation memory userOp = buildPackedUserOp(address(account), nonce);
+        PackedUserOperation memory userOp = buildTemplatePackedUserOp(address(account), nonce);
         userOp.callData = userOpCalldata;
         userOp.callData = userOpCalldata;
 

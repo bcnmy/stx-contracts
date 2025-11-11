@@ -76,7 +76,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
         bytes memory callData = abi.encodeWithSelector(usdc.transfer.selector, recipient, amount);
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(usdc), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             BOB,
             Nexus(payable(address(SMART_ACCOUNT_V2_ADDRESS))),
             EXECTYPE_DEFAULT,
@@ -96,7 +96,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
         vm.deal(address(smartAccountV2), amount + 1 ether);
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(recipient, amount, "");
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             BOB, Nexus(payable(address(smartAccountV2))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0
         );
         ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));

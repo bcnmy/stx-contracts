@@ -19,7 +19,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector));
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Execute the single operation
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -38,7 +38,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
 
         // The method should fail
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("Error(string)", "Counter: Revert operation");
@@ -62,7 +62,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
 
         // The method should fail
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         // Asserting the counter did not increment
@@ -76,7 +76,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
 
         // Build UserOperation for single execution
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
 
@@ -96,7 +96,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
 
         // Build UserOperation for single execution
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         assertEq(receiver.balance, 1 ether, "Receiver should have received 1 ETH");
@@ -113,7 +113,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
             Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
 
         // Prepare and execute the UserOperation
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             BOB, // Sender of the operation
             BOB_ACCOUNT, // Nexus executing the operation
             EXECTYPE_DEFAULT,
@@ -139,7 +139,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
             Execution(address(token), 0, abi.encodeWithSelector(token.approve.selector, CHARLIE.addr, approvalAmount));
 
         // Prepare and execute the approve UserOperation
-        PackedUserOperation[] memory approveOps = buildPackedUserOperation(
+        PackedUserOperation[] memory approveOps = buildAndSignPackedUserOp(
             BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, approvalExecution, address(VALIDATOR_MODULE), 0
         );
 
@@ -216,7 +216,7 @@ contract TestAccountExecution_ExecuteSingle is TestAccountExecution_Base {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
 
         // Build the UserOperation
-        userOps[0] = buildPackedUserOp(
+        userOps[0] = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0))
         );
         userOps[0].callData = executionCalldata;

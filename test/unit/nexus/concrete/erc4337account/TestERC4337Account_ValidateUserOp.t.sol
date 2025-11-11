@@ -23,7 +23,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTestBase {
 
         Execution[] memory executions = prepareSingleExecution(address(account), 0, "");
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(signer, account, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(signer, account, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(signer, userOpHash);
 
@@ -35,7 +35,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTestBase {
     /// @notice Tests a valid user operation.
     function test_ValidateUserOp_ValidOperation() public {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(
+        userOps[0] = buildTemplatePackedUserOp(
             signer.addr, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0))
         );
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -50,7 +50,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTestBase {
     /// @notice Tests an invalid signature for the user operation.
     function test_ValidateUserOp_InvalidSignature() public {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(
+        userOps[0] = buildTemplatePackedUserOp(
             signer.addr, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0))
         );
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -65,7 +65,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTestBase {
     /// @notice Tests an invalid signature format for the user operation.
     function test_ValidateUserOp_InvalidSignatureFormat() public {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(
+        userOps[0] = buildTemplatePackedUserOp(
             signer.addr, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0))
         );
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -80,7 +80,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTestBase {
     /// @notice Tests user operation validation with insufficient funds.
     function test_ValidateUserOp_InsufficientFunds() public {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(
+        userOps[0] = buildTemplatePackedUserOp(
             signer.addr, getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0))
         );
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -99,7 +99,7 @@ contract TestERC4337Account_ValidateUserOp is Test, NexusTestBase {
         vm.deal(address(account), 1 ether);
 
         Execution[] memory executions = prepareSingleExecution(address(account), 0, "");
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             signer, account, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), incorrectNonce
         );
 

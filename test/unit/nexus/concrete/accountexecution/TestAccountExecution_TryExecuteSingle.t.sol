@@ -21,7 +21,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Build UserOperation for single execution
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
@@ -38,7 +38,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -53,7 +53,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Build UserOperation for single execution
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
     }
@@ -74,7 +74,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Build UserOperation for single execution
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -92,7 +92,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
             Execution(address(token), 0, abi.encodeWithSelector(token.transfer.selector, CHARLIE.addr, transferAmount));
 
         // Prepare and execute the UserOperation
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             BOB, // Sender of the operation
             BOB_ACCOUNT, // Nexus executing the operation
             EXECTYPE_TRY,
@@ -119,7 +119,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Prepare and execute the approve UserOperation
         PackedUserOperation[] memory approveOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(approveOps, payable(BOB.addr));
 
@@ -146,7 +146,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
         execution[0] = Execution(address(counter), 0, abi.encodeWithSelector(Counter.revertOperation.selector));
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
 
         // Expect the TryExecuteUnsuccessful event to be emitted with specific data
         vm.expectEmit(true, true, true, true);
@@ -168,7 +168,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Build UserOperation for delegate call execution
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
 
         // Create delegate call data
         bytes memory userOpCalldata = abi.encodeCall(

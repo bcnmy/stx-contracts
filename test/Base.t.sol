@@ -116,7 +116,7 @@ contract BaseTest is Test {
 
     // ============ BUILD USER OP UTILS ============
 
-    function buildUserOpWithCalldata(
+    function buildUserOpWithCalldataAndGasParams(
         address account,
         bytes memory callData,
         Vm.Wallet memory wallet,
@@ -128,6 +128,7 @@ contract BaseTest is Test {
         view
         returns (PackedUserOperation memory userOp)
     {
+        // nonce with default validator and default mode (validation mode) => key = 0x00..00
         uint256 nonce = ENTRYPOINT.getNonce(account, 0);
         userOp = PackedUserOperation({
             sender: account,

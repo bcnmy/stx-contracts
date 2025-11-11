@@ -31,7 +31,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
         bytes memory callData = abi.encodePacked(IAccountExecute.executeUserOp.selector, innerCall);
 
         // Create a PackedUserOperation
-        PackedUserOperation memory userOp = buildPackedUserOp(
+        PackedUserOperation memory userOp = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0))
         );
         userOp.callData = callData;
@@ -64,7 +64,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
         bytes memory callData = abi.encodePacked(IAccountExecute.executeUserOp.selector, innerCall);
 
         // Create a PackedUserOperation
-        PackedUserOperation memory userOp = buildPackedUserOp(
+        PackedUserOperation memory userOp = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0))
         );
         userOp.callData = callData;
@@ -94,7 +94,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
         bytes memory callData = abi.encodePacked(IAccountExecute.executeUserOp.selector);
 
         // Create a PackedUserOperation
-        PackedUserOperation memory userOp = buildPackedUserOp(
+        PackedUserOperation memory userOp = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0))
         );
         userOp.callData = callData;
@@ -127,7 +127,7 @@ contract TestAccountExecution_ExecuteUserOp is TestAccountExecution_Base {
         bytes memory callData = abi.encodePacked(IAccountExecute.executeUserOp.selector, innerCall);
 
         // Create a PackedUserOperation
-        PackedUserOperation memory userOp = buildPackedUserOp(
+        PackedUserOperation memory userOp = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT), getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0))
         );
         userOp.callData = callData;

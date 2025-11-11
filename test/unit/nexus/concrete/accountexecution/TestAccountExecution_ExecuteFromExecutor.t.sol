@@ -24,7 +24,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callDataInstall);
 
         PackedUserOperation[] memory userOpsInstall =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
     }
 
@@ -39,7 +39,7 @@ contract TestAccountExecution_ExecuteFromExecutor is TestAccountExecution_Base {
         execution[0] = Execution(address(mockExecutor), 0, execCallData);
 
         PackedUserOperation[] memory userOpsExec =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOpsExec, payable(address(BOB.addr)));
         assertEq(counter.getNumber(), 1, "Counter should have incremented");
     }

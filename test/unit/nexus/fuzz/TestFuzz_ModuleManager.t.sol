@@ -31,7 +31,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Execute the operation and verify that the module fails to install due to type or address mismatches
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -58,7 +58,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Execute and check if the fallback handler installs correctly
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -93,7 +93,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Perform the installation and handle possible mismatches
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
@@ -130,7 +130,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // First installation should succeed if the module type matches
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
@@ -148,7 +148,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
 
             // Attempt to reinstall the same module should fail
             PackedUserOperation[] memory userOpsSecondAttempt =
-                buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+                buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
             bytes memory expectedRevertReason =
                 abi.encodeWithSignature("LinkedList_EntryAlreadyInList(address)", moduleAddress);
@@ -218,7 +218,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         // Verify that the module is uninstalled
@@ -281,7 +281,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
         // Verify that the module is uninstalled based on the type
@@ -366,7 +366,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // If the module type does not match the installation, expect a revert
         if (!IModule(moduleAddress).isModuleType(moduleTypeId)) {
@@ -435,7 +435,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Expect the uninstallation to fail with a specific revert reason
         bytes memory expectedRevertReason =

@@ -25,7 +25,7 @@ contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
 
         vm.deal(address(mockAccount), 100 ether);
 
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: address(mockAccount),
             callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
             wallet: wallet,

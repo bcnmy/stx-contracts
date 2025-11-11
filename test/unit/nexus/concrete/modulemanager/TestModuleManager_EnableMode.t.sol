@@ -174,7 +174,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         // make the account out of BOB itself
         uint256 nonce = getNonce(BOB_ADDRESS, MODE_MODULE_ENABLE, moduleToEnable, bytes3(0));
 
-        PackedUserOperation memory op = buildPackedUserOp(BOB_ADDRESS, nonce);
+        PackedUserOperation memory op = buildTemplatePackedUserOp(BOB_ADDRESS, nonce);
 
         op.callData = prepareERC7579SingleExecuteCallData(
             EXECTYPE_DEFAULT, address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector)
@@ -572,7 +572,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
     function makeDraftOp(address moduleToEnable) internal view returns (PackedUserOperation memory op) {
         uint256 nonce = getNonce(address(BOB_ACCOUNT), MODE_MODULE_ENABLE, moduleToEnable, bytes3(0));
-        op = buildPackedUserOp(address(BOB_ACCOUNT), nonce);
+        op = buildTemplatePackedUserOp(address(BOB_ACCOUNT), nonce);
 
         op.callData = prepareERC7579SingleExecuteCallData(
             EXECTYPE_DEFAULT, address(counter), 0, abi.encodeWithSelector(Counter.incrementNumber.selector)

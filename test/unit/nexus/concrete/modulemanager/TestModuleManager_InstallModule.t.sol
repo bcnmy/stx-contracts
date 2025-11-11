@@ -90,7 +90,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -195,7 +195,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("InvalidModuleTypeId(uint256)", 99);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -225,7 +225,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -249,7 +249,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -277,7 +277,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId()");
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -308,7 +308,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes memory expectedRevertReason = abi.encodeWithSignature("MismatchModuleTypeId()");
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -341,7 +341,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         assertTrue(
@@ -362,7 +362,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         Execution[] memory executionFirstInstall = new Execution[](1);
         executionFirstInstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataFirstInstall);
 
-        PackedUserOperation[] memory userOpsFirstInstall = buildPackedUserOperation(
+        PackedUserOperation[] memory userOpsFirstInstall = buildAndSignPackedUserOp(
             BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionFirstInstall, address(VALIDATOR_MODULE), 0
         );
         ENTRYPOINT.handleOps(userOpsFirstInstall, payable(address(BOB.addr)));
@@ -375,7 +375,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         Execution[] memory executionReinstall = new Execution[](1);
         executionReinstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataReinstall);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall, address(VALIDATOR_MODULE), 0
         );
 
@@ -408,7 +408,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         assertTrue(
@@ -429,7 +429,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         Execution[] memory executionReinstall = new Execution[](1);
         executionReinstall[0] = Execution(address(BOB_ACCOUNT), 0, callDataReinstall);
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executionReinstall, address(VALIDATOR_MODULE), 0
         );
 
@@ -462,7 +462,7 @@ contract TestModuleManager_InstallModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes memory expectedRevertReason = abi.encodeWithSelector(InvalidModuleTypeId.selector, 99);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);

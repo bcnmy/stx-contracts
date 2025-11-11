@@ -30,7 +30,7 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
 
         // Build a packed user operation for the installation
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Execute the user operation to install the modules
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));

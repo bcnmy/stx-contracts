@@ -117,7 +117,7 @@ contract TestFuzz_ERC4337Account is NexusTestBase {
             callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", address(this), amount)
         });
 
-        PackedUserOperation[] memory withdrawUserOps = buildPackedUserOperation(
+        PackedUserOperation[] memory withdrawUserOps = buildAndSignPackedUserOp(
             BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, withdrawExecutions, address(VALIDATOR_MODULE), 0
         );
         ENTRYPOINT.handleOps(withdrawUserOps, payable(BOB.addr));

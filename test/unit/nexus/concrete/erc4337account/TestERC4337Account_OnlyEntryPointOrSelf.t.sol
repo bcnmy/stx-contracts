@@ -17,7 +17,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTestBase {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, "");
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
@@ -27,7 +27,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTestBase {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, "");
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
         BOB_ACCOUNT.executeUserOp(userOps[0], bytes32(0));
@@ -112,7 +112,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTestBase {
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         uint256 depositAfter = BOB_ACCOUNT.getDeposit();
@@ -129,7 +129,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTestBase {
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 }
