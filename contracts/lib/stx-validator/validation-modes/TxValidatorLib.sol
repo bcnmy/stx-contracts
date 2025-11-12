@@ -249,7 +249,14 @@ library TxValidatorLib {
         iTxHash = bytes32(callData.slice(callData.length - ITX_HASH_BYTE_SIZE, ITX_HASH_BYTE_SIZE));
     }
 
-    function extractProof(bytes calldata signedTx, uint8 proofItemsCount) private pure returns (bytes32[] memory proof) {
+    function extractProof(
+        bytes calldata signedTx,
+        uint8 proofItemsCount
+    )
+        private
+        pure
+        returns (bytes32[] memory proof)
+    {
         proof = new bytes32[](proofItemsCount);
         uint256 pos = signedTx.length - 2 * TIMESTAMP_BYTE_SIZE - 1;
         for (proofItemsCount; proofItemsCount > 0; proofItemsCount--) {
@@ -292,14 +299,17 @@ library TxValidatorLib {
         bytes memory rlpEncodedTxNoSigAndPrefix =
             rlpEncodedTx.slice(totalPrefixSize, rlpEncodedTx.length - totalSignatureSize - totalPrefixSize);
         if (txType == EIP1559_TX_TYPE) {
-            return EfficientHashLib.hash(abi.encodePacked(txType, prependRlpContentSize(rlpEncodedTxNoSigAndPrefix, "")));
+            return
+                EfficientHashLib.hash(abi.encodePacked(txType, prependRlpContentSize(rlpEncodedTxNoSigAndPrefix, "")));
         } else if (txType == LEGACY_TX_TYPE) {
             if (v >= EIP_155_MIN_V_VALUE) {
                 return EfficientHashLib.hash(
                     prependRlpContentSize(
                         rlpEncodedTxNoSigAndPrefix,
                         abi.encodePacked(
-                            uint256(_extractChainIdFromV(v)).encodeUint(), uint256(0).encodeUint(), uint256(0).encodeUint()
+                            uint256(_extractChainIdFromV(v)).encodeUint(),
+                            uint256(0).encodeUint(),
+                            uint256(0).encodeUint()
                         )
                     )
                 );

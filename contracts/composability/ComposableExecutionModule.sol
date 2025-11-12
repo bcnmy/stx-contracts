@@ -42,9 +42,12 @@ contract ComposableExecutionModule is IComposableExecutionModule, IExecutor, ERC
     /**
      * @notice Executes a composable transaction with dynamic parameter composition and return value handling
      * @dev To be used via fallback() from the account
-     * @dev As per ERC-7579 account MUST append original msg.sender address to the calldata in a way specified by ERC-2771
-     * @dev Returns the msg.value back to the sender (account) if any. This is done because in most cases the SA.fallback
-     * forwards value to this module. This allows SA receiving value along with the composable execution call processed via
+     * @dev As per ERC-7579 account MUST append original msg.sender address to the calldata in a way specified by
+     * ERC-2771
+     * @dev Returns the msg.value back to the sender (account) if any. This is done because in most cases the
+     * SA.fallback
+     * forwards value to this module. This allows SA receiving value along with the composable execution call processed
+     * via
      * fallback.
      */
     function executeComposable(ComposableExecution[] calldata cExecutions) external payable {
@@ -63,12 +66,14 @@ contract ComposableExecutionModule is IComposableExecutionModule, IExecutor, ERC
     /// @notice It doesn't require access control as it is expected to be called by the account itself via .execute()
     /// @dev !!! Attention !!! This function should NEVER be installed to be used via fallback() as it doesn't implement
     /// access control
-    /// thus it will be callable by any address account.executeComposableCall => fallback() => this.executeComposableCall
+    /// thus it will be callable by any address account.executeComposableCall => fallback() =>
+    /// this.executeComposableCall
     function executeComposableCall(ComposableExecution[] calldata cExecutions) external {
         _executeComposable(cExecutions, msg.sender, _executeExecutionCall);
     }
 
-    /// @notice It doesn't require access control as it is expected to be called by the account itself via .execute(mode =
+    /// @notice It doesn't require access control as it is expected to be called by the account itself via .execute(mode
+    /// =
     /// delegatecall)
     function executeComposableDelegateCall(ComposableExecution[] calldata cExecutions) external {
         require(THIS_ADDRESS != address(this), DelegateCallOnly());

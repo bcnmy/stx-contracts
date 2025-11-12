@@ -132,7 +132,8 @@ library ComposableExecutionLib {
     // Process a single output parameter and write to storage
     function processOutput(OutputParam calldata param, bytes memory returnData, address account) internal {
         // only static types are supported for now as return values
-        // can also process all the static return values which are before the first dynamic return value in the returnData
+        // can also process all the static return values which are before the first dynamic return value in the
+        // returnData
         if (param.fetcherType == OutputParamFetcherType.EXEC_RESULT) {
             uint256 returnValues;
             address targetStorageContract;
@@ -143,7 +144,9 @@ library ComposableExecutionLib {
                 targetStorageContract := calldataload(add(paramData.offset, 0x20))
                 targetStorageSlot := calldataload(add(paramData.offset, 0x40))
             }
-            _parseReturnDataAndWriteToStorage(returnValues, returnData, targetStorageContract, targetStorageSlot, account);
+            _parseReturnDataAndWriteToStorage(
+                returnValues, returnData, targetStorageContract, targetStorageSlot, account
+            );
             // same for static calls
         } else if (param.fetcherType == OutputParamFetcherType.STATIC_CALL) {
             uint256 returnValues;

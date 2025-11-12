@@ -277,7 +277,14 @@ abstract contract BaseNodePaymaster is BasePaymaster {
         }
     }
 
-    function _applyPercentagePremium(uint256 amount, uint256 premiumPercentage) internal pure returns (uint256 result) {
+    function _applyPercentagePremium(
+        uint256 amount,
+        uint256 premiumPercentage
+    )
+        internal
+        pure
+        returns (uint256 result)
+    {
         result = amount * (_PREMIUM_CALCULATION_BASE + premiumPercentage) / _PREMIUM_CALCULATION_BASE;
     }
 

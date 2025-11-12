@@ -3,7 +3,7 @@
 pragma solidity ^0.8.27;
 
 import { IValidator, MODULE_TYPE_VALIDATOR } from "erc7579/interfaces/IERC7579Module.sol";
-import { ISessionValidator } from "contracts/interfaces/ISessionValidator.sol";
+import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { EnumerableSet } from "EnumerableSet4337/EnumerableSet4337.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
@@ -11,8 +11,8 @@ import {
     SIG_TYPE_SIMPLE,
     SIG_TYPE_ON_CHAIN,
     SIG_TYPE_ERC20_PERMIT,
-    EIP1271_SUCCESS,
-    EIP1271_FAILED,
+    ERC1271_SUCCESS,
+    ERC1271_FAILED,
     MODULE_TYPE_STATELESS_VALIDATOR,
     SIG_TYPE_MEE_FLOW
 } from "contracts/types/Constants.sol";
@@ -41,7 +41,7 @@ import { EcdsaHelperLib } from "../../lib/util/EcdsaHelperLib.sol";
  *        In future full scale 7739 will replace it when superTx hash is 712 and transparent.
  *
  */
-contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
+contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
     using EnumerableSet for EnumerableSet.AddressSet;
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
@@ -202,8 +202,8 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
      * @param signature The signature of the message
      *
      * @return sigValidationResult the result of the signature validation, which can be:
-     *  - EIP1271_SUCCESS if the signature is valid
-     *  - EIP1271_FAILED if the signature is invalid
+     *  - ERC1271_SUCCESS if the signature is valid
+     *  - ERC1271_FAILED if the signature is invalid
      */
     function isValidSignatureWithSender(
         address sender,
@@ -216,7 +216,10 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
         override
         returns (bytes4 sigValidationResult)
     {
-        if (bytes3(signature[0:3]) != SIG_TYPE_MEE_FLOW) {
+        if (
+            signature.length == 0 // for erc7739 detection
+                || bytes3(signature[0:3]) != SIG_TYPE_MEE_FLOW // non-mee flow
+        ) {
             // Non MEE flow => uses 7739
             // goes to ERC7739Validator to apply 7739 magic and then returns back
             // to this contract's _erc1271IsValidSignatureNowCalldata() method.
@@ -243,12 +246,12 @@ contract K1MeeValidator is IValidator, ISessionValidator, ERC7739Validator {
                 }
             }
             return _validateSignatureForOwner(getOwner(msg.sender), dataHash, _erc1271UnwrapSignature(signature))
-                ? EIP1271_SUCCESS
-                : EIP1271_FAILED;
+                ? ERC1271_SUCCESS
+                : ERC1271_FAILED;
         }
     }
 
-    /// @notice ISessionValidator interface for smart session
+    /// @notice IStatelessValidator interface
     /// @param hash The hash of the data to validate
     /// @param sig The signature data
     /// @param data The data to validate against (owner address in this case)

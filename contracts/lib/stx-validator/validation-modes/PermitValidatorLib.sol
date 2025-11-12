@@ -16,8 +16,10 @@ import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/
  *      - https://ethresear.ch/t/fusion-module-7702-alternative-with-no-protocol-changes/20949
  *      - https://docs.biconomy.io/explained/eoa#fusion-module
  *
- *      @dev Important: since ERC20 permit token knows nothing about the MEE, it will treat the superTx hash as a deadline:
- *      -  if (very unlikely) the superTx hash being converted to uint256 is a timestamp in the past, the permit will fail
+ *      @dev Important: since ERC20 permit token knows nothing about the MEE, it will treat the superTx hash as a
+ * deadline:
+ *      -  if (very unlikely) the superTx hash being converted to uint256 is a timestamp in the past, the permit will
+ * fail
  *      -  the deadline with most superTx hashes will be very far in the future
  *
  *      @dev Since at this point bytes32 superTx hash is a blind hash, users and wallets should pay attention if
@@ -94,8 +96,9 @@ library PermitValidatorLib {
     {
         DecodedErc20PermitSig memory decodedSig = _decodeFullPermitSig(parsedSignature);
 
-        bytes32 meeUserOpHash =
-            MEEUserOpHashLib.getMEEUserOpHash(userOpHash, decodedSig.lowerBoundTimestamp, decodedSig.upperBoundTimestamp);
+        bytes32 meeUserOpHash = MEEUserOpHashLib.getMEEUserOpHash(
+            userOpHash, decodedSig.lowerBoundTimestamp, decodedSig.upperBoundTimestamp
+        );
 
         if (
             !EcdsaHelperLib.isValidSignature(
@@ -124,7 +127,8 @@ library PermitValidatorLib {
                 // all good
             } catch {
                 // check if by some reason this permit was already successfully used (and not spent yet)
-                if (ERC20(address(decodedSig.token)).allowance(expectedSigner, decodedSig.spender) < decodedSig.amount) {
+                if (ERC20(address(decodedSig.token)).allowance(expectedSigner, decodedSig.spender) < decodedSig.amount)
+                {
                     // if the above expectationis not true, revert
                     revert PermitFailed();
                 }

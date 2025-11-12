@@ -64,7 +64,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         bytes memory callData =
             abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
 
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: address(mockAccount),
             callData: callData,
             wallet: wallet,
@@ -176,7 +176,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.setValue.selector, valueToSet);
         bytes memory callData =
             abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: address(mockAccount),
             callData: callData,
             wallet: wallet,
@@ -268,7 +268,8 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         // deposit decrease = refund to sponsor (if any) + gas cost refund to beneficiary (EXECUTOR_EOA) =>
         actualRefund = (nodePMDepositBefore - getDeposit(address(EMITTING_NODE_PAYMASTER))) - actualGasCostFromEP;
 
-        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by executor
+        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by
+        // executor
         // EOA)
         meeNodeEarnings =
             applyPremium(maxGasCost, meeNodePremiumPercentage) - actualRefund - gasSpentByExecutorEOA * actualGasPrice;

@@ -3,7 +3,6 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
 import "./ComposabilityBase.t.sol";
-import { ComposableExecutionModule } from "contracts/composability/ComposableExecutionModule.sol";
 import { IComposableExecution } from "contracts/interfaces/IComposableExecution.sol";
 import "contracts/composability/ComposableExecutionLib.sol";
 import "contracts/types/ComposabilityDataTypes.sol";
@@ -156,7 +155,8 @@ contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
             constraintType: ConstraintType.EQ,
             referenceData: abi.encode(bytes32(uint256(keccak256("DUMMY"))))
         });
-        constraints[3] = Constraint({ constraintType: ConstraintType.EQ, referenceData: abi.encode(bytes32(uint256(1))) });
+        constraints[3] =
+            Constraint({ constraintType: ConstraintType.EQ, referenceData: abi.encode(bytes32(uint256(1))) });
 
         vm.startPrank(ENTRYPOINT_V07_ADDRESS);
 
@@ -166,7 +166,9 @@ contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
         inputParams[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(address(dummyContract), abi.encodeWithSelector(DummyContract.returnMultipleValues.selector)),
+            paramData: abi.encode(
+                address(dummyContract), abi.encodeWithSelector(DummyContract.returnMultipleValues.selector)
+            ),
             constraints: constraints
         });
 
