@@ -12,7 +12,7 @@ contract TestStakeable is NexusTestBase {
     IEntryPoint public entryPoint;
 
     /// @notice Sets up the testing environment by deploying the contract and initializing variables
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         owner = FACTORY_OWNER.addr;
         stakeable = new Stakeable(owner);

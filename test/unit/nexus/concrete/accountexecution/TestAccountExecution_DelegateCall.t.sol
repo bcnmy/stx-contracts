@@ -9,7 +9,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
     MockDelegateTarget delegateTarget;
     /// @notice Sets up the testing environment.
 
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
         delegateTarget = new MockDelegateTarget();
     }
@@ -33,7 +33,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Build UserOperation for single execution
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes memory userOpCalldata = abi.encodeCall(
             Nexus.execute,
@@ -73,7 +73,7 @@ contract TestAccountExecution_TryExecuteSingle is TestAccountExecution_Base {
 
         // Build UserOperation for single execution
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
 
         bytes memory userOpCalldata = abi.encodeCall(
             Nexus.execute,

@@ -7,7 +7,7 @@ import "../../../../shared/TestModuleManagement_Base.t.sol";
 /// @notice Tests for module management, verifying support for various module types in BOB_ACCOUNT.
 contract TestModuleManager_SupportsModule is TestModuleManagement_Base {
     /// @notice Sets up the base environment for the module management tests.
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
     }
 

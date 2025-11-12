@@ -11,7 +11,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
     MockHandler private mockFallbackHandler;
 
     /// @notice Sets up the base environment for fallback function tests.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         mockFallbackHandler = new MockHandler();
         vm.label(address(mockFallbackHandler), "MockFallbackHandler");
@@ -102,7 +102,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes memory expectedRevertReason = abi.encodeWithSelector(FallbackCallTypeInvalid.selector);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
@@ -191,7 +191,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         // Verify the fallback handler was installed
@@ -285,7 +285,7 @@ contract TestNexus_FallbackFunction is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
 
         // Verify the module was installed

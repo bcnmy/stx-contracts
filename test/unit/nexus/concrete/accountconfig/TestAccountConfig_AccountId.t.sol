@@ -7,7 +7,7 @@ import { NexusTestBase } from "../../../../NexusTestBase.t.sol";
 contract TestAccountConfig_AccountId is NexusTestBase {
     /// @notice Initialize the testing environment
     /// @notice Initialize the testing environment
-    function setUp() public {
+    function setUp() public virtual override {
         setupPredefinedWallets();
         deployTestContracts();
     }

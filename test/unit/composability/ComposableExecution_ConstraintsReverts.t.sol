@@ -3,7 +3,6 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
 import "./ComposabilityBase.t.sol";
-import { ComposableExecutionModule } from "contracts/composability/ComposableExecutionModule.sol";
 import { IComposableExecution } from "contracts/interfaces/IComposableExecution.sol";
 import "contracts/composability/ComposableExecutionLib.sol";
 import "contracts/types/ComposabilityDataTypes.sol";

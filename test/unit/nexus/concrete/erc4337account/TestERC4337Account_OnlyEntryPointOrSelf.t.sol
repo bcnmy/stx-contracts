@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { MODE_VALIDATION } from "contracts/types/Constants.sol";
 import "../../../../NexusTestBase.t.sol";
 
 /// @title TestERC4337Account_OnlyEntryPointOrSelf
 /// @notice Tests for operations that should be executed only by the EntryPoint or the account itself.
 contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTestBase {
     /// @notice Sets up the testing environment and ensures BOB_ACCOUNT has ether.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         BOB_ACCOUNT.addDeposit{ value: 1 ether }();
     }
@@ -18,7 +17,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTestBase {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, "");
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 
@@ -28,7 +27,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTestBase {
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, "");
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         vm.expectRevert(abi.encodeWithSelector(AccountAccessUnauthorized.selector));
         BOB_ACCOUNT.executeUserOp(userOps[0], bytes32(0));
@@ -113,7 +112,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTestBase {
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         uint256 depositAfter = BOB_ACCOUNT.getDeposit();
@@ -130,7 +129,7 @@ contract TestERC4337Account_OnlyEntryPointOrSelf is NexusTestBase {
         executions[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
 }

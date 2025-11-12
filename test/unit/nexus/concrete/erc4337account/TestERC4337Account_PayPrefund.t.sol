@@ -11,7 +11,7 @@ contract TestERC4337Account_PayPrefund is NexusTestBase {
     Nexus internal account;
 
     /// @notice Sets up the testing environment.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         signer = createAndFundWallet("Signer", 0.0001 ether);
         account = deployNexus(signer, 0.0001 ether, address(VALIDATOR_MODULE));
@@ -27,7 +27,7 @@ contract TestERC4337Account_PayPrefund is NexusTestBase {
 
         // Build a packed user operation
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(signer, account, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(signer, account, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(signer, userOpHash);
 

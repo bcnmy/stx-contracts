@@ -22,16 +22,9 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
     MockSimpleValidator private SIMPLE_VALIDATOR;
     K1MeeValidator private K1_MEE_VALIDATOR;
 
-    struct TestTemps {
-        bytes32 contents;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-    }
-
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
 
         // Deploy supporting contracts
@@ -256,15 +249,5 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         );
         bytes32 parentStructHash = keccak256(abi.encode(keccak256("PersonalSign(bytes prefixed)"), childHash));
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
-    }
-
-    struct AccountDomainStruct {
-        bytes1 fields;
-        string name;
-        string version;
-        uint256 chainId;
-        address verifyingContract;
-        bytes32 salt;
-        uint256[] extensions;
     }
 }

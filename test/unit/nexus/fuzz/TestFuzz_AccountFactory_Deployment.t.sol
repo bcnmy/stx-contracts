@@ -6,7 +6,7 @@ import "../../../NexusTestBase.t.sol";
 /// @title TestFuzz_AccountFactory_Deployment
 /// @notice Fuzz tests for deploying accounts using the NexusAccountFactory.
 contract TestFuzz_AccountFactory_Deployment is NexusTestBase {
-    function setUp() public {
+    function setUp() public virtual override {
         init();
     }
 
@@ -16,15 +16,15 @@ contract TestFuzz_AccountFactory_Deployment is NexusTestBase {
         Vm.Wallet memory randomUser = createAndFundWallet("RandomUser", 1 ether);
         bytes memory initData = abi.encodePacked(randomUser.addr, randomSeed);
 
-        // Use the BootstrapLib to create the configuration
+        // Use theNexusBootstrapLib to create the configuration
         address[] memory modules = new address[](1);
         modules[0] = address(VALIDATOR_MODULE);
 
         bytes[] memory datas = new bytes[](1);
         datas[0] = initData;
 
-        BootstrapConfig[] memory validators = BootstrapLib.createMultipleConfigs(modules, datas);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createMultipleConfigs(modules, datas);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         bytes memory _initData =
             abi.encode(address(BOOTSTRAPPER), abi.encodeCall(BOOTSTRAPPER.initNexusScoped, (validators, hook)));
 
@@ -41,15 +41,15 @@ contract TestFuzz_AccountFactory_Deployment is NexusTestBase {
         Vm.Wallet memory randomUser = createAndFundWallet("RandomUser", 1 ether);
         bytes memory initData = abi.encodePacked(randomUser.addr, largeIndex);
 
-        // Use the BootstrapLib to create the configuration
+        // Use theNexusBootstrapLib to create the configuration
         address[] memory modules = new address[](1);
         modules[0] = address(VALIDATOR_MODULE);
 
         bytes[] memory datas = new bytes[](1);
         datas[0] = initData;
 
-        BootstrapConfig[] memory validators = BootstrapLib.createMultipleConfigs(modules, datas);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createMultipleConfigs(modules, datas);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         bytes memory _initData =
             abi.encode(address(BOOTSTRAPPER), abi.encodeCall(BOOTSTRAPPER.initNexusScoped, (validators, hook)));
 
@@ -70,15 +70,15 @@ contract TestFuzz_AccountFactory_Deployment is NexusTestBase {
         Vm.Wallet memory randomUser = createAndFundWallet("RandomUser", 1 ether);
         bytes memory initData = abi.encodePacked(randomUser.addr, randomSeed);
 
-        // Use the BootstrapLib to create the configuration
+        // Use theNexusBootstrapLib to create the configuration
         address[] memory modules = new address[](1);
         modules[0] = address(VALIDATOR_MODULE);
 
         bytes[] memory datas = new bytes[](1);
         datas[0] = initData;
 
-        BootstrapConfig[] memory validators = BootstrapLib.createMultipleConfigs(modules, datas);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createMultipleConfigs(modules, datas);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         bytes memory _initData =
             abi.encode(address(BOOTSTRAPPER), abi.encodeCall(BOOTSTRAPPER.initNexusScoped, (validators, hook)));
         bytes32 salt = keccak256(abi.encodePacked(randomSeed));

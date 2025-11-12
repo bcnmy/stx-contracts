@@ -10,23 +10,12 @@ import { K1MeeValidator } from "contracts/validators/stx-validator/K1MeeValidato
 /// @notice This contract tests the ERC1271 signature validation functionality.
 /// @dev Uses MockValidator for testing signature validation.
 contract TestERC1271Account_IsValidSignature is NexusTestBase {
-    struct TestTemps {
-        bytes32 userOpHash;
-        bytes32 contents;
-        address signer;
-        uint256 privateKey;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-        uint256 missingAccountFunds;
-    }
-
     K1MeeValidator private validator;
 
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
     /// @notice Initializes the testing environment.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         validator = new K1MeeValidator();
         bytes memory callData = abi.encodeWithSelector(
@@ -41,7 +30,7 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
 
         // Build a packed user operation for the installation
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(ALICE, ALICE_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         // Execute the user operation to install the modules
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -171,7 +160,7 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
     /// @return The ERC-1271 hash for personal sign.
     function toERC1271HashPersonalSign(bytes32 childHash, address account) internal view returns (bytes32) {
         AccountDomainStruct memory t;
-        ( /*t.fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*t.extensions*/ ) =
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
             EIP712(account).eip712Domain();
         bytes32 domainSeparator = keccak256(
             abi.encode(
@@ -186,20 +175,12 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, parentStructHash));
     }
 
-    struct AccountDomainStruct {
-        string name;
-        string version;
-        uint256 chainId;
-        address verifyingContract;
-        bytes32 salt;
-    }
-
     /// @notice Retrieves the EIP-712 domain struct fields.
     /// @param account The account address.
     /// @return The encoded EIP-712 domain struct fields.
     function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        ( /*fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*extensions*/ ) =
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
             EIP712(account).eip712Domain();
 
         return abi.encode(

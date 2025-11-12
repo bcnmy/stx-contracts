@@ -8,7 +8,7 @@ import "../../../../NexusTestBase.t.sol";
 /// @notice Tests the correct EntryPoint address for ERC4337 accounts.
 contract TestERC4337Account_EntryPoint is NexusTestBase {
     /// @notice Initializes the testing environment.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
     }
 

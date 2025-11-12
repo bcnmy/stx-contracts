@@ -9,7 +9,7 @@ import "../../../../shared/TestModuleManagement_Base.t.sol";
 /// @notice Tests for installing and uninstalling the hook module in a smart account.
 contract TestModuleManager_HookModule is TestModuleManagement_Base {
     /// @notice Sets up the base module management environment.
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
     }
 
@@ -62,7 +62,7 @@ contract TestModuleManager_HookModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
 
@@ -112,7 +112,7 @@ contract TestModuleManager_HookModule is TestModuleManagement_Base {
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Expect the PreCheckCalled and PostCheckCalled events to be emitted
         vm.expectEmit(true, true, true, true);
@@ -142,7 +142,7 @@ contract TestModuleManager_HookModule is TestModuleManagement_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, execType, execution, address(VALIDATOR_MODULE), 0);
 
         // Emitting an event to capture the uninstallation attempt for assertion in tests
         vm.expectEmit(true, true, true, true);

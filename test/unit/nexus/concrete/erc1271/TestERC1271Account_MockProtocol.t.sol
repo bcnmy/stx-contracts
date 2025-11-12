@@ -14,18 +14,7 @@ import { K1MeeValidator } from "contracts/validators/stx-validator/K1MeeValidato
 /// @title TestERC1271Account_MockProtocol
 /// @notice This contract tests the ERC1271 signature validation with a mock protocol and mock validator.
 contract TestERC1271Account_MockProtocol is NexusTestBase {
-    K1MeeValidator private validator;
-
-    struct TestTemps {
-        bytes32 userOpHash;
-        bytes32 contents;
-        address signer;
-        uint256 privateKey;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
-        uint256 missingAccountFunds;
-    }
+    address private validatorAddress;
 
     bytes32 internal constant PARENT_TYPEHASH = 0xd61db970ec8a2edc5f9fd31d876abe01b785909acb16dcd4baaf3b434b4c439b;
     bytes32 internal domainSepB;
@@ -33,15 +22,26 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
     MockPreValidationHook preValidationHook;
 
     /// @notice Sets up the testing environment and initializes the permit token.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
 
-        validator = new K1MeeValidator();
+        validatorAddress = BOB_ACCOUNT.getDefaultValidator();
+        assertEq(validatorAddress, ALICE_ACCOUNT.getDefaultValidator());
+
+        K1MeeValidator validator = K1MeeValidator(validatorAddress);
+        // initialize the default module
+        vm.startPrank(address(BOB_ACCOUNT));
+        validator.onInstall(abi.encodePacked(BOB.addr));
+        vm.stopPrank();
+
+        vm.startPrank(address(ALICE_ACCOUNT));
+        validator.onInstall(abi.encodePacked(ALICE.addr));
+        vm.stopPrank();
+
         preValidationHook = new MockPreValidationHook();
-        installK1Validator(BOB_ACCOUNT, BOB);
-        installK1Validator(ALICE_ACCOUNT, ALICE);
-        installPrevalidationHook(BOB_ACCOUNT, BOB);
-        installPrevalidationHook(ALICE_ACCOUNT, ALICE);
+        _installPrevalidationHook(BOB_ACCOUNT, BOB);
+        _installPrevalidationHook(ALICE_ACCOUNT, ALICE);
+
         permitToken = new TokenWithPermit("TestToken", "TST");
         domainSepB = permitToken.DOMAIN_SEPARATOR();
     }
@@ -63,7 +63,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
-        bytes memory completeSignature = abi.encodePacked(address(validator), signature);
+        bytes memory completeSignature = abi.encodePacked(address(0), signature);
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), completeSignature);
         assertEq(ret, bytes4(0x1626ba7e));
         permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
@@ -87,7 +87,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
-        bytes memory completeSignature = abi.encodePacked(address(validator), signature);
+        bytes memory completeSignature = abi.encodePacked(address(0), signature);
 
         vm.expectRevert(abi.encodeWithSelector(ERC1271InvalidSigner.selector, address(ALICE_ACCOUNT)));
         permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
@@ -112,20 +112,12 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
-        bytes memory completeSignature = abi.encodePacked(address(validator), signature);
+        bytes memory completeSignature = abi.encodePacked(address(0), signature);
 
         vm.expectRevert(abi.encodeWithSelector(ERC1271InvalidSigner.selector, address(ALICE_ACCOUNT)));
         permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
 
         assertEq(permitToken.allowance(address(ALICE_ACCOUNT), address(0x69)), 0);
-    }
-
-    struct AccountDomainStruct {
-        string name;
-        string version;
-        uint256 chainId;
-        address verifyingContract;
-        bytes32 salt;
     }
 
     /// @notice Converts the contents hash to an EIP-712 hash.
@@ -159,7 +151,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
     /// @return The EIP-712 domain struct fields encoded.
     function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        ( /*t.fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*t.extensions*/ ) =
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
             EIP712(account).eip712Domain();
 
         return abi.encode(
@@ -171,34 +163,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         );
     }
 
-    /// @notice Helper function to install a validator module to a specific deployed Smart Account.
-    /// @param account The Smart Account to which the validator will be installed.
-    /// @param user The wallet executing the operation.
-    function installK1Validator(Nexus account, Vm.Wallet memory user) internal {
-        // Prepare call data for installing the validator module
-        bytes memory callData = abi.encodeWithSelector(
-            IModuleManager.installModule.selector, MODULE_TYPE_VALIDATOR, validator, abi.encodePacked(user.addr)
-        );
-
-        // Prepare execution array
-        Execution[] memory execution = new Execution[](1);
-        execution[0] = Execution(address(account), 0, callData);
-
-        // Build the packed user operation
-        PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(user, account, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
-
-        // Handle the user operation through the entry point
-        ENTRYPOINT.handleOps(userOps, payable(user.addr));
-
-        // Assert that the validator module is installed
-        assertTrue(
-            account.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validator), ""),
-            "Validator module should be installed"
-        );
-    }
-
-    function installPrevalidationHook(Nexus account, Vm.Wallet memory user) internal {
+    function _installPrevalidationHook(Nexus account, Vm.Wallet memory user) internal {
         // Prepare call data for installing the validator module
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
@@ -212,8 +177,14 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         execution[0] = Execution(address(account), 0, callData);
 
         // Build the packed user operation
-        PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(user, account, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp({
+            signer: user,
+            account: account,
+            execType: EXECTYPE_DEFAULT,
+            executions: execution,
+            validator: address(0), // default validator
+            nonce: 0
+        });
 
         // Handle the user operation through the entry point
         ENTRYPOINT.handleOps(userOps, payable(user.addr));

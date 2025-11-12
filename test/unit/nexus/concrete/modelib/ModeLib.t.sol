@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "contracts/lib/erc-7579/ModeLib.sol";
 
 contract ModeLibTest is Test {
-    function setUp() public { }
+    function setUp() public virtual { }
 
     function test_encodeDecodeSingle_Success() public {
         CallType callType = CALLTYPE_SINGLE;

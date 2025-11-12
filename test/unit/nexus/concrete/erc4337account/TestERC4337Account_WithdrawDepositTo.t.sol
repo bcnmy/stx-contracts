@@ -10,7 +10,7 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTestBase {
     uint256 private defaultTolerance;
 
     /// @notice Sets up the testing environment.
-    function setUp() public {
+    function setUp() public virtual override {
         init();
         BOB_ACCOUNT = BOB_ACCOUNT;
         defaultDepositAmount = 1 ether;
@@ -34,7 +34,7 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTestBase {
             callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount)
         });
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
         uint256 depositAfter = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
@@ -70,7 +70,7 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTestBase {
             callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount)
         });
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BUNDLER.addr);
 
         uint256 depositAfter = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
@@ -106,7 +106,7 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTestBase {
             callData: abi.encodeWithSignature("withdrawDepositTo(address,uint256)", to, amount)
         });
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         uint256 gasUsed = handleUserOpAndMeasureGas(userOps, BOB.addr);
 
         uint256 depositAfter = ENTRYPOINT.balanceOf(address(BOB_ACCOUNT));
@@ -182,7 +182,7 @@ contract TestERC4337Account_WithdrawDepositTo is NexusTestBase {
         });
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }

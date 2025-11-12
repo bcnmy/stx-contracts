@@ -11,7 +11,7 @@ contract TestFuzz_ExecuteFromExecutor is NexusTestBase {
     MockToken public token;
 
     /// @notice Sets up the environment before each test
-    function setUp() public {
+    function setUp() public virtual override {
         init(); // Initializes all required contracts and wallets
         mockExecutor = new MockExecutor();
         counter = new Counter();
@@ -26,7 +26,7 @@ contract TestFuzz_ExecuteFromExecutor is NexusTestBase {
         execution[0] = Execution({ target: address(BOB_ACCOUNT), value: 0, callData: installExecModuleData });
 
         PackedUserOperation[] memory userOpsInstall =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
 
         require(

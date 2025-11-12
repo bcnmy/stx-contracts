@@ -8,7 +8,7 @@ import "../../../../shared/TestAccountExecution_Base.t.sol";
 /// @notice This contract tests batch execution attempts using the try method in the account execution system.
 contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
     /// @notice Sets up the testing environment.
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
     }
 
@@ -24,7 +24,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
 
         // Execute batch operation
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -43,7 +43,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
 
         // Execute batch operation
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
 
         vm.expectEmit(true, true, true, true);
         emit TryExecuteUnsuccessful(
@@ -94,7 +94,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
 
         // Execute batch operation
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
 
         vm.expectEmit(true, true, true, true);
         emit TryExecuteUnsuccessful(
@@ -115,7 +115,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
 
         // Execute batch operation
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
     }
@@ -140,7 +140,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
 
         // Execute batch operation
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
 
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
@@ -159,7 +159,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
 
         // Execute batch operations
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
 
         // Assertions
@@ -182,7 +182,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
 
         // Prepare UserOperation for approval
         PackedUserOperation[] memory approvalUserOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, approvalExecution, address(VALIDATOR_MODULE), 0);
 
         // Execution for transferFrom
         Execution[] memory transferExecution = new Execution[](1);
@@ -195,7 +195,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
         );
 
         // Prepare UserOperation for transferFrom
-        PackedUserOperation[] memory transferUserOps = buildPackedUserOperation(
+        PackedUserOperation[] memory transferUserOps = buildAndSignPackedUserOp(
             ALICE, ALICE_ACCOUNT, EXECTYPE_TRY, transferExecution, address(VALIDATOR_MODULE), 0
         );
 
@@ -248,7 +248,7 @@ contract TestAccountExecution_TryExecuteBatch is TestAccountExecution_Base {
 
         // Prepare UserOperation for both actions
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
 
         userOps[0].nonce = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
 

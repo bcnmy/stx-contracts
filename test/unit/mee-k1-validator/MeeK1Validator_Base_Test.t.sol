@@ -47,7 +47,7 @@ contract MeeK1Validator_Base_Test is BaseTest {
         view
         returns (PackedUserOperation memory)
     {
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: account,
             callData: callData,
             wallet: userOpSigner,

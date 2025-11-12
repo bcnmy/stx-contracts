@@ -31,7 +31,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
     }
 
     /// @notice Sets up the initial state for the tests
-    function setUp() public {
+    function setUp() public virtual override {
         // Fork the Base network
         uint256 baseFork = vm.createFork(getBaseRpcUrl());
         vm.selectFork(baseFork);
@@ -113,7 +113,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         );
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         measureAndLogGas("48::UniswapV2::swapExactTokensForTokens::Nexus::Deployed::N/A", userOps);
     }
 
@@ -141,7 +141,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
 
@@ -181,7 +181,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
 
@@ -213,7 +213,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         );
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
         measureAndLogGas("51::UniswapV2::approve+swapExactTokensForTokens::Nexus::Deployed::N/A", userOps);
     }
 
@@ -240,7 +240,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
 
@@ -279,7 +279,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
 
@@ -316,7 +316,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
         );
 
         // Build user operation with initCode and callData
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
         userOps[0].initCode = initCode;
@@ -357,7 +357,7 @@ contract TestNexusSwapWETH_Integration is BaseSettings {
 
         // Build the PackedUserOperation array
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         // Generate and sign paymaster data
         userOps[0].paymasterAndData = generateAndSignPaymasterData(userOps[0], BUNDLER, paymaster);

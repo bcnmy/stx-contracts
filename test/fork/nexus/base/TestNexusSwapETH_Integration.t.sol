@@ -30,7 +30,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
     }
 
     /// @notice Sets up the initial state for the tests
-    function setUp() public {
+    function setUp() public virtual override {
         // Fork the Base network
         uint256 baseFork = vm.createFork(getBaseRpcUrl());
         vm.selectFork(baseFork);
@@ -94,7 +94,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         );
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(user, deployedNexus, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         measureAndLogGas("42::UniswapV2::swapExactETHForTokens::Nexus::Deployed::N/A", userOps);
     }
@@ -120,7 +120,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         );
 
         // Build the PackedUserOperation array
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             user, // Wallet initiating the operation
             Nexus(preComputedAddress), // Nexus account precomputed address
             EXECTYPE_DEFAULT, // Execution type
@@ -160,7 +160,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
             )
         );
 
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
 
@@ -193,7 +193,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         );
 
         // Build user operation with initCode and callData
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             user, Nexus(preComputedAddress), EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0
         );
         userOps[0].initCode = initCode;
@@ -226,7 +226,7 @@ contract TestNexusSwapETH_Integration is BaseSettings {
         Nexus deployedNexus = deployNexus(user, 100 ether, address(VALIDATOR_MODULE));
 
         // Build the PackedUserOperation array
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             user, // Wallet initiating the operation
             deployedNexus, // Deployed Nexus account
             EXECTYPE_DEFAULT, // Execution type

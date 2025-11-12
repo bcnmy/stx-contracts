@@ -7,7 +7,7 @@ import "../../../../shared/TestAccountExecution_Base.t.sol";
 contract TestGas_ExecutionHelper is TestAccountExecution_Base {
     MockExecutor public mockExecutor;
 
-    function setUp() public {
+    function setUp() public virtual override {
         setUpTestAccountExecution_Base();
 
         mockExecutor = new MockExecutor();
@@ -19,7 +19,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callDataInstall);
 
         PackedUserOperation[] memory userOpsInstall =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
         ENTRYPOINT.handleOps(userOpsInstall, payable(address(BOB.addr)));
         assertTrue(
             BOB_ACCOUNT.isModuleInstalled(MODULE_TYPE_EXECUTOR, address(mockExecutor), ""),
@@ -33,7 +33,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
         execution[0] = Execution(address(0), 0, "");
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0);
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
@@ -46,7 +46,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
         execution[0] = Execution(address(0), 0, "");
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, execution, address(VALIDATOR_MODULE), 0);
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(address(BOB.addr)));
@@ -61,7 +61,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
         }
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, executions, address(VALIDATOR_MODULE), 0);
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));
@@ -76,7 +76,7 @@ contract TestGas_ExecutionHelper is TestAccountExecution_Base {
         }
 
         PackedUserOperation[] memory userOps =
-            buildPackedUserOperation(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
+            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_TRY, executions, address(VALIDATOR_MODULE), 0);
 
         uint256 initialGas = gasleft();
         ENTRYPOINT.handleOps(userOps, payable(BOB.addr));

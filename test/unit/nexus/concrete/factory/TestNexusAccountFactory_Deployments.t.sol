@@ -11,8 +11,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
     bytes initData;
 
     /// @notice Sets up the testing environment.
-    function setUp() public {
-        super.setupTestEnvironment();
+    function setUp() public virtual override {
+        init();
         user = newWallet("user");
         vm.deal(user.addr, 1 ether);
         initData = abi.encodePacked(user.addr);
@@ -21,8 +21,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
     /// @notice Tests deploying an account using the factory directly.
     function test_DeployAccount_CreateAccount() public {
         // Prepare bootstrap configuration for validators
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -53,8 +53,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
 
     /// @notice Tests that deploying an account returns the same address with the same arguments.
     function test_DeployAccount_CreateAccount_SameAddress() public {
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -97,8 +97,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
 
     /// @notice Tests that a deployed account is initialized and cannot be reinitialized.
     function test_DeployAccount_CannotReinitialize() public {
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -114,8 +114,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
 
     /// @notice Tests creating accounts with different indexes.
     function test_DeployAccount_DifferentIndexes() public {
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -132,8 +132,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
 
     /// @notice Tests creating accounts with an invalid validator module.
     function test_DeployAccount_InvalidValidatorModule() public {
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -142,7 +142,7 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
         // Should revert if the validator module is invalid
-        BootstrapConfig[] memory validatorsInvalid = BootstrapLib.createArrayConfig(address(0), initData);
+        BootstrapConfig[] memory validatorsInvalid = NexusBootstrapLib.createArrayConfig(address(0), initData);
         bytes memory _initDataInvalidModule =
             abi.encode(address(BOOTSTRAPPER), abi.encodeCall(BOOTSTRAPPER.initNexusScoped, (validatorsInvalid, hook)));
 
@@ -153,8 +153,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
 
     /// @notice Tests creating accounts without enough gas.
     function test_RevertIf_DeployAccount_InsufficientGas() public {
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 
@@ -176,7 +176,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
         new Nexus(zeroAddress, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
     }
 
-    /// @notice Tests BootstrapLib.createArrayConfig function for multiple modules and data in BootstrapLib and uses it
+    /// @notice TestsNexusBootstrapLib.createArrayConfig function for multiple modules and data inNexusBootstrapLib and
+    /// uses it
     /// to
     /// deploy an account.
     function test_createArrayConfig_MultipleModules_DeployAccount() public {
@@ -188,8 +189,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
         datas[0] = abi.encodePacked(user.addr);
         datas[1] = abi.encodePacked(bytes1(uint8(MODULE_TYPE_VALIDATOR)), bytes32(bytes20(user.addr)));
 
-        BootstrapConfig[] memory configArray = BootstrapLib.createMultipleConfigs(modules, datas);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory configArray = NexusBootstrapLib.createMultipleConfigs(modules, datas);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
 
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
@@ -204,8 +205,9 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
 
     /// @notice Tests initNexusScoped function in NexusBootstrap and uses it to deploy an account with a hook module.
     function test_initNexusScoped_WithHook_DeployAccount() public {
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(HOOK_MODULE), abi.encodePacked(user.addr));
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig memory hook =
+            NexusBootstrapLib.createSingleConfig(address(HOOK_MODULE), abi.encodePacked(user.addr));
 
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
@@ -236,8 +238,8 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
     /// @notice Tests that the manually computed address matches the one from computeAccountAddress.
     function test_ComputeAccountAddress_ManualComparison() public view {
         // Prepare the initial data and salt
-        BootstrapConfig[] memory validators = BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+        BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), initData);
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         bytes memory saDeploymentIndex = "0";
         bytes32 salt = keccak256(saDeploymentIndex);
 

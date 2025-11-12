@@ -14,7 +14,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
     MockSimpleValidator SIMPLE_VALIDATOR_MODULE;
 
     /// @notice Sets up the base module management environment.
-    function setUp() public {
+    function setUp() public virtual override {
         setUpModuleManagement_Base();
         // Deploy  simple validator
         SIMPLE_VALIDATOR_MODULE = new MockSimpleValidator();
@@ -77,7 +77,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
         );
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(
+        userOps[0] = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT),
             getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(SIMPLE_VALIDATOR_MODULE), bytes3(0))
         );
@@ -124,7 +124,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
             abi.encodeWithSelector(Nexus.emergencyUninstallHook.selector, emergencyUninstall, signature);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(
+        userOps[0] = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT),
             getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(SIMPLE_VALIDATOR_MODULE), bytes3(0))
         );
@@ -158,7 +158,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
             abi.encodeWithSelector(Nexus.emergencyUninstallHook.selector, emergencyUninstall, signature);
 
         PackedUserOperation[] memory newUserOps = new PackedUserOperation[](1);
-        newUserOps[0] = buildPackedUserOp(
+        newUserOps[0] = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT),
             getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(SIMPLE_VALIDATOR_MODULE), bytes3(0))
         );
@@ -208,7 +208,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
             abi.encodeWithSelector(Nexus.emergencyUninstallHook.selector, emergencyUninstall, signature);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(
+        userOps[0] = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT),
             getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(SIMPLE_VALIDATOR_MODULE), bytes3(0))
         );
@@ -245,7 +245,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
             abi.encodeWithSelector(Nexus.emergencyUninstallHook.selector, emergencyUninstall, signature);
 
         PackedUserOperation[] memory newUserOps = new PackedUserOperation[](1);
-        newUserOps[0] = buildPackedUserOp(
+        newUserOps[0] = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT),
             getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(SIMPLE_VALIDATOR_MODULE), bytes3(0))
         );
@@ -293,7 +293,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
             abi.encodeWithSelector(Nexus.emergencyUninstallHook.selector, emergencyUninstall, signature);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(
+        userOps[0] = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT),
             getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(SIMPLE_VALIDATOR_MODULE), bytes3(0))
         );
@@ -330,7 +330,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
             abi.encodeWithSelector(Nexus.emergencyUninstallHook.selector, emergencyUninstall, signature);
 
         PackedUserOperation[] memory newUserOps = new PackedUserOperation[](1);
-        newUserOps[0] = buildPackedUserOp(
+        newUserOps[0] = buildTemplatePackedUserOp(
             address(BOB_ACCOUNT),
             getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(SIMPLE_VALIDATOR_MODULE), bytes3(0))
         );

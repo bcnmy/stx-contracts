@@ -3,8 +3,6 @@ pragma solidity ^0.8.27;
 
 import "../../../NexusTestBase.t.sol";
 import {
-    ModeLib,
-    ExecutionMode,
     ExecType,
     CallType,
     CALLTYPE_BATCH,
@@ -24,7 +22,7 @@ contract TestFuzz_Execute is NexusTestBase {
     MockToken internal token;
 
     /// @notice Initializes the test environment.
-    function setUp() public {
+    function setUp() public virtual override {
         init(); // Initializes all required contracts and wallets
         counter = new Counter(); // Deploy a new Counter contract
         token = new MockToken("Test Token", "TST"); // Deploy a new MockToken contract

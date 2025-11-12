@@ -7,7 +7,7 @@ import "../../../NexusTestBase.t.sol";
 /// @notice This contract inherits from NexusTestBase to provide common setup and utilities for fuzz testing
 contract TestFuzz_ValidateUserOp is NexusTestBase {
     /// @notice Initializes the testing environment and sets the user address
-    function setUp() public {
+    function setUp() public virtual override {
         init(); // Initializes all required contracts and wallets
     }
 
@@ -64,7 +64,7 @@ contract TestFuzz_ValidateUserOp is NexusTestBase {
         prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), missingAccountFunds + 0.1 ether);
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
-        userOps[0] = buildPackedUserOp(address(BOB_ACCOUNT), randomNonce);
+        userOps[0] = buildTemplatePackedUserOp(address(BOB_ACCOUNT), randomNonce);
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[0]);
         userOps[0].signature = signMessage(BOB, userOpHash); // Using a valid signature
 

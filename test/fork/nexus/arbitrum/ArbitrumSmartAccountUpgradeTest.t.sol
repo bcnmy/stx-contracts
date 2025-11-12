@@ -2,8 +2,8 @@
 pragma solidity ^0.8.27;
 
 import "../../../util/Imports.sol";
+import { NexusTestBase } from "test/NexusTestBase.t.sol";
 import { ArbitrumSettings } from "./ArbitrumSettings.t.sol";
-import { NexusTestBase } from "../../../NexusTestBase.t.sol";
 import { UserOperation } from "../../../shared/interfaces/UserOperation.t.sol";
 import { IEntryPointV_0_6 } from "../../../shared/interfaces/IEntryPointV_0_6.t.sol";
 import { IBiconomySmartAccountV2 } from "../../../shared/interfaces/IBiconomySmartAccountV2.t.sol";
@@ -19,7 +19,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
     IBiconomySmartAccountV2 public smartAccountV2;
 
     /// @notice Sets up the initial test environment and forks the Arbitrum mainnet.
-    function setUp() public {
+    function setUp() public virtual override {
         address _ENTRYPOINT = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
         uint256 mainnetFork = vm.createFork(getArbitrumRpcUrl());
         vm.selectFork(mainnetFork);
@@ -76,7 +76,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
         bytes memory callData = abi.encodeWithSelector(usdc.transfer.selector, recipient, amount);
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(usdc), 0, callData);
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             BOB,
             Nexus(payable(address(SMART_ACCOUNT_V2_ADDRESS))),
             EXECTYPE_DEFAULT,
@@ -96,7 +96,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
         vm.deal(address(smartAccountV2), amount + 1 ether);
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(recipient, amount, "");
-        PackedUserOperation[] memory userOps = buildPackedUserOperation(
+        PackedUserOperation[] memory userOps = buildAndSignPackedUserOp(
             BOB, Nexus(payable(address(smartAccountV2))), EXECTYPE_DEFAULT, execution, address(VALIDATOR_MODULE), 0
         );
         ENTRYPOINT_V_0_7.handleOps(userOps, payable(OWNER_ADDRESS));
@@ -127,8 +127,8 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
         calldatas[0] = abi.encodeWithSelector(IBiconomySmartAccountV2.updateImplementation.selector, newImplementation);
 
         BootstrapConfig[] memory validators =
-            BootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), abi.encodePacked(BOB.addr));
-        BootstrapConfig memory hook = BootstrapLib.createSingleConfig(address(0), "");
+            NexusBootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), abi.encodePacked(BOB.addr));
+        BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
 
         // Create initcode and salt to be sent to Factory
         bytes memory _initData =
