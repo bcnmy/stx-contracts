@@ -41,10 +41,10 @@ CLAUDE.MD
 solhint-report.txt
 
 # Bash deploy helper logs
-script/deploy/deploy-logs/*
+script/deploy/deploy-logs/*.log
+script/deploy/deploy-logs/build/*.log
+script/deploy/deploy-logs/precalc/*.log
 !script/deploy/deploy-logs/.gitkeep
-script/deploy/deploy-logs/build/*
 !script/deploy/deploy-logs/build/.gitkeep
-script/deploy/deploy-logs/precalc/*
 !script/deploy/deploy-logs/precalc/.gitkeep
 
