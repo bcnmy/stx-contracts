@@ -61,7 +61,8 @@ fi
 
 # Find the RPC URL for the given chain ID
 # We have validated that the RPC_VAR is set in the .env file in the deploy-stx.sh script
-RPC_VAR="RPC_${CHAIN_ID}"
+# Load from env variable RPC_<CHAIN_ID>
+RPC_VAR=$(eval echo \$RPC_${CHAIN_ID})
 
 # Get the additional params from the config.toml file
 
@@ -104,8 +105,8 @@ fi
 #### ================= START DEPLOYMENT LOGIC =================
 
 # STEP 1: Verify / Deploy prerequisites
-log_info "STEP 1: Verifying / Deploying prerequisites for chain $CHAIN_ID"
 echo "========================================================================"
+log_info "STEP 1: Verifying / Deploying prerequisites for chain $CHAIN_ID"
 
 CREATE2_FACTORY_SIZE=$(cast codesize --rpc-url $RPC_VAR 0x4e59b44847b379578588920ca78fbf26c0b4956c)
 #printf "CREATE2 FACTORY Codesize: $CREATE2_FACTORY_SIZE\n"
@@ -152,8 +153,8 @@ else
 fi
 
 # STEP 2: Identify the contracts to deploy
-log_info "STEP 2: Identifying contracts to deploy for chain $CHAIN_ID"
 echo "========================================================================"
+log_info "STEP 2: Identifying contracts to deploy for chain $CHAIN_ID"
 
 # Create temporary file for logs
 TEMP_LOG="deploy-logs/precalc-log-$CHAIN_ID.log"
@@ -220,6 +221,7 @@ if [ $CREATEX_SIZE -eq 0 ]; then
                     log_warning "CreateX deployment failed. Disperse contract will not be deployed."
                 else
                     # successfully deployed CreateX
+                    # if no createx => no disperse at an expected address
                     CONTRACT_ARRAY+=("Disperse")
                     CONTRACT_ADDRESSES_ARRAY+=($EXPECTED_DISPERSE_ADDRESS)
                 fi
@@ -235,9 +237,13 @@ if [ $CREATEX_SIZE -eq 0 ]; then
     } 
 else
     # createx has already been deployed
-    CONTRACT_ARRAY+=("Disperse")
-    CONTRACT_ADDRESSES_ARRAY+=($EXPECTED_DISPERSE_ADDRESS)
-fi
+    log_info "CreateX is already deployed on chain $CHAIN_ID"
+    DISPERSE_SIZE=$(cast codesize --rpc-url $RPC_VAR $EXPECTED_DISPERSE_ADDRESS)
+    # if disperse size is 0, schedule it for deployment
+    if [ $DISPERSE_SIZE -eq 0 ]; then
+        CONTRACT_ARRAY+=("Disperse")
+        CONTRACT_ADDRESSES_ARRAY+=($EXPECTED_DISPERSE_ADDRESS)
+    fi
 
 # Convert bash array to JSON array format for forge script
 CONTRACT_NAMES="["
@@ -254,11 +260,17 @@ CONTRACT_NAMES="${CONTRACT_NAMES}]"
 rm -f "$TEMP_LOG"
 rm -f "$TEMP_LOG_ERRORS"
 
-log_info "Contracts to deploy on chain $CHAIN_ID: $CONTRACT_NAMES"
+# Log every contract with an address on a new line
+printf "Contracts to deploy on chain $CHAIN_ID:\n"
+for i in "${!CONTRACT_ARRAY[@]}"; do
+    contract_name="${CONTRACT_ARRAY[$i]}"
+    contract_address="${CONTRACT_ADDRESSES_ARRAY[$i]}"
+    printf "$contract_name\n"
+done
 
 # STEP 3: Deploy Stx contracts
-log_info "STEP 3: Deploying Stx contracts for chain $CHAIN_ID"
 echo "========================================================================"
+log_info "STEP 3: Deploying Stx contracts for chain $CHAIN_ID"
 
 # Check if there are any contracts to deploy
 if [ "$CONTRACT_NAMES" = "[]" ]; then
@@ -281,7 +293,7 @@ if forge script ./DeployStxContracts.s.sol:DeployStxContracts  \
     --private-key $PRIVATE_KEY \
     $VERIFY_FLAG \
     $GAS_SUFFIX \
-    --vv --broadcast --slow; then
+    -vv --broadcast --slow; then
     # successfully deployed and verified
     log_info "Deployment and verification completed successfully for chain $CHAIN_ID"
     exit 0
@@ -291,8 +303,13 @@ else
     # Check if all contracts are deployed by verifying their codesize
     ALL_DEPLOYED=true
     for contract_address in "${CONTRACT_ADDRESSES_ARRAY[@]}"; do
+        echo "Checking codesize for $contract_address"
         CODE_SIZE=$(cast codesize --rpc-url $RPC_VAR $contract_address)
-        if [ "$CODE_SIZE" -eq 0 ]; then
+        echo "CODE_SIZE: $CODE_SIZE"
+        if ! [[ "$CODE_SIZE" =~ ^[0-9]+$ ]]; then
+            log_error "Failed to get codesize for $contract_address: $CODE_SIZE"
+            ALL_DEPLOYED=false
+        elif [ "$CODE_SIZE" -eq 0 ]; then
             log_error "Contract at $contract_address was not deployed (codesize: 0)"
             ALL_DEPLOYED=false
         fi

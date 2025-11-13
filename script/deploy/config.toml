@@ -13,7 +13,7 @@
 # NexusAccountFactory : Factory contract for deploying Nexus smart accounts
 # ComposableExecutionModule : Module enabling composable execution of multiple operations
 # ComposableStorage : Storage contract for composable execution module
-# EthForwarder : Forwarder contract for ETH transfers
+# EtherForwarder : Forwarder contract for ETH transfers
 # NodePaymasterFactory : Factory contract for deploying Node Paymasters
 # Disperse : Utility contract for batch token/ETH transfers
 
@@ -49,3 +49,21 @@ chain_id = 11155111
 
 [11155111.string]
 name = "Eth Sepolia"
+
+# ===============
+# BASE
+# ===============
+
+### Base(8453)
+[8453]
+endpoint_url = "${RPC_8453}"
+
+[8453.bool]
+is_testnet = false
+verify = true
+
+[8453.uint]
+chain_id = 8453
+
+[8453.string]
+name = "Base Mainnet"

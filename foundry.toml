@@ -18,7 +18,7 @@
   cache_path  = "cache_forge"
   libs = ["node_modules"]
   gas_reports_ignore = ["MockToken"]
-  fs_permissions = [{ access = "read", path = "scripts/bash-deploy/artifacts"}]
+  fs_permissions = [{ access = "read", path = "script/deploy/artifacts"}, { access = "read", path = "script/deploy"}]
 
 [profile.ci]
   fuzz = { runs = 1_000 }
@@ -55,3 +55,8 @@
     "**/*Test*.sol",
   ]
   severity = ["high", "med", "gas"]
+
+[etherscan]
+  mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "1"}
+
+  base = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "8453"}

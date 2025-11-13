@@ -33,6 +33,27 @@ log_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
+# Function to show a spinner animation
+spinner() {
+    local pid=$1
+    local message=$2
+    local spinstr='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    local i=0
+    
+    # Hide cursor
+    tput civis
+    
+    while kill -0 $pid 2>/dev/null; do
+        local temp=${spinstr:i++%${#spinstr}:1}
+        printf "\r${GREEN}[%s]${NC} %s" "$temp" "$message"
+        sleep 0.1
+    done
+    
+    # Show cursor again
+    tput cnorm
+    printf "\r"
+}
+
 # Function to check if a command succeeded
 check_success() {
     if [ $? -eq 0 ]; then
@@ -116,7 +137,7 @@ read -r -p "Do you want to rebuild Stx-contracts artifacts from your local sourc
 if [ $proceed = "y" ]; then
     ### BUILD ARTIFACTS ###
     printf "Building Stx-contracts artifacts\n"
-    { (forge build 1> ./logs/forge-build.log 2> ./logs/forge-build-errors.log) } || {
+    { (forge build 1> ./deploy-logs/forge-build.log 2> ./deploy-logs/forge-build-errors.log) } || {
         printf "Build failed\n See logs for more details\n"
         exit 1
     }
@@ -129,9 +150,8 @@ if [ $proceed = "y" ]; then
     mkdir -p ./artifacts/NexusProxy
     mkdir -p ./artifacts/ComposableExecutionModule
     mkdir -p ./artifacts/ComposableStorage
-    mkdir -p ./artifacts/EthForwarder
+    mkdir -p ./artifacts/EtherForwarder
     mkdir -p ./artifacts/NodePaymasterFactory
-    mkdir -p ./artifacts/Disperse
     
     cp ../../out/K1MeeValidator.sol/K1MeeValidator.json ./artifacts/K1MeeValidator/.
     cp ../../out/Nexus.sol/Nexus.json ./artifacts/Nexus/.
@@ -140,9 +160,8 @@ if [ $proceed = "y" ]; then
     cp ../../out/NexusProxy.sol/NexusProxy.json ./artifacts/NexusProxy/.
     cp ../../out/ComposableExecutionModule.sol/ComposableExecutionModule.json ./artifacts/ComposableExecutionModule/.
     cp ../../out/ComposableStorage.sol/ComposableStorage.json ./artifacts/ComposableStorage/.
-    cp ../../out/EthForwarder.sol/EthForwarder.json ./artifacts/EthForwarder/.
+    cp ../../out/EtherForwarder.sol/EtherForwarder.json ./artifacts/EtherForwarder/.
     cp ../../out/NodePaymasterFactory.sol/NodePaymasterFactory.json ./artifacts/NodePaymasterFactory/.
-    cp ../../out/Disperse.sol/Disperse.json ./artifacts/Disperse/.
     
     printf "Artifacts copied\n"
 
@@ -155,10 +174,12 @@ if [ $proceed = "y" ]; then
     forge verify-contract --show-standard-json-input $(cast address-zero) NexusProxy > ./artifacts/NexusProxy/verify.json
     forge verify-contract --show-standard-json-input $(cast address-zero) ComposableExecutionModule > ./artifacts/ComposableExecutionModule/verify.json
     forge verify-contract --show-standard-json-input $(cast address-zero) ComposableStorage > ./artifacts/ComposableStorage/verify.json
-    forge verify-contract --show-standard-json-input $(cast address-zero) EthForwarder > ./artifacts/EthForwarder/verify.json
-    forge verify-contract --show-standard-json-input $(cast address-zero) NodePaymasterFactory > ./artifacts/NodePaymasterFactory/verify.json 
+    forge verify-contract --show-standard-json-input $(cast address-zero) EtherForwarder > ./artifacts/EtherForwarder/verify.json
+    forge verify-contract --show-standard-json-input $(cast address-zero) NodePaymasterFactory > ./artifacts/NodePaymasterFactory/verify.json
+    
+    log_info "Artifacts created"
 else 
-    printf "Using precompiled artifacts\n"
+    log_info "Using precompiled artifacts"
 fi
 
 CHAIN_ARRAY="["
@@ -171,8 +192,25 @@ done
 CHAIN_ARRAY="${CHAIN_ARRAY}]"
 
 # Check the expected addresses for the contracts and record the bytecode hashes
-forge script ./DeployStxContracts.s.sol:DeployStxContracts  \
---sig "run(uint256, bool)" "${REQUESTED_CHAINS[0]}" "true" 1> ./deploy-logs/00dry-run.log 2> ./deploy-logs/00dry-run-errors.log
+log_info "Getting expected addresses for the contracts..."
+{ 
+    forge script ./DeployStxContracts.s.sol:DeployStxContracts  \
+    --sig "run(uint256, bool)" "${REQUESTED_CHAINS[0]}" "true" 1> ./deploy-logs/00dry-run.log 2> ./deploy-logs/00dry-run-errors.log
+} &
+
+# Capture the PID of the background process
+forge_pid=$!
+spinner $forge_pid "Computing expected addresses..."
+wait $forge_pid
+forge_status=$?
+
+if [ $forge_status -ne 0 ]; then
+    log_error "Failed to get expected addresses for the contracts, see logs for more details"
+    exit 1
+fi
+
+# display the addresses from above log file
+cat ./deploy-logs/00dry-run.log | grep "bytes at" | awk '{print $6, $1}'
 
 # Request if the user wants to proceed with the deployment
 read -r -p "Do you want to proceed with the addresses above? (y/n): " proceed
@@ -185,21 +223,25 @@ fi
 # by callig the deploy-chain.sh script and logging the output to a file
 for chain_id in "${REQUESTED_CHAINS[@]}"; do
     chain_name=$(awk -v id="$chain_id" '/^\['"$chain_id"'\.string\]/{flag=1;next} /^\[/{flag=0} flag && /^name =/{gsub(/"/, "", $3); print $3}' config.toml)
-    log_info "Deploying Stx contracts to chain $chain_id ($chain_name)"
     
     # Temporarily disable exit on error to handle deployment failures gracefully
     set +e
-    bash deploy-chain.sh $chain_id 1> ./deploy-logs/$chain_name-$$chain_id-deployment.log 2> ./deploy-logs/$chain_name-$chain_id-deployment-errors.log
+    bash deploy-chain.sh $chain_id 1> ./deploy-logs/$chain_name-$chain_id-deploy.log 2> ./deploy-logs/$chain_name-$chain_id-deploy-errors.log &
+    deploy_pid=$!
+    spinner $deploy_pid "Deploying Stx contracts to chain $chain_id ($chain_name)..."
+    wait $deploy_pid
     deploy_status=$?
     set -e
     
     if [ $deploy_status -eq 0 ]; then
         log_info "Stx contracts deployed to chain $chain_id ($chain_name) successfully"
+    elif [ $deploy_status -eq 2 ]; then
+        log_warning "Stx contracts deployed to chain $chain_id ($chain_name) successfully, but verification failed"
+        log_warning "See logs for more details"
+        log_info "Continuing with deployment for next chain if present"
     else
         log_error "Failed to deploy Stx contracts to chain $chain_id ($chain_name)"
         log_error "See logs for more details"
-        exit 1
+        log_info "Continuing with deployment for next chain if present"
     fi
 done
-
-log_info "All Stx contracts deployed successfully"
