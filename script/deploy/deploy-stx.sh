@@ -133,11 +133,12 @@ if [ -z "$EXPECTED_DISPERSE_ADDRESS" ]; then
 fi
 
 # Check if we have to recompile the artifacts
+export FOUNDRY_PROFILE="via-ir"
 read -r -p "Do you want to rebuild Stx-contracts artifacts from your local sources? (y/n): " proceed
 if [ $proceed = "y" ]; then
     ### BUILD ARTIFACTS ###
     printf "Building Stx-contracts artifacts\n"
-    { (forge build 1> ./deploy-logs/forge-build.log 2> ./deploy-logs/forge-build-errors.log) } || {
+    { (forge build --sizes 1> ./deploy-logs/build/forge-build.log 2> ./deploy-logs/build/forge-build-errors.log) } || {
         printf "Build failed\n See logs for more details\n"
         exit 1
     }

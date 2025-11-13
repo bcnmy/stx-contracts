@@ -67,3 +67,19 @@ chain_id = 8453
 
 [8453.string]
 name = "Base Mainnet"
+
+# ===============
+# SCROLL
+# ===============
+[534352]
+endpoint_url = "${RPC_534352}"
+
+[534352.bool]
+is_testnet = false
+verify = true
+
+[534352.uint]
+chain_id = 534352
+
+[534352.string]
+name = "Scroll Mainnet"

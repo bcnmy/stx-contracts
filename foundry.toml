@@ -58,5 +58,7 @@
 
 [etherscan]
   mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "1"}
-
+  sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "11155111"} 
   base = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "8453"}
+  # base-sepolia
+  scroll = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "534352"} 

@@ -157,8 +157,8 @@ echo "========================================================================"
 log_info "STEP 2: Identifying contracts to deploy for chain $CHAIN_ID"
 
 # Create temporary file for logs
-TEMP_LOG="deploy-logs/precalc-log-$CHAIN_ID.log"
-TEMP_LOG_ERRORS="deploy-logs/precalc-log-$CHAIN_ID-errors.log"
+TEMP_LOG="deploy-logs/precalc/precalc-log-$CHAIN_ID.log"
+TEMP_LOG_ERRORS="deploy-logs/precalc/precalc-log-$CHAIN_ID-errors.log"
 
 # Run dry run and capture output
 {
@@ -172,7 +172,7 @@ TEMP_LOG_ERRORS="deploy-logs/precalc-log-$CHAIN_ID-errors.log"
 # Parse the log file to find contracts with 0 bytes (not deployed)
 # Extract contract names from lines like: "ContractName  is  0  bytes at 0x... on chain:  1"
 CONTRACTS=$(grep " is 0 bytes" "$TEMP_LOG" | awk '{print $1}')
-CONTRACT_ADDRESSES=$(grep " is 0 bytes" "$TEMP_LOG" | awk '{print $3}')
+CONTRACT_ADDRESSES=$(grep " is 0 bytes" "$TEMP_LOG" | awk '{print $6}')
 
 # Build bash array of contract names
 CONTRACT_ARRAY=()
@@ -244,6 +244,7 @@ else
         CONTRACT_ARRAY+=("Disperse")
         CONTRACT_ADDRESSES_ARRAY+=($EXPECTED_DISPERSE_ADDRESS)
     fi
+fi
 
 # Convert bash array to JSON array format for forge script
 CONTRACT_NAMES="["
@@ -265,7 +266,7 @@ printf "Contracts to deploy on chain $CHAIN_ID:\n"
 for i in "${!CONTRACT_ARRAY[@]}"; do
     contract_name="${CONTRACT_ARRAY[$i]}"
     contract_address="${CONTRACT_ADDRESSES_ARRAY[$i]}"
-    printf "$contract_name\n"
+    printf "$contract_name at $contract_address\n"
 done
 
 # STEP 3: Deploy Stx contracts
@@ -301,17 +302,21 @@ else
     # forge script failed
     log_warning "Forge script failed. Checking if contracts were deployed..."
     # Check if all contracts are deployed by verifying their codesize
+    # if at least one contract is not deployed, set ALL_DEPLOYED to false
     ALL_DEPLOYED=true
-    for contract_address in "${CONTRACT_ADDRESSES_ARRAY[@]}"; do
-        echo "Checking codesize for $contract_address"
-        CODE_SIZE=$(cast codesize --rpc-url $RPC_VAR $contract_address)
-        echo "CODE_SIZE: $CODE_SIZE"
-        if ! [[ "$CODE_SIZE" =~ ^[0-9]+$ ]]; then
-            log_error "Failed to get codesize for $contract_address: $CODE_SIZE"
+
+    # Loop through all contract addresses and check if they have code
+    for i in "${!CONTRACT_ADDRESSES_ARRAY[@]}"; do
+        contract_address="${CONTRACT_ADDRESSES_ARRAY[$i]}"
+        contract_name="${CONTRACT_ARRAY[$i]}"
+
+        codesize=$(cast codesize --rpc-url $RPC_VAR "$contract_address")
+
+        if [ "$codesize" -eq 0 ]; then
+            log_error "Contract $contract_name at $contract_address was not deployed (codesize: 0)"
             ALL_DEPLOYED=false
-        elif [ "$CODE_SIZE" -eq 0 ]; then
-            log_error "Contract at $contract_address was not deployed (codesize: 0)"
-            ALL_DEPLOYED=false
+        else
+            log_info "Contract $contract_name at $contract_address is deployed (codesize: $codesize)"
         fi
     done
 
