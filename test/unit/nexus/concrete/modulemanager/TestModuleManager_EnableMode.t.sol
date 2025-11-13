@@ -228,7 +228,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(op);
         op.signature = signMessage(ALICE, userOpHash); // SIGN THE USEROP WITH SIGNER THAT IS ABOUT TO BE USED
 
-        (bytes memory multiInstallData, /*bytes32 eip712ChildHash*/, bytes32 structHash) =
+        (bytes memory multiInstallData,/*bytes32 eip712ChildHash*/, bytes32 structHash) =
             makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_MULTI, userOpHash);
 
         // app is just account itself in this case
@@ -242,7 +242,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         bytes memory contentsType = bytes(MODULE_ENABLE_MODE_NOTATION);
         bytes memory enableModeSig =
             abi.encodePacked(t.r, t.s, t.v, appDomainSeparator, structHash, contentsType, uint16(contentsType.length)); //prepare
-            // 7739 sig
+        // 7739 sig
 
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig); //append validator address
         bytes memory enableModeSigPrefix = abi.encodePacked(
@@ -302,11 +302,11 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOp);
         userOp.signature = signMessage(ALICE, userOpHash); // SIGN THE USEROP WITH SIGNER THAT IS ABOUT TO BE USED VIA
-            // NEWLY INSTALLED (VIA ENABLE MODE) MODULE
+        // NEWLY INSTALLED (VIA ENABLE MODE) MODULE
 
         // since the account is not deployed yet, we can't get eip712 domain from it
         // so we take the structHash and manually convert it to proper 712 typed data hash
-        (bytes memory multiInstallData, /*bytes32 hashToSign*/, bytes32 structHash) =
+        (bytes memory multiInstallData,/*bytes32 hashToSign*/, bytes32 structHash) =
             makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_MULTI, userOpHash);
 
         bytes32 eip712digest;
@@ -504,8 +504,9 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
         op.signature = signMessage(ALICE, userOpHash);
 
         (bytes memory multiInstallData, bytes32 hashToSign,) =
-            makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_EXECUTOR, userOpHash); // Use EXECUTOR type instead of
-            // MULTI
+            makeInstallDataAndHash(address(BOB_ACCOUNT), MODULE_TYPE_EXECUTOR, userOpHash); // Use EXECUTOR type instead
+        // of
+        // MULTI
 
         bytes memory enableModeSig = signMessage(BOB, hashToSign);
         enableModeSig = abi.encodePacked(address(VALIDATOR_MODULE), enableModeSig);

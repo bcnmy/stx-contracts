@@ -87,7 +87,7 @@ contract ComposableExecutionModule is IComposableExecutionModule, IExecutor, ERC
     function _executeComposable(
         ComposableExecution[] calldata cExecutions,
         address account,
-        function(Execution memory) internal returns(bytes[] memory) executeExecutionFunction
+        function(Execution memory) internal returns (bytes[] memory) executeExecutionFunction
     )
         internal
     {
@@ -110,10 +110,11 @@ contract ComposableExecutionModule is IComposableExecutionModule, IExecutor, ERC
 
     /// @dev function to be used as an argument for _executeComposable in case of regular call
     function _executeExecutionCall(Execution memory execution) internal returns (bytes[] memory) {
-        return IERC7579Account(msg.sender).executeFromExecutor({
-            mode: ModeLib.encodeSimpleSingle(),
-            executionCalldata: ExecutionLib.encodeSingle(execution.target, execution.value, execution.callData)
-        });
+        return IERC7579Account(msg.sender)
+            .executeFromExecutor({
+                mode: ModeLib.encodeSimpleSingle(),
+                executionCalldata: ExecutionLib.encodeSingle(execution.target, execution.value, execution.callData)
+            });
     }
 
     /// @dev function to be used as an argument for _executeComposable in case of delegatecall

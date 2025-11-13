@@ -242,7 +242,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     /// @notice Tests reversion when attempting to install the forbidden onInstall selector as a fallback handler.
     function test_RevertIf_InstallForbiddenOnInstallSelector() public {
         bytes memory customData = abi.encode(bytes5(abi.encodePacked(bytes4(0x6d61fe70), CALLTYPE_SINGLE))); // onInstall
-            // selector
+        // selector
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData
         );
@@ -264,7 +264,7 @@ contract TestModuleManager_FallbackHandler is TestModuleManagement_Base {
     /// @notice Tests reversion when attempting to install the forbidden onUninstall selector as a fallback handler.
     function test_RevertIf_InstallForbiddenOnUninstallSelector() public {
         bytes memory customData = abi.encode(bytes5(abi.encodePacked(bytes4(0x8a91b0e3), CALLTYPE_SINGLE))); // onUninstall
-            // selector
+        // selector
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector, MODULE_TYPE_FALLBACK, address(HANDLER_MODULE), customData
         );

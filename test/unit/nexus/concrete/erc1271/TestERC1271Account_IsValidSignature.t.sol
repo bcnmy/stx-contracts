@@ -56,8 +56,9 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         bytes32 dataToSign = toERC1271Hash(t.contents, address(ALICE_ACCOUNT));
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, dataToSign);
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
+        );
         if (random() % 4 == 0) signature = erc6492Wrap(signature);
         bytes4 ret =
             ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(validator), signature));
@@ -70,8 +71,9 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         t.contents = keccak256("123");
         (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, address(ALICE_ACCOUNT)));
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
+        );
         bytes4 ret =
             ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(validator), signature));
         assertEq(ret, bytes4(0xFFFFFFFF));
@@ -87,8 +89,9 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, dataToSign);
 
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
+        );
 
         // Wrap the original signature using the ERC6492 format
         bytes memory wrappedSignature = erc6492Wrap(signature);
@@ -109,8 +112,9 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, dataToSign);
 
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
+        );
 
         bytes4 ret =
             ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(validator), signature));

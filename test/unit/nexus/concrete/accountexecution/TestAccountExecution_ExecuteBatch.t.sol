@@ -65,7 +65,7 @@ contract TestAccountExecution_ExecuteBatch is TestAccountExecution_Base {
         uint256 numberOfExecutions = 3;
 
         (bool res,) = payable(address(BOB_ACCOUNT)).call{ value: valueToSend * numberOfExecutions }(""); // Fund
-            // BOB_ACCOUNT
+        // BOB_ACCOUNT
         assertEq(res, true, "Funding BOB_ACCOUNT should succeed");
         Execution[] memory executions =
             prepareSeveralIdenticalExecutions(Execution(receiver, valueToSend, ""), numberOfExecutions);

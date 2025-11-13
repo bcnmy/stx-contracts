@@ -70,11 +70,9 @@ contract MockValidator_7739v2 is ERC7739Validator {
         if (SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, signature)) {
             return true;
         }
-        if (
-            SignatureCheckerLib.isValidSignatureNowCalldata(
+        if (SignatureCheckerLib.isValidSignatureNowCalldata(
                 owner, MessageHashUtils.toEthSignedMessageHash(hash), signature
-            )
-        ) {
+            )) {
             return true;
         }
         return false;
@@ -108,10 +106,8 @@ contract MockValidator_7739v2 is ERC7739Validator {
     // msg.sender = Smart Account
     // sender = 1271 og request sender
     function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool) {
-        return (
-            sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
-                || sender == msg.sender
-        );
+        return (sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
+                || sender == msg.sender);
     }
 
     function onInstall(bytes calldata data) external {

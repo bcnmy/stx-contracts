@@ -21,16 +21,15 @@ contract EtherForwarder {
         bool success;
         assembly {
             // Gas-efficient way to forward ETH
-            success :=
-                call(
-                    gas(), // Forward all available gas
-                    destination, // Destination address
-                    callvalue(), // Amount of ETH to send
-                    0, // No data to send
-                    0, // No data size
-                    0, // No data to receive
-                    0 // No data size to receive
-                )
+            success := call(
+                gas(), // Forward all available gas
+                destination, // Destination address
+                callvalue(), // Amount of ETH to send
+                0, // No data to send
+                0, // No data size
+                0, // No data to receive
+                0 // No data size to receive
+            )
         }
 
         if (!success) revert ForwardFailed();

@@ -33,8 +33,10 @@ contract TestEIP7702 is NexusTestBase {
         BootstrapConfig[] memory executors = NexusBootstrapLib.createArrayConfig(address(mockExecutor), "");
         BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         BootstrapConfig[] memory fallbacks = NexusBootstrapLib.createArrayConfig(address(0), "");
-        BootstrapPreValidationHookConfig[] memory preValidationHooks = NexusBootstrapLib
-            .createArrayPreValidationHookConfig(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(mockPreValidationHook), "");
+        BootstrapPreValidationHookConfig[] memory preValidationHooks =
+            NexusBootstrapLib.createArrayPreValidationHookConfig(
+                MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(mockPreValidationHook), ""
+            );
 
         return abi.encode(
             address(BOOTSTRAPPER),

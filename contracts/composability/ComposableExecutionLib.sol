@@ -217,11 +217,10 @@ library ComposableExecutionLib {
             assembly {
                 value := mload(add(returnData, add(0x20, mul(i, 0x20))))
             }
-            ComposableStorage(targetStorageContract).writeStorage({
-                slot: keccak256(abi.encodePacked(targetStorageSlot, i)),
-                value: value,
-                account: account
-            });
+            ComposableStorage(targetStorageContract)
+                .writeStorage({
+                    slot: keccak256(abi.encodePacked(targetStorageSlot, i)), value: value, account: account
+                });
         }
     }
 }

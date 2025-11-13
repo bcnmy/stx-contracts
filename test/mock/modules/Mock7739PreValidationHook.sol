@@ -95,6 +95,7 @@ contract Mock7739PreValidationHook is IPreValidationHookERC1271 {
                 } // Has
                 // a byte in ", )\x00".
 
+
                 mstore(p, " contents,bytes1 fields,string n") // Store the rest of the encoding.
                 mstore(add(p, 0x20), "ame,string version,uint256 chain")
                 mstore(add(p, 0x40), "Id,address verifyingContract,byt")
@@ -167,13 +168,12 @@ contract Mock7739PreValidationHook is IPreValidationHookERC1271 {
     /// @param account the smart account, who's domain separator will be used
     /// @param structHash the typed data struct hash
     function _hashTypedDataForAccount(address account, bytes32 structHash) private view returns (bytes32 digest) {
-        (
-            ,
+        (,
             /*bytes1 fields*/
             string memory name,
             string memory version,
             uint256 chainId,
-            address verifyingContract, /*bytes32 salt*/ /*uint256[] memory extensions*/
+            address verifyingContract,/*bytes32 salt*/ /*uint256[] memory extensions*/
             ,
         ) = EIP712(account).eip712Domain();
 

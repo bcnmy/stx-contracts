@@ -189,13 +189,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
 
         enableModeSignature = enableModeSignature[20:];
 
-        if (
-            !_checkEnableModeSignature({
+        if (!_checkEnableModeSignature({
                 structHash: _getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData),
                 sig: enableModeSignature,
                 validator: enableModeSigValidator
-            })
-        ) {
+            })) {
             revert EnableModeSigError();
         }
         this.installModule(moduleType, module, moduleInitData);
@@ -532,9 +530,13 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
         // Get the pre-validation hook for ERC-1271
         address preValidationHook = _getPreValidationHook(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271);
         // If no pre-validation hook is installed, return the original hash and signature
-        if (preValidationHook == address(0)) return (hash, signature);
+        if (preValidationHook == address(0)) {
+            return (hash, signature);
+        }
         // Otherwise, call the pre-validation hook and return the updated hash and signature
-        else return IPreValidationHookERC1271(preValidationHook).preValidationHookERC1271(msg.sender, hash, signature);
+        else {
+            return IPreValidationHookERC1271(preValidationHook).preValidationHookERC1271(msg.sender, hash, signature);
+        }
     }
 
     /// @notice Checks if an enable mode signature is valid.

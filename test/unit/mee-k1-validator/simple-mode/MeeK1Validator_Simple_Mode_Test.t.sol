@@ -28,7 +28,9 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         uint256 counterBefore = mockTarget.counter();
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
+            callData: abi.encodeWithSelector(
+                mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
+            ),
             account: address(mockAccount),
             userOpSigner: wallet
         });
@@ -54,7 +56,9 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         // prepare user ops
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
+            callData: abi.encodeWithSelector(
+                mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
+            ),
             account: address(mockAccount),
             userOpSigner: wallet
         });
@@ -273,7 +277,8 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         // Process each entry in stxLayout and generate its hash
         for (uint256 i = 0; i < totalEntries; i++) {
             if (stxLayout[i].entryType == EntryType.MEE_USER_OP) {
-                // Hash MeeUserOp as: hashStruct(MeeUserOp) = keccak256(MEE_USER_OP_TYPEHASH ‖ userOpHash ‖ lowerBound
+                // Hash MeeUserOp as: hashStruct(MeeUserOp) = keccak256(MEE_USER_OP_TYPEHASH ‖ userOpHash ‖
+                // lowerBound
                 // ‖ upperBound)
                 bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[userOpCounter]);
                 stxItemHashes[i] =
@@ -419,9 +424,7 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
 
                 // Store in NonUserOpEntryData array
                 nonUserOpEntryDatas[nonUserOpDataCounter] = NonUserOpEntryData({
-                    entryHash: stxItemHashes[i],
-                    entryIndex: i,
-                    packedSignatureForEntry: signature
+                    entryHash: stxItemHashes[i], entryIndex: i, packedSignatureForEntry: signature
                 });
                 nonUserOpDataCounter++;
             }

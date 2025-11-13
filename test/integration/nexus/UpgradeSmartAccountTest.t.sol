@@ -72,7 +72,7 @@ contract UpgradeSmartAccountTest is NexusTestBase {
 
     /// @notice Tests the upgrade of the smart account implementation with an invalid address
     function test_upgradeImplementation_InvalidAddress() public {
-        /// @note "" means empty calldata. this will just update the implementation but not setup the account.
+        /// @dev "" means empty calldata. this will just update the implementation but not setup the account.
         bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, address(0), "");
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);
@@ -93,7 +93,7 @@ contract UpgradeSmartAccountTest is NexusTestBase {
 
     /// @notice Tests the upgrade of the smart account implementation with an invalid address
     function test_upgradeImplementation_InvalidAddress_NotAContract() public {
-        /// @note "" means empty calldata. this will just update the implementation but not setup the account.
+        /// @dev "" means empty calldata. this will just update the implementation but not setup the account.
         bytes memory callData = abi.encodeWithSelector(Nexus.upgradeToAndCall.selector, BOB.addr, "");
         Execution[] memory execution = new Execution[](1);
         execution[0] = Execution(address(BOB_ACCOUNT), 0, callData);

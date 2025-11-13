@@ -100,13 +100,11 @@ library PermitValidatorLib {
             userOpHash, decodedSig.lowerBoundTimestamp, decodedSig.upperBoundTimestamp
         );
 
-        if (
-            !EcdsaHelperLib.isValidSignature(
+        if (!EcdsaHelperLib.isValidSignature(
                 expectedSigner,
                 _getSignedDataHash(expectedSigner, decodedSig),
                 abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v))
-            )
-        ) {
+            )) {
             return SIG_VALIDATION_FAILED;
         }
 
@@ -115,17 +113,19 @@ library PermitValidatorLib {
         }
 
         if (decodedSig.isPermitTx) {
-            try decodedSig.token.permit(
-                expectedSigner,
-                decodedSig.spender,
-                decodedSig.amount,
-                uint256(decodedSig.superTxHash),
-                uint8(decodedSig.v),
-                decodedSig.r,
-                decodedSig.s
-            ) {
-                // all good
-            } catch {
+            try decodedSig.token
+                .permit(
+                    expectedSigner,
+                    decodedSig.spender,
+                    decodedSig.amount,
+                    uint256(decodedSig.superTxHash),
+                    uint8(decodedSig.v),
+                    decodedSig.r,
+                    decodedSig.s
+                ) {
+            // all good
+            }
+            catch {
                 // check if by some reason this permit was already successfully used (and not spent yet)
                 if (ERC20(address(decodedSig.token)).allowance(expectedSigner, decodedSig.spender) < decodedSig.amount)
                 {
@@ -149,13 +149,11 @@ library PermitValidatorLib {
     {
         DecodedErc20PermitSigShort calldata decodedSig = _decodeShortPermitSig(parsedSignature);
 
-        if (
-            !EcdsaHelperLib.isValidSignature(
+        if (!EcdsaHelperLib.isValidSignature(
                 expectedSigner,
                 _getSignedDataHash(expectedSigner, decodedSig),
                 abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v))
-            )
-        ) {
+            )) {
             return false;
         }
 

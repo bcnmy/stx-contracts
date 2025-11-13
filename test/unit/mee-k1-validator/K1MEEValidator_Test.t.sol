@@ -27,7 +27,9 @@ contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
 
         PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: address(mockAccount),
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
+            callData: abi.encodeWithSelector(
+                mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
+            ),
             wallet: wallet,
             preVerificationGasLimit: 3e5,
             verificationGasLimit: 500e3,
@@ -47,7 +49,9 @@ contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
     function test_nonMEEFlow_validateSignatureWithData_success() public view {
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
+            callData: abi.encodeWithSelector(
+                mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
+            ),
             account: address(mockAccount),
             userOpSigner: wallet
         });
@@ -61,8 +65,9 @@ contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
         bytes32 dataToSign = toERC1271Hash(t.contents, address(mockAccount));
         (t.v, t.r, t.s) = vm.sign(wallet.privateKey, dataToSign);
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
+        );
         bytes4 ret = mockAccount.isValidSignature(toContentsHash(t.contents), signature);
         assertEq(ret, bytes4(ERC1271_SUCCESS));
     }

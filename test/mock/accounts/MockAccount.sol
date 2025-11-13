@@ -55,11 +55,9 @@ contract MockAccount is ComposableExecutionBase, IAccount {
     }
 
     function isValidSignature(bytes32 hash, bytes calldata signature) external view returns (bytes4) {
-        return IValidator(address(validator)).isValidSignatureWithSender({
-            sender: msg.sender,
-            hash: hash,
-            data: signature
-        });
+        return
+            IValidator(address(validator))
+                .isValidSignatureWithSender({ sender: msg.sender, hash: hash, data: signature });
     }
 
     function validateSignatureWithData(
@@ -71,11 +69,8 @@ contract MockAccount is ComposableExecutionBase, IAccount {
         view
         returns (bool)
     {
-        return IStatelessValidator(address(validator)).validateSignatureWithData({
-            hash: signedHash,
-            signature: signature,
-            data: signerData
-        });
+        return IStatelessValidator(address(validator))
+            .validateSignatureWithData({ hash: signedHash, signature: signature, data: signerData });
     }
 
     function execute(

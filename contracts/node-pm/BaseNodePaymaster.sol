@@ -159,8 +159,8 @@ abstract contract BaseNodePaymaster is BasePaymaster {
         address refundReceiver;
 
         // Prepare refund info if any
-        if (context.length == 0x00) { // 0 bytes => KEEP mode => NO REFUND
-                // do nothing
+        if (context.length == 0x00) {  // 0 bytes => KEEP mode => NO REFUND
+        // do nothing
         } else if (context.length == 0x54) {
             // 84 bytes => REFUND: fixed premium mode.
             (refundReceiver, refund) = _handleFixedPremium(context, actualGasCost, actualUserOpFeePerGas);
@@ -277,14 +277,7 @@ abstract contract BaseNodePaymaster is BasePaymaster {
         }
     }
 
-    function _applyPercentagePremium(
-        uint256 amount,
-        uint256 premiumPercentage
-    )
-        internal
-        pure
-        returns (uint256 result)
-    {
+    function _applyPercentagePremium(uint256 amount, uint256 premiumPercentage) internal pure returns (uint256 result) {
         result = amount * (_PREMIUM_CALCULATION_BASE + premiumPercentage) / _PREMIUM_CALCULATION_BASE;
     }
 

@@ -35,11 +35,7 @@ library ExecLib {
      * https://github.com/Vectorized/solady/blob/740812cedc9a1fc11e17cb3d4569744367dedf19/src/accounts/LibERC7579.sol#L146
      *      Credits to Vectorized and the Solady Team
      */
-    function decodeBatch(bytes calldata executionCalldata)
-        internal
-        pure
-        returns (Execution[] calldata executionBatch)
-    {
+    function decodeBatch(bytes calldata executionCalldata) internal pure returns (Execution[] calldata executionBatch) {
         /// @solidity memory-safe-assembly
         assembly {
             let u := calldataload(executionCalldata.offset)

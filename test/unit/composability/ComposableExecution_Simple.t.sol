@@ -105,8 +105,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         OutputParam[] memory outputParamsA = new OutputParam[](1);
         outputParamsA[0] = OutputParam({
-            fetcherType: OutputParamFetcherType.EXEC_RESULT,
-            paramData: abi.encode(1, storageContract, SLOT_A)
+            fetcherType: OutputParamFetcherType.EXEC_RESULT, paramData: abi.encode(1, storageContract, SLOT_A)
         });
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
@@ -114,7 +113,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
             functionSig: DummyContract.A.selector,
             inputParams: inputParamsA, // TARGET and VALUE parameters only
             outputParams: outputParamsA // store output of the function A() to the storage
-         });
+        });
 
         // Call function A
         IComposableExecution(address(account)).executeComposable(executions);
@@ -132,22 +131,21 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
         inputParamsB[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))),
+            paramData: abi.encode(
+                storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))
+            ),
             constraints: emptyConstraints
         });
 
         // Prepare return value config for function B
         OutputParam[] memory outputParamsB = new OutputParam[](1);
         outputParamsB[0] = OutputParam({
-            fetcherType: OutputParamFetcherType.EXEC_RESULT,
-            paramData: abi.encode(1, storageContract, SLOT_B)
+            fetcherType: OutputParamFetcherType.EXEC_RESULT, paramData: abi.encode(1, storageContract, SLOT_B)
         });
 
         ComposableExecution[] memory executionsB = new ComposableExecution[](1);
         executionsB[0] = ComposableExecution({
-            functionSig: DummyContract.B.selector,
-            inputParams: inputParamsB,
-            outputParams: outputParamsB
+            functionSig: DummyContract.B.selector, inputParams: inputParamsB, outputParams: outputParamsB
         });
         // Call function B
         IComposableExecution(address(account)).executeComposable(executionsB);
@@ -186,9 +184,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({
-            functionSig: DummyContract.emitUint256.selector,
-            inputParams: inputParams,
-            outputParams: outputParams
+            functionSig: DummyContract.emitUint256.selector, inputParams: inputParams, outputParams: outputParams
         });
 
         vm.expectEmit(address(dummyContract));
@@ -227,9 +223,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({
-            functionSig: DummyContract.getFoo.selector,
-            inputParams: inputParams,
-            outputParams: outputParams
+            functionSig: DummyContract.getFoo.selector, inputParams: inputParams, outputParams: outputParams
         });
 
         uint256 expectedValue = 2517;
@@ -272,8 +266,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         OutputParam[] memory outputParams_execution1 = new OutputParam[](2);
         outputParams_execution1[0] = OutputParam({
-            fetcherType: OutputParamFetcherType.EXEC_RESULT,
-            paramData: abi.encode(1, address(storageContract), SLOT_A)
+            fetcherType: OutputParamFetcherType.EXEC_RESULT, paramData: abi.encode(1, address(storageContract), SLOT_A)
         });
         outputParams_execution1[1] = OutputParam({
             fetcherType: OutputParamFetcherType.STATIC_CALL,
@@ -297,13 +290,17 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
         inputParams_execution2[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))),
+            paramData: abi.encode(
+                storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))
+            ),
             constraints: emptyConstraints
         });
         inputParams_execution2[3] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_B_0))),
+            paramData: abi.encode(
+                storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_B_0))
+            ),
             constraints: emptyConstraints
         });
         OutputParam[] memory outputParams_execution2 = new OutputParam[](0);
@@ -366,15 +363,12 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         OutputParam[] memory outputParams = new OutputParam[](1);
         outputParams[0] = OutputParam({
-            fetcherType: OutputParamFetcherType.EXEC_RESULT,
-            paramData: abi.encode(1, address(storageContract), SLOT_A)
+            fetcherType: OutputParamFetcherType.EXEC_RESULT, paramData: abi.encode(1, address(storageContract), SLOT_A)
         });
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({
-            functionSig: DummyContract.getAddress.selector,
-            inputParams: inputParams,
-            outputParams: outputParams
+            functionSig: DummyContract.getAddress.selector, inputParams: inputParams, outputParams: outputParams
         });
 
         IComposableExecution(address(account)).executeComposable(executions);
@@ -399,15 +393,12 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         OutputParam[] memory outputParams = new OutputParam[](1);
         outputParams[0] = OutputParam({
-            fetcherType: OutputParamFetcherType.EXEC_RESULT,
-            paramData: abi.encode(1, address(storageContract), SLOT_A)
+            fetcherType: OutputParamFetcherType.EXEC_RESULT, paramData: abi.encode(1, address(storageContract), SLOT_A)
         });
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({
-            functionSig: DummyContract.getBool.selector,
-            inputParams: inputParams,
-            outputParams: outputParams
+            functionSig: DummyContract.getBool.selector, inputParams: inputParams, outputParams: outputParams
         });
 
         IComposableExecution(address(account)).executeComposable(executions);
@@ -428,7 +419,9 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
         inputParams[1] = InputParam({
             paramType: InputParamType.VALUE,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(address(dummyContract), abi.encodeWithSelector(DummyContract.getNativeValue.selector)),
+            paramData: abi.encode(
+                address(dummyContract), abi.encodeWithSelector(DummyContract.getNativeValue.selector)
+            ),
             constraints: emptyConstraints
         });
 
@@ -436,9 +429,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({
-            functionSig: DummyContract.payableEmit.selector,
-            inputParams: inputParams,
-            outputParams: outputParams
+            functionSig: DummyContract.payableEmit.selector, inputParams: inputParams, outputParams: outputParams
         });
 
         uint256 expectedValue = dummyContract.getNativeValue();
@@ -473,9 +464,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({
-            functionSig: DummyContract.emitUint256.selector,
-            inputParams: inputParams,
-            outputParams: outputParams
+            functionSig: DummyContract.emitUint256.selector, inputParams: inputParams, outputParams: outputParams
         });
 
         vm.expectEmit(address(dummyContract));
@@ -508,9 +497,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({
-            functionSig: DummyContract.emitUint256.selector,
-            inputParams: inputParams,
-            outputParams: outputParams
+            functionSig: DummyContract.emitUint256.selector, inputParams: inputParams, outputParams: outputParams
         });
 
         // balance is used as param to the emitUint256 function
@@ -543,9 +530,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({
-            functionSig: DummyContract.emitUint256.selector,
-            inputParams: inputParams,
-            outputParams: outputParams
+            functionSig: DummyContract.emitUint256.selector, inputParams: inputParams, outputParams: outputParams
         });
 
         vm.expectEmit(address(dummyContract));

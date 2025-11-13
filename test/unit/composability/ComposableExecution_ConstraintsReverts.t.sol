@@ -205,8 +205,7 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
     function _inputParamUsingInConstraints(address account, address caller) internal {
         Constraint[] memory constraints = new Constraint[](1);
         constraints[0] = Constraint({
-            constraintType: ConstraintType.IN,
-            referenceData: abi.encode(bytes32(uint256(41)), bytes32(uint256(43)))
+            constraintType: ConstraintType.IN, referenceData: abi.encode(bytes32(uint256(41)), bytes32(uint256(43)))
         });
 
         vm.startPrank(ENTRYPOINT_V07_ADDRESS);
@@ -398,9 +397,7 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({
-            functionSig: DummyContract.B.selector,
-            inputParams: inputParams,
-            outputParams: outputParams
+            functionSig: DummyContract.B.selector, inputParams: inputParams, outputParams: outputParams
         });
 
         bytes memory expectedRevertReason;
@@ -436,8 +433,7 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
 
         OutputParam[] memory outputParamsExecA = new OutputParam[](1);
         outputParamsExecA[0] = OutputParam({
-            fetcherType: OutputParamFetcherType.EXEC_RESULT,
-            paramData: abi.encode(1, address(storageContract), SLOT_B)
+            fetcherType: OutputParamFetcherType.EXEC_RESULT, paramData: abi.encode(1, address(storageContract), SLOT_B)
         });
 
         ComposableExecution[] memory executionsA = new ComposableExecution[](1);

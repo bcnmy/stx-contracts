@@ -87,8 +87,9 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
         );
         Execution[] memory installExecution = new Execution[](1);
         installExecution[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
-        PackedUserOperation[] memory installUserOps =
-            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory installUserOps = buildAndSignPackedUserOp(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0
+        );
         ENTRYPOINT.handleOps(installUserOps, payable(address(BOB.addr)));
 
         // Uninstall module
@@ -118,8 +119,9 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
         );
         Execution[] memory installExecution = new Execution[](1);
         installExecution[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
-        PackedUserOperation[] memory installUserOps =
-            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory installUserOps = buildAndSignPackedUserOp(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0
+        );
         ENTRYPOINT.handleOps(installUserOps, payable(address(BOB.addr)));
 
         // Uninstall module
@@ -148,8 +150,9 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
             abi.encodeWithSelector(IModuleManager.installModule.selector, MODULE_TYPE_HOOK, address(mockHook), "");
         Execution[] memory installExecution = new Execution[](1);
         installExecution[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
-        PackedUserOperation[] memory installUserOps =
-            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory installUserOps = buildAndSignPackedUserOp(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0
+        );
         ENTRYPOINT.handleOps(installUserOps, payable(address(BOB.addr)));
 
         // Uninstall module
@@ -180,8 +183,9 @@ contract TestGas_ModuleManager is TestModuleManagement_Base {
         );
         Execution[] memory installExecution = new Execution[](1);
         installExecution[0] = Execution(address(BOB_ACCOUNT), 0, installCallData);
-        PackedUserOperation[] memory installUserOps =
-            buildAndSignPackedUserOp(BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0);
+        PackedUserOperation[] memory installUserOps = buildAndSignPackedUserOp(
+            BOB, BOB_ACCOUNT, EXECTYPE_DEFAULT, installExecution, address(VALIDATOR_MODULE), 0
+        );
         ENTRYPOINT.handleOps(installUserOps, payable(address(BOB.addr)));
 
         // Uninstall module

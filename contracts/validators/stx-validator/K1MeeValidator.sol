@@ -388,10 +388,10 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
     // msg.sender = Smart Account
     // sender = 1271 og request sender
     function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool isCallerSafe) {
-        isCallerSafe = (
-            sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
+        isCallerSafe =
+        (sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
                 || sender == msg.sender // Smart Account. Assume smart account never sends non safe eip-712 struct
-                || _safeSenders.contains(msg.sender, sender)
-        ); // check if sender is in _safeSenders for the Smart Account
+                || _safeSenders.contains(msg.sender, sender)); // check if sender is in _safeSenders for the Smart
+        // Account
     }
 }

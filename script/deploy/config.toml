@@ -1,0 +1,40 @@
+# Parameters:
+# endpoint_url - the name of .env variable that contains the RPC url for a given chain
+# is_testnet - is this chain testnet or Mainnet
+# verify - should the script try to verify the contracts on a given chain or not
+# chain_id - numeric id of the chain
+# name - name of the chain
+# 
+
+
+# ===============
+# Ethereum 
+# ===============
+
+### Mainnet(chain id = 1)
+[1]
+endpoint_url = "${RPC_1}"
+
+[1.bool]
+is_testnet = false
+verify = true
+
+[1.uint]
+chain_id = 1
+
+[1.string]
+name = "Eth Mainnet"
+
+### Sepolia 
+[11155111]
+endpoint_url = "${RPC_11155111}"
+
+[11155111.bool]
+is_testnet = true
+verify = true
+
+[11155111.uint]
+chain_id = 11155111
+
+[11155111.string]
+name = "Eth Sepolia"

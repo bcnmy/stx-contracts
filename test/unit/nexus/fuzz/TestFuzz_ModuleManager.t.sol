@@ -21,7 +21,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
         // Restrict the type ID and address to ensure they are intentionally incorrect for testing
         vm.assume(randomTypeId < 1000 && randomTypeId > 4); // Exclude valid type ID range
         vm.assume(randomAddress != address(0) && randomAddress != address(mockValidator)); // Exclude zero and known
-            // validator address
+        // validator address
 
         // Simulate the erroneous installation attempt with randomized and invalid parameters
         bytes memory callData =
@@ -47,7 +47,7 @@ contract TestFuzz_ModuleManager is TestModuleManagement_Base {
     /// @param selector The random function selector
     function testFuzz_InstallFallbackHandler_WithRandomSelector(bytes4 selector) public {
         vm.assume(selector != bytes4(0x6d61fe70) && selector != bytes4(0x8a91b0e3) && selector != bytes4(0)); // Exclude
-            // known selectors
+        // known selectors
         // Prepare data with a random selector to test dynamic input handling
         bytes memory customData = abi.encode(selector);
         bytes memory callData = abi.encodeWithSelector(

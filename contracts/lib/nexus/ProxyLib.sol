@@ -65,8 +65,8 @@ library ProxyLib {
         );
 
         // Compute the predicted address
-        predictedAddress = payable(
-            address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, initCodeHash)))))
-        );
+        predictedAddress = payable(address(
+                uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, initCodeHash))))
+            ));
     }
 }

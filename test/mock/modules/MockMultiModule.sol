@@ -63,18 +63,14 @@ contract MockMultiModule is IModule {
     function postCheck(bytes calldata hookData) external { }
 
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {
-        return (
-            moduleTypeId == MODULE_TYPE_HOOK || moduleTypeId == MODULE_TYPE_EXECUTOR
-                || moduleTypeId == MODULE_TYPE_VALIDATOR || moduleTypeId == MODULE_TYPE_FALLBACK
-        );
+        return (moduleTypeId == MODULE_TYPE_HOOK || moduleTypeId == MODULE_TYPE_EXECUTOR
+                || moduleTypeId == MODULE_TYPE_VALIDATOR || moduleTypeId == MODULE_TYPE_FALLBACK);
     }
 
     function isInitialized(address smartAccount) external view returns (bool) {
-        return (
-            configs[MODULE_TYPE_VALIDATOR][smartAccount] != bytes32(0x00)
+        return (configs[MODULE_TYPE_VALIDATOR][smartAccount] != bytes32(0x00)
                 || configs[MODULE_TYPE_EXECUTOR][smartAccount] != bytes32(0x00)
                 || configs[MODULE_TYPE_HOOK][smartAccount] != bytes32(0x00)
-                || configs[MODULE_TYPE_FALLBACK][smartAccount] != bytes32(0x00)
-        );
+                || configs[MODULE_TYPE_FALLBACK][smartAccount] != bytes32(0x00));
     }
 }
