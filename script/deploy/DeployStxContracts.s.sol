@@ -96,7 +96,7 @@ contract DeployStxContracts is Script {
     function run(uint256 chainId, bool isDryRun) external {
            bytes memory bytecode = vm.getCode("script/deploy/artifacts/K1MeeValidator/K1MeeValidator.json");
            address expectedAddress = DeterministicDeployerLib.predictAddress(bytecode, MEE_K1_VALIDATOR_SALT);
-           checkAndLogContractStatus(chainId, expectedAddress, contractToCheck);
+           checkAndLogContractStatus(chainId, expectedAddress, "K1MeeValidator");
            if (isDryRun) {
                 console.logBytes32(keccak256(bytecode));
            }
@@ -104,7 +104,7 @@ contract DeployStxContracts is Script {
            bytecode = vm.getCode("script/deploy/artifacts/Nexus/Nexus.json");
            bytes memory args = abi.encode(ENTRYPOINT_ADDRESS, deployedContracts[chainId].meeK1Validator, abi.encodePacked(EEEEEE_ADDRESS));
            address expectedAddress = DeterministicDeployerLib.predictAddress(bytecode, args, NEXUS_SALT);
-           checkAndLogContractStatus(chainId, expectedAddress, contractToCheck);
+           checkAndLogContractStatus(chainId, expectedAddress, "Nexus");
            if (isDryRun) {
                 console2.logBytes(args);
                 console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
@@ -113,7 +113,7 @@ contract DeployStxContracts is Script {
            bytecode = vm.getCode("script/deploy/artifacts/NexusBootstrap/NexusBootstrap.json");
            args = abi.encode(deployedContracts[chainId].meeK1Validator, abi.encodePacked(EEEEEE_ADDRESS));
            address expectedAddress = DeterministicDeployerLib.predictAddress(bytecode, args, NEXUSBOOTSTRAP_SALT);
-           checkAndLogContractStatus(chainId, expectedAddress, contractToCheck);
+           checkAndLogContractStatus(chainId, expectedAddress, "NexusBootstrap");
            if (isDryRun) {
                 console2.logBytes(args);
                 console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
@@ -122,7 +122,7 @@ contract DeployStxContracts is Script {
            bytecode = vm.getCode("script/deploy/artifacts/NexusAccountFactory/NexusAccountFactory.json");
            args = abi.encode(deployedContracts[chainId].nexus, FACTORY_OWNER_ADDRESS);
            address expectedAddress = DeterministicDeployerLib.predictAddress(bytecode, args, NEXUS_ACCOUNT_FACTORY_SALT);
-           checkAndLogContractStatus(chainId, expectedAddress, contractToCheck);
+           checkAndLogContractStatus(chainId, expectedAddress, "NexusAccountFactory");
            if (isDryRun) {
                 console2.logBytes(args);
                 console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
@@ -131,7 +131,7 @@ contract DeployStxContracts is Script {
            bytecode = vm.getCode("script/deploy/artifacts/ComposableExecutionModule/ComposableExecutionModule.json");
            args = abi.encode(ENTRYPOINT_ADDRESS);
            address expectedAddress = DeterministicDeployerLib.predictAddress(bytecode, args, COMPOSABLE_EXECUTION_MODULE_SALT);
-           checkAndLogContractStatus(chainId, expectedAddress, contractToCheck);
+           checkAndLogContractStatus(chainId, expectedAddress, "ComposableExecutionModule");
            if (isDryRun) {
                 console2.logBytes(args);
                 console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
@@ -139,21 +139,21 @@ contract DeployStxContracts is Script {
         
            bytecode = vm.getCode("script/deploy/artifacts/ComposableStorage/ComposableStorage.json");
            address expectedAddress = DeterministicDeployerLib.predictAddress(bytecode, COMPOSABLE_STORAGE_SALT);
-           checkAndLogContractStatus(chainId, expectedAddress, contractToCheck);
+           checkAndLogContractStatus(chainId, expectedAddress, "ComposableStorage");
            if (isDryRun) {
                 console2.logBytes32(keccak256(bytecode));
            }
         
            bytecode = vm.getCode("script/deploy/artifacts/EthForwarder/EthForwarder.json");
            address expectedAddress = DeterministicDeployerLib.predictAddress(bytecode, ETH_FORWARDER_SALT);
-           checkAndLogContractStatus(chainId, expectedAddress, contractToCheck);
+           checkAndLogContractStatus(chainId, expectedAddress, "EthForwarder");
            if (isDryRun) {
                 console2.logBytes32(keccak256(bytecode));
            }
         
            bytecode = vm.getCode("script/deploy/artifacts/NodePaymasterFactory/NodePaymasterFactory.json");
            address expectedAddress = DeterministicDeployerLib.predictAddress(bytecode, NODE_PMF_SALT);
-           checkAndLogContractStatus(chainId, expectedAddress, contractToCheck);
+           checkAndLogContractStatus(chainId, expectedAddress, "NodePaymasterFactory");
            if (isDryRun) {
                 console2.logBytes32(keccak256(bytecode));
            }

@@ -5,6 +5,17 @@
 # chain_id - numeric id of the chain
 # name - name of the chain
 # 
+# Contracts in the scope
+# Official name : description
+# K1MeeValidator : Mee validator that uses the secp256k1 curve only and is a default validator for stx validation currently
+# Nexus : Nexus smart account implementation
+# NexusBootstrap : Bootstrap utility for initializing Nexus accounts 
+# NexusAccountFactory : Factory contract for deploying Nexus smart accounts
+# ComposableExecutionModule : Module enabling composable execution of multiple operations
+# ComposableStorage : Storage contract for composable execution module
+# EthForwarder : Forwarder contract for ETH transfers
+# NodePaymasterFactory : Factory contract for deploying Node Paymasters
+# Disperse : Utility contract for batch token/ETH transfers
 
 
 # ===============

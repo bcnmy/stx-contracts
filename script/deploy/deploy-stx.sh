@@ -105,6 +105,12 @@ if [ -z "$CREATEX_ADDRESS" ]; then
     exit 1
 fi
 
+# Check if EXPECTED_DISPERSE_ADDRESS is set in .env (0xd15fE25eD0Dba12fE05e7029C88b10C25e8880E3)
+if [ -z "$EXPECTED_DISPERSE_ADDRESS" ]; then
+    log_error "EXPECTED_DISPERSE_ADDRESS is not set in .env"
+    exit 1
+fi
+
 # Check if we have to recompile the artifacts
 read -r -p "Do you want to rebuild Stx-contracts artifacts from your local sources? (y/n): " proceed
 if [ $proceed = "y" ]; then
@@ -183,7 +189,7 @@ for chain_id in "${REQUESTED_CHAINS[@]}"; do
     
     # Temporarily disable exit on error to handle deployment failures gracefully
     set +e
-    bash deploy-chain.sh $chain_id 1> ./deploy-logs/$chain_id-$chain_name-deployment.log 2> ./deploy-logs/$chain_id-$chain_name-deployment-errors.log
+    bash deploy-chain.sh $chain_id 1> ./deploy-logs/$chain_name-$$chain_id-deployment.log 2> ./deploy-logs/$chain_name-$chain_id-deployment-errors.log
     deploy_status=$?
     set -e
     
