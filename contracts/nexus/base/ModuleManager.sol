@@ -194,7 +194,11 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
                 sig: enableModeSignature,
                 validator: enableModeSigValidator
             })) {
-            revert EnableModeSigError();
+            assembly {
+                // revert EnableModeSigError()
+                mstore(0x00, 0x46fdc333)
+                revert(0x1c, 0x04)
+            }
         }
         this.installModule(moduleType, module, moduleInitData);
     }
