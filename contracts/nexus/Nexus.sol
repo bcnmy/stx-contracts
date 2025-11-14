@@ -257,7 +257,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         onlyEntryPointOrSelf
     {
         _installModule(moduleTypeId, module, initData);
-        emit ModuleInstalled(moduleTypeId, module);
+        assembly {
+            // emit ModuleInstalled(moduleTypeId, module)
+            mstore(0x00, moduleTypeId)
+            mstore(0x20, module)
+            log1(0x00, 0x40, 0xd21d0b289f126c4b473ea641963e766833c2f13866e4ff480abd787c100ef123)
+        }
     }
 
     /// @notice Uninstalls a module from the smart account.
