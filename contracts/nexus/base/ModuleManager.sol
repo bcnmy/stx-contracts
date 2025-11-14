@@ -189,17 +189,17 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
 
         enableModeSignature = enableModeSignature[20:];
 
-        if (!_checkEnableModeSignature({
-                structHash: _getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData),
-                sig: enableModeSignature,
-                validator: enableModeSigValidator
-            })) {
-            assembly {
+        bytes32 structHash = _getEnableModeDataHash(module, moduleType, userOpHash, moduleInitData);
+        bool isValid = _checkEnableModeSignature(structHash, enableModeSignature, enableModeSigValidator);
+
+        assembly {
+            if iszero(isValid) {
                 // revert EnableModeSigError()
                 mstore(0x00, 0x46fdc333)
                 revert(0x1c, 0x04)
             }
         }
+
         this.installModule(moduleType, module, moduleInitData);
     }
 
