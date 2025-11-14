@@ -148,15 +148,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param executionCalldata The encoded transaction data to execute.
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPoint` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
-    function execute(
-        ExecutionMode mode,
-        bytes calldata executionCalldata
-    )
-        external
-        payable
-        onlyEntryPoint
-        withHook(msg.value)
-    {
+    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPoint withHook {
         (CallType callType, ExecType execType) = mode.decodeBasic();
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
@@ -181,7 +173,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         external
         payable
         onlyExecutorModule
-        withHook(msg.value)
+        withHook
         returns (bytes[] memory returnData)
     {
         (CallType callType, ExecType execType) = mode.decodeBasic();
@@ -207,9 +199,10 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         bytes32
     )
         external
+        payable
         virtual
         onlyEntryPoint
-        withHook(uint256(0))
+        withHook
     {
         bytes calldata callData = userOp.callData[4:];
         (bool success,) = address(this).delegatecall(callData);
@@ -226,7 +219,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         payable
         override
         onlyEntryPoint
-        withHook(msg.value)
+        withHook
     {
         _executeComposable(executions);
     }
@@ -292,7 +285,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         external
         payable
         onlyEntryPointOrSelf
-        withHook(msg.value)
+        withHook
     {
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
 
@@ -510,16 +503,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
-    function upgradeToAndCall(
-        address newImplementation,
-        bytes calldata data
-    )
-        public
-        payable
-        virtual
-        override
-        withHook(msg.value)
-    {
+    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override withHook {
         require(newImplementation != address(0), InvalidImplementationAddress());
         bool res;
         assembly {

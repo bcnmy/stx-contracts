@@ -74,12 +74,12 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
 
     /// @notice Does pre-checks and post-checks using an installed hook on the account.
     /// @dev sender, msg.data and msg.value is passed to the hook to implement custom flows.
-    modifier withHook(uint256 messageValue) {
+    modifier withHook() {
         address hook = _getHook();
         if (hook == address(0)) {
             _;
         } else {
-            bytes memory hookData = IHook(hook).preCheck(msg.sender, messageValue, msg.data);
+            bytes memory hookData = IHook(hook).preCheck(msg.sender, msg.value, msg.data);
             _;
             IHook(hook).postCheck(hookData);
         }
@@ -241,7 +241,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     /// @dev Installs a new validator module after checking if it matches the required module type.
     /// @param validator The address of the validator module to be installed.
     /// @param data Initialization data to configure the validator upon installation.
-    function _installValidator(address validator, bytes calldata data) internal virtual withHook(msg.value) {
+    function _installValidator(address validator, bytes calldata data) internal virtual withHook {
         if (!IValidator(validator).isModuleType(MODULE_TYPE_VALIDATOR)) revert MismatchModuleTypeId();
         if (validator == _DEFAULT_VALIDATOR) {
             revert DefaultValidatorAlreadyInstalled();
@@ -269,7 +269,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     /// @dev Installs a new executor module after checking if it matches the required module type.
     /// @param executor The address of the executor module to be installed.
     /// @param data Initialization data to configure the executor upon installation.
-    function _installExecutor(address executor, bytes calldata data) internal virtual withHook(msg.value) {
+    function _installExecutor(address executor, bytes calldata data) internal virtual withHook {
         if (!IExecutor(executor).isModuleType(MODULE_TYPE_EXECUTOR)) revert MismatchModuleTypeId();
         _getAccountStorage().executors.push(executor);
         IExecutor(executor).onInstall(data);
@@ -289,7 +289,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     /// @dev Installs a hook module, ensuring no other hooks are installed before proceeding.
     /// @param hook The address of the hook to be installed.
     /// @param data Initialization data to configure the hook upon installation.
-    function _installHook(address hook, bytes calldata data) internal virtual withHook(msg.value) {
+    function _installHook(address hook, bytes calldata data) internal virtual withHook {
         if (!IHook(hook).isModuleType(MODULE_TYPE_HOOK)) revert MismatchModuleTypeId();
         address currentHook = _getHook();
         require(currentHook == address(0), HookAlreadyInstalled(currentHook));
@@ -321,7 +321,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     /// @dev Installs a fallback handler for a given selector with initialization data.
     /// @param handler The address of the fallback handler to install.
     /// @param params The initialization parameters including the selector and call type.
-    function _installFallbackHandler(address handler, bytes calldata params) internal virtual withHook(msg.value) {
+    function _installFallbackHandler(address handler, bytes calldata params) internal virtual withHook {
         if (!IFallback(handler).isModuleType(MODULE_TYPE_FALLBACK)) revert MismatchModuleTypeId();
         // Extract the function selector from the provided parameters.
         bytes4 selector = bytes4(params[0:4]);
@@ -382,7 +382,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     )
         internal
         virtual
-        withHook(msg.value)
+        withHook
     {
         if (!IModule(preValidationHook).isModuleType(preValidationHookType)) revert MismatchModuleTypeId();
         address currentPreValidationHook = _getPreValidationHook(preValidationHookType);
