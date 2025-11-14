@@ -40,9 +40,6 @@ interface INexusEventsAndErrors {
     /// @notice Error thrown when the provided implementation address is invalid.
     error InvalidImplementationAddress();
 
-    /// @notice Error thrown when the provided implementation address is not a contract.
-    error ImplementationIsNotAContract();
-
     /// @notice Error thrown when an inner call fails.
     error InnerCallFailed();
 

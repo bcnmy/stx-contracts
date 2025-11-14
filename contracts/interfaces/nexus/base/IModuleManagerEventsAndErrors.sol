@@ -40,9 +40,6 @@ interface IModuleManagerEventsAndErrors {
     /// @dev Thrown when the specified module address is not recognized as valid.
     error ValidatorNotInstalled(address module);
 
-    /// @dev Thrown when there is no installed validator detected.
-    error NoValidatorInstalled();
-
     /// @dev Thrown when the specified module address is not recognized as valid.
     error InvalidModule(address module);
 
@@ -76,9 +73,6 @@ interface IModuleManagerEventsAndErrors {
     /// @dev Thrown when there is an attempt to uninstall a fallback handler for a selector that does not have one
     /// installed.
     error FallbackNotInstalledForSelector(bytes4 selector);
-
-    /// @dev Thrown when a fallback handler fails to uninstall properly.
-    error FallbackHandlerUninstallFailed();
 
     /// @dev Thrown when no fallback handler is available for a given selector.
     error MissingFallbackHandler(bytes4 selector);
