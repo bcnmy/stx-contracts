@@ -607,10 +607,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
         // check r is valid
         bytes32 r = LibPREP.rPREP(address(this), keccak256(initData), saltAndDelegation);
-        if (r == bytes32(0)) {
-            revert InvalidPREP();
+        assembly {
+            if iszero(r) {
+                mstore(0x00, 0xe483bbcb) // revert InvalidPREP()
+                revert(0x1c, 0x04)
+            }
+            // emit PREPInitialized(r)
+            mstore(0x00, r)
+            log1(0x00, 0x20, 0x4f058962bce244bca6c9be42f256083afc66f1f63a1f9a04e31a3042311af38d)
         }
-        emit PREPInitialized(r);
     }
 
     // checks if there's at least one validator initialized
@@ -627,7 +632,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 }
                 if (next == SENTINEL) {
                     //went through all validators and none was initialized
-                    revert CanNotRemoveLastValidator();
+                    assembly {
+                        // revert CanNotRemoveLastValidator()
+                        mstore(0x00, 0xcc319d84)
+                        revert(0x1c, 0x04)
+                    }
                 }
             }
         }
