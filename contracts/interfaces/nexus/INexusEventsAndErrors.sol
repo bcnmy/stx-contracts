@@ -24,9 +24,6 @@ interface INexusEventsAndErrors {
     /// @param moduleTypeId The ID of the unsupported module type.
     error UnsupportedModuleType(uint256 moduleTypeId);
 
-    /// @notice Error thrown on failed execution.
-    error ExecutionFailed();
-
     /// @notice Error thrown when the Factory fails to initialize the account with posted bootstrap data.
     error NexusInitializationFailed();
 
@@ -35,9 +32,6 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when the provided implementation address is invalid.
     error InvalidImplementationAddress();
-
-    /// @notice Error thrown when an inner call fails.
-    error InnerCallFailed();
 
     /// @notice Error thrown when attempted to emergency-uninstall a hook
     error EmergencyTimeLockNotExpired();

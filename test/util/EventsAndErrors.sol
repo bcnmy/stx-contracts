@@ -44,7 +44,6 @@ contract EventsAndErrors {
     error FactoryNotWhitelisted();
     error InvalidFactoryAddress();
     error InvalidEntryPointAddress();
-    error InnerCallFailed();
     error EmergencyUninstallSigError();
     error CallToDeployWithFactoryFailed();
     error NexusInitializationFailed();

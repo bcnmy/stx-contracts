@@ -206,8 +206,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     {
         bytes calldata callData = userOp.callData[4:];
         (bool success,) = address(this).delegatecall(callData);
-        if (!success) {
-            revert ExecutionFailed();
+        assembly {
+            if iszero(success) {
+                // revert ExecutionFailed()
+                mstore(0x00, 0xacfdb444)
+                revert(0x1c, 0x04)
+            }
         }
     }
 
