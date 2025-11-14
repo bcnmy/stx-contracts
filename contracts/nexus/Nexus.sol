@@ -409,7 +409,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         if (signature.length == 0) {
             // Forces the compiler to optimize for smaller bytecode size.
             if (uint256(hash) == (~signature.length / 0xffff) * 0x7739) {
-                return checkERC7739Support(hash, signature);
+                return _checkERC7739Support(hash, signature);
             }
         }
         // else proceed with normal signature verification
@@ -443,15 +443,13 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param moduleTypeId The identifier of the module type to check.
     /// @return True if the module type is supported, false otherwise.
     function supportsModule(uint256 moduleTypeId) external view virtual returns (bool) {
-        if (
-            moduleTypeId == MODULE_TYPE_VALIDATOR || moduleTypeId == MODULE_TYPE_EXECUTOR
-                || moduleTypeId == MODULE_TYPE_FALLBACK || moduleTypeId == MODULE_TYPE_HOOK
-                || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
-                || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 || moduleTypeId == MODULE_TYPE_MULTI
-        ) {
-            return true;
-        }
-        return false;
+        /* MODULE_TYPE_VALIDATOR || MODULE_TYPE_EXECUTOR
+        || MODULE_TYPE_FALLBACK || MODULE_TYPE_HOOK
+        || MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
+        || MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 || MODULE_TYPE_MULTI */
+        // Bitmap: 0x31F represents supported module types: 0,1,2,3,4,8,9
+        // 0x31F = 0b1100011111 = (1<<0)|(1<<1)|(1<<2)|(1<<3)|(1<<4)|(1<<8)|(1<<9)
+        return ((1 << moduleTypeId) & 0x31F) != 0;
     }
 
     /// @notice Determines if a specific execution mode is supported.
@@ -529,7 +527,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// If no validator supports ERC-7739, this function returns false
     /// thus the account will proceed with normal signature verification
     /// and return 0xffffffff as a result.
-    function checkERC7739Support(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4) {
+    function _checkERC7739Support(bytes32 hash, bytes calldata signature) internal view virtual returns (bytes4) {
         bytes4 result;
         unchecked {
             SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
