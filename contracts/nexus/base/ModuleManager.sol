@@ -771,9 +771,10 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
                 mstore(0x20, s) // Store `msg.sig`.
                 return(0x3c, 0x20) // Return `msg.sig`.
             }
+            mstore(0x00, 0x08c63e27)
+            mstore(0x20, shl(224, s)) // Left-align bytes4 for ABI encoding
+            revert(0x1c, 0x24) // revert MissingFallbackHandler(msg.sig)
         }
-        // if there was no handler and it is not the onERCXXXReceived call, revert
-        revert MissingFallbackHandler(msg.sig);
     }
 
     /// @dev Helper function to paginate entries in a SentinelList.

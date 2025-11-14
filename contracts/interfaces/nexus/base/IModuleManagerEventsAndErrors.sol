@@ -71,9 +71,6 @@ interface IModuleManagerEventsAndErrors {
     /// installed.
     error FallbackNotInstalledForSelector(bytes4 selector);
 
-    /// @dev Thrown when no fallback handler is available for a given selector.
-    error MissingFallbackHandler(bytes4 selector);
-
     /// @dev Thrown when Invalid data is provided for MultiType install flow
     error InvalidInput();
 
