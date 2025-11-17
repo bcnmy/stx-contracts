@@ -468,7 +468,13 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     function _checkEmergencyUninstallSignature(EmergencyUninstall calldata data, bytes calldata signature) internal {
         address validator = _handleValidator(address(bytes20(signature[0:20])));
         // Hash the data
-        bytes32 hash = _getEmergencyUninstallDataHash(data.hook, data.hookType, data.deInitData, data.nonce);
+        bytes32 hash = _hashTypedData(
+            keccak256(
+                abi.encode(
+                    EMERGENCY_UNINSTALL_TYPE_HASH, data.hook, data.hookType, keccak256(data.deInitData), data.nonce
+                )
+            )
+        );
         // Check if nonce is valid
         require(!_getAccountStorage().nonces[data.nonce], InvalidNonce());
         // Mark nonce as used
@@ -566,27 +572,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
         } catch {
             return false;
         }
-    }
-
-    /// @notice Builds the emergency uninstall data hash as per eip712
-    /// @param hookType Type of the hook (4 for Hook, 8 for ERC-1271 Prevalidation Hook, 9 for ERC-4337 Prevalidation
-    /// Hook)
-    /// @param hook address of the hook being uninstalled
-    /// @param data De-initialization data to configure the hook upon uninstallation.
-    /// @param nonce Unique nonce for the operation
-    /// @return structHash data hash
-    function _getEmergencyUninstallDataHash(
-        address hook,
-        uint256 hookType,
-        bytes calldata data,
-        uint256 nonce
-    )
-        internal
-        view
-        returns (bytes32)
-    {
-        return
-            _hashTypedData(keccak256(abi.encode(EMERGENCY_UNINSTALL_TYPE_HASH, hook, hookType, keccak256(data), nonce)));
     }
 
     /// @notice Checks if a module is installed on the smart account.
