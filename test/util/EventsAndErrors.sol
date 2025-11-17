@@ -46,7 +46,6 @@ contract EventsAndErrors {
     error InvalidEntryPointAddress();
     error EmergencyUninstallSigError();
     error CallToDeployWithFactoryFailed();
-    error NexusInitializationFailed();
     error AccountAlreadyInitialized();
 
     // ==========================

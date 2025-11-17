@@ -24,9 +24,6 @@ interface INexusEventsAndErrors {
     /// @param moduleTypeId The ID of the unsupported module type.
     error UnsupportedModuleType(uint256 moduleTypeId);
 
-    /// @notice Error thrown when the Factory fails to initialize the account with posted bootstrap data.
-    error NexusInitializationFailed();
-
     /// @notice Error thrown when a zero address is provided as the Entry Point address.
     error EntryPointCanNotBeZero();
 

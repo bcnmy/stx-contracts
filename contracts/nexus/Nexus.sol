@@ -394,7 +394,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
         (bool success,) = bootstrap.delegatecall(bootstrapCall);
 
-        require(success, NexusInitializationFailed());
+        assembly {
+            if iszero(success) {
+                mstore(0x00, 0x315927c5) // NexusInitializationFailed()
+                revert(0x00, 0x04)
+            }
+        }
         if (!_amIERC7702()) {
             require(isInitialized(), AccountNotInitialized());
         }
@@ -494,7 +499,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// Returns the account's implementation ID.
     /// @return The unique identifier for this account implementation.
     function accountId() external pure virtual returns (string memory) {
-        return _ACCOUNT_IMPLEMENTATION_ID;
+        return "biconomy.nexus.1.3.0";
     }
 
     /// Upgrades the contract to a new implementation and calls a function on the new contract.
