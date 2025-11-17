@@ -13,8 +13,8 @@ pragma solidity ^0.8.27;
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
 import { ExecutionMode } from "../../../lib/erc-7579/ModeLib.sol";
-
 import { IExecutionHelperEventsAndErrors } from "./IExecutionHelperEventsAndErrors.sol";
+import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 /// @title Nexus - IExecutionHelper
 /// @notice Interface for executing transactions on behalf of smart accounts within the Nexus system.
@@ -45,4 +45,15 @@ interface IExecutionHelper is IExecutionHelperEventsAndErrors {
         external
         payable
         returns (bytes[] memory returnData);
+
+    /**
+     * Account may implement this execute method.
+     * passing this methodSig at the beginning of callData will cause the entryPoint to pass the full UserOp (and hash)
+     * to the account.
+     * The account should skip the methodSig, and use the callData (and optionally, other UserOp fields)
+     *
+     * @param userOp              - The operation that was just validated.
+     * @param userOpHash          - Hash of the user's request data.
+     */
+    function executeUserOp(PackedUserOperation calldata userOp, bytes32 userOpHash) external payable;
 }

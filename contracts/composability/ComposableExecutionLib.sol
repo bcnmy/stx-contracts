@@ -20,7 +20,6 @@ library ComposableExecutionLib {
     error Output_StaticCallFailed();
     error InvalidParameterEncoding(string message);
     error InvalidOutputParamFetcherType();
-    error ComposableExecutionFailed();
     error InvalidConstraintType();
     error InvalidSetOfInputParams(string message);
 
@@ -90,8 +89,12 @@ library ComposableExecutionLib {
                 callData.length := calldataload(u)
             }
             (bool success, bytes memory returnData) = contractAddr.staticcall(callData);
-            if (!success) {
-                revert ComposableExecutionFailed();
+            assembly {
+                if iszero(success) {
+                    // revert ComposableExecutionFailed()
+                    mstore(0x00, 0x6533cc8d)
+                    revert(0x1c, 0x04)
+                }
             }
             _validateConstraints(returnData, param.constraints);
             return returnData;
@@ -217,11 +220,10 @@ library ComposableExecutionLib {
             assembly {
                 value := mload(add(returnData, add(0x20, mul(i, 0x20))))
             }
-            ComposableStorage(targetStorageContract).writeStorage({
-                slot: keccak256(abi.encodePacked(targetStorageSlot, i)),
-                value: value,
-                account: account
-            });
+            ComposableStorage(targetStorageContract)
+                .writeStorage({
+                    slot: keccak256(abi.encodePacked(targetStorageSlot, i)), value: value, account: account
+                });
         }
     }
 }

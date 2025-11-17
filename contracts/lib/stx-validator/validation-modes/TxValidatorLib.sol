@@ -249,10 +249,7 @@ library TxValidatorLib {
         iTxHash = bytes32(callData.slice(callData.length - ITX_HASH_BYTE_SIZE, ITX_HASH_BYTE_SIZE));
     }
 
-    function extractProof(
-        bytes calldata signedTx,
-        uint8 proofItemsCount
-    )
+    function extractProof(bytes calldata signedTx, uint8 proofItemsCount)
         private
         pure
         returns (bytes32[] memory proof)

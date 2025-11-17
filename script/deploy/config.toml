@@ -1,0 +1,85 @@
+# Parameters:
+# endpoint_url - the name of .env variable that contains the RPC url for a given chain
+# is_testnet - is this chain testnet or Mainnet
+# verify - should the script try to verify the contracts on a given chain or not
+# chain_id - numeric id of the chain
+# name - name of the chain
+# 
+# Contracts in the scope
+# Official name : description
+# K1MeeValidator : Mee validator that uses the secp256k1 curve only and is a default validator for stx validation currently
+# Nexus : Nexus smart account implementation
+# NexusBootstrap : Bootstrap utility for initializing Nexus accounts 
+# NexusAccountFactory : Factory contract for deploying Nexus smart accounts
+# ComposableExecutionModule : Module enabling composable execution of multiple operations
+# ComposableStorage : Storage contract for composable execution module
+# EtherForwarder : Forwarder contract for ETH transfers
+# NodePaymasterFactory : Factory contract for deploying Node Paymasters
+# Disperse : Utility contract for batch token/ETH transfers
+
+
+# ===============
+# Ethereum 
+# ===============
+
+### Mainnet(chain id = 1)
+[1]
+endpoint_url = "${RPC_1}"
+
+[1.bool]
+is_testnet = false
+verify = true
+
+[1.uint]
+chain_id = 1
+
+[1.string]
+name = "Eth Mainnet"
+
+### Sepolia 
+[11155111]
+endpoint_url = "${RPC_11155111}"
+
+[11155111.bool]
+is_testnet = true
+verify = true
+
+[11155111.uint]
+chain_id = 11155111
+
+[11155111.string]
+name = "Eth Sepolia"
+
+# ===============
+# BASE
+# ===============
+
+### Base(8453)
+[8453]
+endpoint_url = "${RPC_8453}"
+
+[8453.bool]
+is_testnet = false
+verify = true
+
+[8453.uint]
+chain_id = 8453
+
+[8453.string]
+name = "Base Mainnet"
+
+# ===============
+# SCROLL
+# ===============
+[534352]
+endpoint_url = "${RPC_534352}"
+
+[534352.bool]
+is_testnet = false
+verify = true
+
+[534352.uint]
+chain_id = 534352
+
+[534352.string]
+name = "Scroll Mainnet"

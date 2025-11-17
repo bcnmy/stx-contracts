@@ -10,7 +10,10 @@ import { MockAccountCaller } from "../../mock/accounts/MockAccountCaller.sol";
 import { MockAccount } from "../../mock/accounts/MockAccount.sol";
 import { ComposableStorage } from "contracts/composability/ComposableStorage.sol";
 import {
-    InputParam, Constraint, InputParamType, InputParamFetcherType
+    InputParam,
+    Constraint,
+    InputParamType,
+    InputParamFetcherType
 } from "contracts/types/ComposabilityDataTypes.sol";
 import { MockERC20Balance } from "test/mock/tokens/MockERC20Balance.sol";
 import "../../mock/DummyContract.sol";
@@ -40,14 +43,10 @@ contract ComposabilityTestBase is BaseTest {
 
         composabilityHandler = new ComposableExecutionModule(ENTRYPOINT_V07_ADDRESS);
         mockFallbackAccount = new MockFallbackAccount({
-            _validator: address(0),
-            _executor: address(composabilityHandler),
-            _handler: address(composabilityHandler)
+            _validator: address(0), _executor: address(composabilityHandler), _handler: address(composabilityHandler)
         });
         mockAccountCaller = new MockAccountCaller({
-            _validator: address(0),
-            _executor: address(composabilityHandler),
-            _handler: address(composabilityHandler)
+            _validator: address(0), _executor: address(composabilityHandler), _handler: address(composabilityHandler)
         });
         mockAccountDelegateCaller = new MockAccountDelegateCaller({ _composableModule: address(composabilityHandler) });
 

@@ -18,14 +18,14 @@
   cache_path  = "cache_forge"
   libs = ["node_modules"]
   gas_reports_ignore = ["MockToken"]
-  fs_permissions = [{ access = "read", path = "scripts/bash-deploy/artifacts"}]
+  fs_permissions = [{ access = "read", path = "script/deploy/artifacts"}, { access = "read", path = "script/deploy"}]
 
 [profile.ci]
   fuzz = { runs = 1_000 }
   verbosity = 3
 
-[profile.coverage]
-  via-ir = false
+[profile.via-ir]
+  via-ir = true
 
 [fmt]
   bracket_spacing = true
@@ -55,3 +55,10 @@
     "**/*Test*.sol",
   ]
   severity = ["high", "med", "gas"]
+
+[etherscan]
+  mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "1"}
+  sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "11155111"} 
+  base = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "8453"}
+  # base-sepolia
+  scroll = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "534352"} 

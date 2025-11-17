@@ -12,7 +12,6 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { IBaseAccount } from "../../interfaces/nexus/base/IBaseAccount.sol";
 
 /// @title Nexus - BaseAccount
@@ -24,9 +23,6 @@ import { IBaseAccount } from "../../interfaces/nexus/base/IBaseAccount.sol";
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract BaseAccount is IBaseAccount {
-    /// @notice Identifier for this implementation on the network
-    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.3.0";
-
     /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
     /// This address is consistent across all supported networks.
     address internal immutable _ENTRYPOINT;
@@ -93,13 +89,6 @@ contract BaseAccount is IBaseAccount {
         }
     }
 
-    /// @notice Gets the nonce for a particular key.
-    /// @param key The nonce key.
-    /// @return The nonce associated with the key.
-    function nonce(uint192 key) external view virtual returns (uint256) {
-        return IEntryPoint(_ENTRYPOINT).getNonce(address(this), key);
-    }
-
     /// @notice Returns the current deposit balance of this account on the EntryPoint.
     /// @return result The current balance held at the EntryPoint.
     function getDeposit() external view virtual returns (uint256 result) {
@@ -108,16 +97,15 @@ contract BaseAccount is IBaseAccount {
         assembly {
             mstore(0x20, address()) // Store the `account` argument.
             mstore(0x00, 0x70a08231) // `balanceOf(address)`.
-            result :=
-                mul(
-                    // Returns 0 if the EntryPoint does not exist.
-                    mload(0x20),
-                    and(
-                        // The arguments of `and` are evaluated from right to left.
-                        gt(returndatasize(), 0x1f), // At least 32 bytes returned.
-                        staticcall(gas(), entryPointAddress, 0x1c, 0x24, 0x20, 0x20)
-                    )
+            result := mul(
+                // Returns 0 if the EntryPoint does not exist.
+                mload(0x20),
+                and(
+                    // The arguments of `and` are evaluated from right to left.
+                    gt(returndatasize(), 0x1f), // At least 32 bytes returned.
+                    staticcall(gas(), entryPointAddress, 0x1c, 0x24, 0x20, 0x20)
                 )
+            )
         }
     }
 

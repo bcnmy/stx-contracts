@@ -26,9 +26,7 @@ contract TestFuzz_ERC4337Account is NexusTestBase {
 
         Execution[] memory executions = new Execution[](1);
         executions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: depositAmount,
-            callData: abi.encodeWithSignature("addDeposit()")
+            target: address(BOB_ACCOUNT), value: depositAmount, callData: abi.encodeWithSignature("addDeposit()")
         });
 
         executeBatch(BOB, BOB_ACCOUNT, executions, EXECTYPE_DEFAULT);
@@ -56,9 +54,7 @@ contract TestFuzz_ERC4337Account is NexusTestBase {
             uint256 nonceBefore = getNonce(address(BOB_ACCOUNT), MODE_VALIDATION, address(VALIDATOR_MODULE), bytes3(0));
             Execution[] memory executions = new Execution[](1);
             executions[0] = Execution({
-                target: address(BOB_ACCOUNT),
-                value: 0,
-                callData: abi.encodeWithSignature("incrementNonce()")
+                target: address(BOB_ACCOUNT), value: 0, callData: abi.encodeWithSignature("incrementNonce()")
             });
 
             executeBatch(BOB, BOB_ACCOUNT, executions, EXECTYPE_DEFAULT);
@@ -75,7 +71,7 @@ contract TestFuzz_ERC4337Account is NexusTestBase {
         vm.assume(!isContract(to)); // Valid 'to' address and skip precompiles
         vm.assume(uint160(address(to)) > 0xff); // no precompiles
         vm.assume(amount > 0.01 ether && amount <= 50 ether); // Restricting the amount to a reasonable upper limit and
-            // ensuring it's greater than 0
+        // ensuring it's greater than 0
         vm.assume(to.balance == 0);
         // Fund the BOB_ACCOUNT with more than just the deposit amount to cover potential transaction fees
         vm.deal(address(BOB_ACCOUNT), amount + 1 ether);
@@ -83,9 +79,7 @@ contract TestFuzz_ERC4337Account is NexusTestBase {
         // Deposit the amount to EntryPoint
         Execution[] memory depositExecutions = new Execution[](1);
         depositExecutions[0] = Execution({
-            target: address(BOB_ACCOUNT),
-            value: amount,
-            callData: abi.encodeWithSignature("addDeposit()")
+            target: address(BOB_ACCOUNT), value: amount, callData: abi.encodeWithSignature("addDeposit()")
         });
         executeBatch(BOB, BOB_ACCOUNT, depositExecutions, EXECTYPE_DEFAULT);
 

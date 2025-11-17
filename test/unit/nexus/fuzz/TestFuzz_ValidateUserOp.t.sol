@@ -78,7 +78,7 @@ contract TestFuzz_ValidateUserOp is NexusTestBase {
 
         // Expect revert with ValidatorNotInstalled selector
         if (validator != address(0)) {
-            vm.expectRevert(abi.encodeWithSelector(ValidatorNotInstalled.selector, validator));
+            vm.expectRevert(abi.encodeWithSelector(bytes4(0x6859e01e), validator));
         }
 
         // Attempt to validate the user operation

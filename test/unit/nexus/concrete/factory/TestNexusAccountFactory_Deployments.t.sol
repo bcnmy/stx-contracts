@@ -108,7 +108,7 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
         address payable firstAccountAddress = FACTORY.createAccount(_initData, salt);
 
         vm.prank(user.addr); // Even owner cannot reinitialize the account
-        vm.expectRevert(NexusInitializationFailed.selector);
+        vm.expectRevert(bytes4(0x315927c5)); // NexusInitializationFailed()
         INexus(firstAccountAddress).initializeAccount(_initData);
     }
 
@@ -222,15 +222,13 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
 
         // Verify that the validators and hook were installed
         assertTrue(
-            IModuleManager(deployedAccountAddress).isModuleInstalled(
-                MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""
-            ),
+            IModuleManager(deployedAccountAddress)
+                .isModuleInstalled(MODULE_TYPE_VALIDATOR, address(VALIDATOR_MODULE), ""),
             "Validator should be installed"
         );
         assertTrue(
-            IModuleManager(deployedAccountAddress).isModuleInstalled(
-                MODULE_TYPE_HOOK, address(HOOK_MODULE), abi.encodePacked(user.addr)
-            ),
+            IModuleManager(deployedAccountAddress)
+                .isModuleInstalled(MODULE_TYPE_HOOK, address(HOOK_MODULE), abi.encodePacked(user.addr)),
             "Hook should be installed"
         );
     }
@@ -250,8 +248,7 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
         address payable expectedAddress = FACTORY.computeAccountAddress(_initData, salt);
 
         // Manually compute the expected address
-        address payable manualExpectedAddress = payable(
-            address(
+        address payable manualExpectedAddress = payable(address(
                 uint160(
                     uint256(
                         keccak256(
@@ -272,8 +269,7 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
                         )
                     )
                 )
-            )
-        );
+            ));
 
         // Validate that both addresses match
         assertEq(expectedAddress, manualExpectedAddress, "Manually computed address mismatch");

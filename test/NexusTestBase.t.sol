@@ -134,6 +134,7 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
         CHARLIE_ACCOUNT = deployNexus(CHARLIE, 100 ether, address(VALIDATOR_MODULE));
         vm.label(address(CHARLIE_ACCOUNT), "CHARLIE_ACCOUNT");
     }
+
     // -----------------------------------------
     // Utility Functions
     // -----------------------------------------
@@ -142,14 +143,7 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
     /// @param owner The address of the owner
     /// @param validator The address of the validator
     /// @return account The calculated account address
-    function calculateAccountAddress(
-        address owner,
-        address validator
-    )
-        internal
-        view
-        returns (address payable account)
-    {
+    function calculateAccountAddress(address owner, address validator) internal view returns (address payable account) {
         bytes memory moduleInstallData = abi.encodePacked(owner);
 
         BootstrapConfig[] memory validators = NexusBootstrapLib.createArrayConfig(validator, moduleInstallData);

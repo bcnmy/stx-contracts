@@ -438,10 +438,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
 
         // 2. Sign and request emergency uninstall
         EmergencyUninstall memory emergencyUninstall = EmergencyUninstall({
-            hook: address(preValidationHook),
-            hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
-            deInitData: "",
-            nonce: 0
+            hook: address(preValidationHook), hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, deInitData: "", nonce: 0
         });
 
         bytes32 hash = _hashTypedData(
@@ -489,10 +486,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
 
         // 2. Sign and request emergency uninstall
         EmergencyUninstall memory emergencyUninstall = EmergencyUninstall({
-            hook: address(preValidationHook),
-            hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
-            deInitData: "",
-            nonce: 0
+            hook: address(preValidationHook), hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, deInitData: "", nonce: 0
         });
 
         bytes32 hash = _hashTypedData(
@@ -533,10 +527,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
 
         // 2. Sign with wrong signer (ALICE instead of BOB)
         EmergencyUninstall memory emergencyUninstall = EmergencyUninstall({
-            hook: address(preValidationHook),
-            hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
-            deInitData: "",
-            nonce: 0
+            hook: address(preValidationHook), hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, deInitData: "", nonce: 0
         });
 
         bytes32 hash = _hashTypedData(
@@ -575,10 +566,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
 
         // 2. Sign with wrong signer (ALICE instead of BOB)
         EmergencyUninstall memory emergencyUninstall = EmergencyUninstall({
-            hook: address(preValidationHook),
-            hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
-            deInitData: "",
-            nonce: 0
+            hook: address(preValidationHook), hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, deInitData: "", nonce: 0
         });
 
         bytes32 hash = _hashTypedData(
@@ -624,10 +612,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
 
         // 2. Sign and request emergency uninstall
         EmergencyUninstall memory emergencyUninstall = EmergencyUninstall({
-            hook: address(preValidationHook),
-            hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
-            deInitData: "",
-            nonce: 0
+            hook: address(preValidationHook), hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, deInitData: "", nonce: 0
         });
 
         bytes32 hash = _hashTypedData(
@@ -701,10 +686,7 @@ contract TestNexus_Hook_Emergency_Uninstall is TestModuleManagement_Base {
 
         // 2. Sign and request emergency uninstall
         EmergencyUninstall memory emergencyUninstall = EmergencyUninstall({
-            hook: address(preValidationHook),
-            hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
-            deInitData: "",
-            nonce: 0
+            hook: address(preValidationHook), hookType: MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, deInitData: "", nonce: 0
         });
 
         bytes32 hash = _hashTypedData(

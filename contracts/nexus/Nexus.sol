@@ -31,9 +31,6 @@ import {
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_FALLBACK,
     MODULE_TYPE_HOOK,
-    MODULE_TYPE_MULTI,
-    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
-    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
     SUPPORTS_ERC7739
 } from "../types/Constants.sol";
 import {
@@ -148,15 +145,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param executionCalldata The encoded transaction data to execute.
     /// @dev This function handles transaction execution flexibility and is protected by the `onlyEntryPoint` modifier.
     /// @dev This function also goes through hook checks via withHook modifier.
-    function execute(
-        ExecutionMode mode,
-        bytes calldata executionCalldata
-    )
-        external
-        payable
-        onlyEntryPoint
-        withHook(msg.value)
-    {
+    function execute(ExecutionMode mode, bytes calldata executionCalldata) external payable onlyEntryPoint withHook {
         (CallType callType, ExecType execType) = mode.decodeBasic();
         if (callType == CALLTYPE_SINGLE) {
             _handleSingleExecution(executionCalldata, execType);
@@ -181,7 +170,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         external
         payable
         onlyExecutorModule
-        withHook(msg.value)
+        withHook
         returns (bytes[] memory returnData)
     {
         (CallType callType, ExecType execType) = mode.decodeBasic();
@@ -207,14 +196,19 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         bytes32
     )
         external
+        payable
         virtual
         onlyEntryPoint
-        withHook(uint256(0))
+        withHook
     {
         bytes calldata callData = userOp.callData[4:];
         (bool success,) = address(this).delegatecall(callData);
-        if (!success) {
-            revert ExecutionFailed();
+        assembly {
+            if iszero(success) {
+                // revert ExecutionFailed()
+                mstore(0x00, 0xacfdb444)
+                revert(0x1c, 0x04)
+            }
         }
     }
 
@@ -226,7 +220,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         payable
         override
         onlyEntryPoint
-        withHook(msg.value)
+        withHook
     {
         _executeComposable(executions);
     }
@@ -264,7 +258,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         onlyEntryPointOrSelf
     {
         _installModule(moduleTypeId, module, initData);
-        emit ModuleInstalled(moduleTypeId, module);
+        assembly {
+            // emit ModuleInstalled(moduleTypeId, module)
+            mstore(0x00, moduleTypeId)
+            mstore(0x20, module)
+            log1(0x00, 0x40, 0xd21d0b289f126c4b473ea641963e766833c2f13866e4ff480abd787c100ef123)
+        }
     }
 
     /// @notice Uninstalls a module from the smart account.
@@ -292,7 +291,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         external
         payable
         onlyEntryPointOrSelf
-        withHook(msg.value)
+        withHook
     {
         require(_isModuleInstalled(moduleTypeId, module, deInitData), ModuleNotInstalled(moduleTypeId, module));
 
@@ -303,10 +302,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             _uninstallExecutor(module, deInitData);
         } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             _uninstallFallbackHandler(module, deInitData);
-        } else if (
-            moduleTypeId == MODULE_TYPE_HOOK || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
-                || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
-        ) {
+        } else if (moduleTypeId == MODULE_TYPE_HOOK || _isPrevalidationHookType(moduleTypeId)) {
             _uninstallHook(module, moduleTypeId, deInitData);
         }
         emit ModuleUninstalled(moduleTypeId, module);
@@ -319,11 +315,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         (uint256 hookType, address hook, bytes calldata deInitData) = (data.hookType, data.hook, data.deInitData);
 
         // Validate the hook is of a supported type and is installed
-        require(
-            hookType == MODULE_TYPE_HOOK || hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
-                || hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
-            UnsupportedModuleType(hookType)
-        );
+        require(hookType == MODULE_TYPE_HOOK || _isPrevalidationHookType(hookType), UnsupportedModuleType(hookType));
         require(_isModuleInstalled(hookType, hook, deInitData), ModuleNotInstalled(hookType, hook));
 
         // Get the account storage
@@ -399,7 +391,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
         (bool success,) = bootstrap.delegatecall(bootstrapCall);
 
-        require(success, NexusInitializationFailed());
+        assembly {
+            if iszero(success) {
+                mstore(0x00, 0x315927c5) // NexusInitializationFailed()
+                revert(0x1c, 0x04)
+            }
+        }
         if (!_amIERC7702()) {
             require(isInitialized(), AccountNotInitialized());
         }
@@ -416,7 +413,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         if (signature.length == 0) {
             // Forces the compiler to optimize for smaller bytecode size.
             if (uint256(hash) == (~signature.length / 0xffff) * 0x7739) {
-                return checkERC7739Support(hash, signature);
+                return _checkERC7739Support(hash, signature);
             }
         }
         // else proceed with normal signature verification
@@ -450,15 +447,13 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @param moduleTypeId The identifier of the module type to check.
     /// @return True if the module type is supported, false otherwise.
     function supportsModule(uint256 moduleTypeId) external view virtual returns (bool) {
-        if (
-            moduleTypeId == MODULE_TYPE_VALIDATOR || moduleTypeId == MODULE_TYPE_EXECUTOR
-                || moduleTypeId == MODULE_TYPE_FALLBACK || moduleTypeId == MODULE_TYPE_HOOK
-                || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
-                || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 || moduleTypeId == MODULE_TYPE_MULTI
-        ) {
-            return true;
-        }
-        return false;
+        /* MODULE_TYPE_VALIDATOR || MODULE_TYPE_EXECUTOR
+        || MODULE_TYPE_FALLBACK || MODULE_TYPE_HOOK
+        || MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
+        || MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 || MODULE_TYPE_MULTI */
+        // Bitmap: 0x31F represents supported module types: 0,1,2,3,4,8,9
+        // 0x31F = 0b1100011111 = (1<<0)|(1<<1)|(1<<2)|(1<<3)|(1<<4)|(1<<8)|(1<<9)
+        return ((1 << moduleTypeId) & 0x31F) != 0;
     }
 
     /// @notice Determines if a specific execution mode is supported.
@@ -501,7 +496,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// Returns the account's implementation ID.
     /// @return The unique identifier for this account implementation.
     function accountId() external pure virtual returns (string memory) {
-        return _ACCOUNT_IMPLEMENTATION_ID;
+        return "biconomy.nexus.1.3.0";
     }
 
     /// Upgrades the contract to a new implementation and calls a function on the new contract.
@@ -510,16 +505,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// as Biconomy v2 Account (proxy) reads implementation from the slot that is defined by its address
     /// @param newImplementation The address of the new contract implementation.
     /// @param data The calldata to be sent to the new implementation.
-    function upgradeToAndCall(
-        address newImplementation,
-        bytes calldata data
-    )
-        public
-        payable
-        virtual
-        override
-        withHook(msg.value)
-    {
+    function upgradeToAndCall(address newImplementation, bytes calldata data) public payable virtual override withHook {
         require(newImplementation != address(0), InvalidImplementationAddress());
         bool res;
         assembly {
@@ -545,7 +531,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// If no validator supports ERC-7739, this function returns false
     /// thus the account will proceed with normal signature verification
     /// and return 0xffffffff as a result.
-    function checkERC7739Support(bytes32 hash, bytes calldata signature) public view virtual returns (bytes4) {
+    function _checkERC7739Support(bytes32 hash, bytes calldata signature) internal view virtual returns (bytes4) {
         bytes4 result;
         unchecked {
             SentinelListLib.SentinelList storage validators = _getAccountStorage().validators;
@@ -579,7 +565,9 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @dev Ensures that only authorized callers can upgrade the smart contract implementation.
     /// This is part of the UUPS (Universal Upgradeable Proxy Standard) pattern.
     /// param newImplementation The address of the new implementation to upgrade to.
-    function _authorizeUpgrade(address /* newImplementation */ )
+    function _authorizeUpgrade(
+        address /* newImplementation */
+    )
         internal
         virtual
         override(UUPSUpgradeable)
@@ -623,10 +611,15 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
 
         // check r is valid
         bytes32 r = LibPREP.rPREP(address(this), keccak256(initData), saltAndDelegation);
-        if (r == bytes32(0)) {
-            revert InvalidPREP();
+        assembly {
+            if iszero(r) {
+                mstore(0x00, 0xe483bbcb) // revert InvalidPREP()
+                revert(0x1c, 0x04)
+            }
+            // emit PREPInitialized(r)
+            mstore(0x00, r)
+            log1(0x00, 0x20, 0x4f058962bce244bca6c9be42f256083afc66f1f63a1f9a04e31a3042311af38d)
         }
-        emit PREPInitialized(r);
     }
 
     // checks if there's at least one validator initialized
@@ -643,7 +636,11 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 }
                 if (next == SENTINEL) {
                     //went through all validators and none was initialized
-                    revert CanNotRemoveLastValidator();
+                    assembly {
+                        // revert CanNotRemoveLastValidator()
+                        mstore(0x00, 0xcc319d84)
+                        revert(0x1c, 0x04)
+                    }
                 }
             }
         }

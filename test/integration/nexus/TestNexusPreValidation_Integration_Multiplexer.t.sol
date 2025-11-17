@@ -198,7 +198,7 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
 
         // Prepare signature with validator prefix and triggering both hooks
         bytes memory validatorSignature2 = abi.encodePacked(address(K1_MEE_VALIDATOR), bytes1(0x01), signature); // Skip
-            // 7739 wrap
+        // 7739 wrap
 
         // Validate signature through hook chain
         bytes4 result2 = BOB_ACCOUNT.isValidSignature(t.contents, validatorSignature2);

@@ -60,8 +60,7 @@ contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
 
         OutputParam[] memory outputParams = new OutputParam[](1);
         outputParams[0] = OutputParam({
-            fetcherType: OutputParamFetcherType.EXEC_RESULT,
-            paramData: abi.encode(4, address(storageContract), SLOT_A)
+            fetcherType: OutputParamFetcherType.EXEC_RESULT, paramData: abi.encode(4, address(storageContract), SLOT_A)
         });
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
@@ -152,8 +151,7 @@ contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
             referenceData: abi.encode(bytes32(uint256(uint160(address(dummyContract)))))
         });
         constraints[2] = Constraint({
-            constraintType: ConstraintType.EQ,
-            referenceData: abi.encode(bytes32(uint256(keccak256("DUMMY"))))
+            constraintType: ConstraintType.EQ, referenceData: abi.encode(bytes32(uint256(keccak256("DUMMY"))))
         });
         constraints[3] =
             Constraint({ constraintType: ConstraintType.EQ, referenceData: abi.encode(bytes32(uint256(1))) });
@@ -213,7 +211,9 @@ contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
         inputParams[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(address(dummyContract), abi.encodeWithSelector(DummyContract.B.selector, someStaticValue)),
+            paramData: abi.encode(
+                address(dummyContract), abi.encodeWithSelector(DummyContract.B.selector, someStaticValue)
+            ),
             constraints: emptyConstraints
         });
 
@@ -315,7 +315,9 @@ contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
         inputParams[5] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(address(dummyContract), abi.encodeWithSelector(DummyContract.B.selector, someStaticValue)),
+            paramData: abi.encode(
+                address(dummyContract), abi.encodeWithSelector(DummyContract.B.selector, someStaticValue)
+            ),
             constraints: constraints
         });
 
@@ -349,9 +351,7 @@ contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
 
         ComposableExecution[] memory executions = new ComposableExecution[](1);
         executions[0] = ComposableExecution({
-            functionSig: DummyContract.acceptStruct.selector,
-            inputParams: inputParams,
-            outputParams: outputParams
+            functionSig: DummyContract.acceptStruct.selector, inputParams: inputParams, outputParams: outputParams
         });
 
         vm.expectEmit(address(dummyContract));

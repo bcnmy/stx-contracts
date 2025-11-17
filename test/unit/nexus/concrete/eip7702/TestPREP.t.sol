@@ -31,15 +31,18 @@ contract TestPREP is NexusTestBase {
     function _getInitData() internal view returns (bytes memory) {
         // Create config for initial modules
         BootstrapConfig[] memory validators =
-            NexusBootstrapLib.createArrayConfig(address(mockValidator), abi.encodePacked(BOB_ADDRESS)); // set BOB as signer
-            // in
-            // the
-            // validator
+            NexusBootstrapLib.createArrayConfig(address(mockValidator), abi.encodePacked(BOB_ADDRESS)); // set BOB as
+        // signer
+        // in
+        // the
+        // validator
         BootstrapConfig[] memory executors = NexusBootstrapLib.createArrayConfig(address(mockExecutor), "");
         BootstrapConfig memory hook = NexusBootstrapLib.createSingleConfig(address(0), "");
         BootstrapConfig[] memory fallbacks = NexusBootstrapLib.createArrayConfig(address(0), "");
-        BootstrapPreValidationHookConfig[] memory preValidationHooks = NexusBootstrapLib
-            .createArrayPreValidationHookConfig(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(mockPreValidationHook), "");
+        BootstrapPreValidationHookConfig[] memory preValidationHooks =
+            NexusBootstrapLib.createArrayPreValidationHookConfig(
+                MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, address(mockPreValidationHook), ""
+            );
 
         return abi.encode(
             address(BOOTSTRAPPER),
@@ -96,8 +99,9 @@ contract TestPREP is NexusTestBase {
         valueToSet = bound(valueToSet, 0, 77e18);
         bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, valueToSet);
 
-        bytes memory initData =
-            abi.encodeWithSelector(NexusBootstrap.initNexusWithDefaultValidator.selector, abi.encodePacked(BOB_ADDRESS));
+        bytes memory initData = abi.encodeWithSelector(
+            NexusBootstrap.initNexusWithDefaultValidator.selector, abi.encodePacked(BOB_ADDRESS)
+        );
         initData = abi.encode(address(BOOTSTRAPPER), initData);
         bytes32 initDataHash = keccak256(abi.encodePacked(initData));
 
@@ -162,11 +166,7 @@ contract TestPREP is NexusTestBase {
         assertEq(s, signedDelegation.s);
     }
 
-    function _rlpEncodeAuth(
-        uint256 chainId,
-        address implementation,
-        uint64 nonce
-    )
+    function _rlpEncodeAuth(uint256 chainId, address implementation, uint64 nonce)
         internal
         view
         returns (bytes memory)

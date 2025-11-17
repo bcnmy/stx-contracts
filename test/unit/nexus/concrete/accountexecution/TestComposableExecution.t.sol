@@ -86,8 +86,7 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
 
         OutputParam[] memory outputParams_execution1 = new OutputParam[](2);
         outputParams_execution1[0] = OutputParam({
-            fetcherType: OutputParamFetcherType.EXEC_RESULT,
-            paramData: abi.encode(1, address(storageContract), SLOT_A)
+            fetcherType: OutputParamFetcherType.EXEC_RESULT, paramData: abi.encode(1, address(storageContract), SLOT_A)
         });
         outputParams_execution1[1] = OutputParam({
             fetcherType: OutputParamFetcherType.STATIC_CALL,
@@ -113,13 +112,17 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
         inputParams_execution2[0] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))),
+            paramData: abi.encode(
+                storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))
+            ),
             constraints: constraints_input2_1
         });
         inputParams_execution2[1] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_B_0))),
+            paramData: abi.encode(
+                storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_B_0))
+            ),
             constraints: emptyConstraints
         });
         inputParams_execution2[2] = InputParam({

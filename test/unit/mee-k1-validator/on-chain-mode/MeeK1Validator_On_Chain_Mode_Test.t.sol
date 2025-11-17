@@ -27,7 +27,7 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
         uint256 amountToTransfer = 1 ether; // 1 token
 
         bytes memory innerCallData = abi.encodeWithSelector(erc20.transfer.selector, bob, amountToTransfer); // mock
-            // Account transfers tokens to bob
+        // Account transfers tokens to bob
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
             callData: abi.encodeWithSelector(mockAccount.execute.selector, address(erc20), uint256(0), innerCallData),
             account: address(mockAccount),
@@ -174,23 +174,22 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
     {
         LibRLP.List memory accessList = LibRLP.p();
 
-        LibRLP.List memory serializedTxList = LibRLP.p(block.chainid).p(0).p(uint256(1)).p(uint256(20)).p(
-            uint256(50_000)
-        ).p(to).p(uint256(0)).p(txnData) // chainId
-                // nonce
-                // maxPriorityFeePerGas
-                // maxFeePerGas
-                // gasLimit
-                // to
-                // value
-                // txn data
+        LibRLP.List memory serializedTxList = LibRLP.p(block.chainid).p(0).p(uint256(1)).p(uint256(20))
+            .p(uint256(50_000)).p(to).p(uint256(0)).p(txnData) // chainId
+            // nonce
+            // maxPriorityFeePerGas
+            // maxFeePerGas
+            // gasLimit
+            // to
+            // value
+            // txn data
             .p(accessList); // empty access list
 
         bytes32 uTxHash = keccak256(abi.encodePacked(hex"02", serializedTxList.encode()));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, uTxHash);
 
         serializedTxList = serializedTxList.p(v == 28 ? true : false).p(uint256(r)).p(uint256(s)); // add v, r, s to the
-            // list
+        // list
         return abi.encodePacked(hex"02", serializedTxList.encode()); // add tx type to the list
     }
 }

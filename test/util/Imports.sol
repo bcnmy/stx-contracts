@@ -92,6 +92,7 @@ import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { SentinelListHelper } from "sentinellist/SentinelListHelper.sol";
 
 contract Imports {
-// This contract acts as a single point of import for Foundry tests.
-// It does not require any logic, as its sole purpose is to consolidate imports.
-}
+    // This contract acts as a single point of import for Foundry tests.
+    // It does not require any logic, as its sole purpose is to consolidate imports.
+
+    }
