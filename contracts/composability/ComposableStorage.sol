@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
+
 /**
  * @title ComposableStorage
  * @dev Contract to handle generic storage operations with cross-chain support
  */
 contract ComposableStorage {
+    using EfficientHashLib for *;
+
     error SlotNotInitialized();
 
     // Mapping to track initialized slots
@@ -57,20 +61,28 @@ contract ComposableStorage {
      * @dev Generates a namespaced slot
      * @param namespace The namespace (typically a contract address)
      * @param slot The storage slot to read from
-     * @return The namespaced slot
+     * return The namespaced slot
      */
-    function getNamespacedSlot(bytes32 namespace, bytes32 slot) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(namespace, slot));
+    function getNamespacedSlot(bytes32 namespace, bytes32 slot) public pure returns (bytes32 result) {
+        assembly {
+            mstore(0x00, namespace)
+            mstore(0x20, slot)
+            result := keccak256(0x00, 0x40)
+        }
     }
 
     /**
      * @dev Generates a namespace for a given account and caller
      * @param account The account address
-     * @param caller The caller address
-     * @return The generated namespace
+     * @param _caller The caller address
+     * return The generated namespace
      */
-    function getNamespace(address account, address caller) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(account, caller));
+    function getNamespace(address account, address _caller) public pure returns (bytes32 result) {
+        assembly {
+            mstore(0x00, account)
+            mstore(0x14, _caller)
+            result := keccak256(0x0c, 0x28)
+        }
     }
 
     /**
