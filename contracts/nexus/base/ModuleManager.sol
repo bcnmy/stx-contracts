@@ -683,12 +683,19 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     }
 
     /// @dev Returns the validator address to use
-    function _handleValidator(address validator) internal view returns (address) {
-        if (validator == address(0)) {
-            return _DEFAULT_VALIDATOR;
+    function _handleValidator(address _validator) internal view returns (address validator) {
+        if (_validator == address(0)) {
+            validator = _DEFAULT_VALIDATOR;
         } else {
-            require(_isValidatorInstalled(validator), ValidatorNotInstalled(validator));
-            return validator;
+            if (!_isValidatorInstalled(_validator)) {
+                assembly {
+                    // revert ValidatorNotInstalled(address)
+                    mstore(0x00, 0x6859e01e)
+                    mstore(0x20, _validator)
+                    revert(0x1c, 0x24)
+                }
+            }
+            validator = _validator;
         }
     }
 

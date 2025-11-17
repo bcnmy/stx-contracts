@@ -407,7 +407,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
             FailedOpWithRevert.selector,
             0,
             "AA23 reverted",
-            abi.encodeWithSelector(ValidatorNotInstalled.selector, invalidValidator)
+            abi.encodeWithSelector(bytes4(0x6859e01e), invalidValidator)
         );
 
         vm.expectRevert(expectedRevertReason);
@@ -528,7 +528,7 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
             FailedOpWithRevert.selector,
             0,
             "AA23 reverted",
-            abi.encodeWithSelector(ValidatorNotInstalled.selector, address(moduleToEnable))
+            abi.encodeWithSelector(bytes4(0x6859e01e), address(moduleToEnable))
         );
 
         vm.expectRevert(expectedRevertReason);
