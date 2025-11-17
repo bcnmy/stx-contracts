@@ -230,10 +230,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
             _installFallbackHandler(module, initData);
         } else if (moduleTypeId == MODULE_TYPE_HOOK) {
             _installHook(module, initData);
-        } else if (
-            moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
-                || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
-        ) {
+        } else if (_isPrevalidationHookType(moduleTypeId)) {
             _installPreValidationHook(moduleTypeId, module, initData);
         } else if (moduleTypeId == MODULE_TYPE_MULTI) {
             _multiTypeInstall(module, initData);
@@ -308,9 +305,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     function _uninstallHook(address hook, uint256 hookType, bytes calldata data) internal virtual {
         if (hookType == MODULE_TYPE_HOOK) {
             _setHook(address(0));
-        } else if (
-            hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
-        ) {
+        } else if (_isPrevalidationHookType(hookType)) {
             _uninstallPreValidationHook(hookType);
         }
         hook.excessivelySafeCall(gasleft(), 0, 0, abi.encodeWithSelector(IModule.onUninstall.selector, data));
@@ -454,9 +449,7 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*          INSTALL PRE-VALIDATION HOOK                       */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-            else if (
-                theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271 || theType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
-            ) {
+            else if (_isPrevalidationHookType(theType)) {
                 _installPreValidationHook(theType, module, initDatas[i]);
             }
         }
@@ -603,13 +596,23 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
             return _isFallbackHandlerInstalled(selector, module);
         } else if (moduleTypeId == MODULE_TYPE_HOOK) {
             return _isHookInstalled(module);
-        } else if (
-            moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
-                || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
-        ) {
+        } else if (_isPrevalidationHookType(moduleTypeId)) {
             return _getPreValidationHook(moduleTypeId) == module;
         } else {
             return false;
+        }
+    }
+
+    /// @dev Does bytecode optimized check of the module type id being a pre-validation hook type.
+    /// @param moduleTypeId The module type id to check.
+    /// return True if the module type id is a pre-validation hook type, otherwise false.
+    /// If theType == 8: 8 - 8 = 0, and 0 < 2 ✓
+    /// If theType == 9: 9 - 8 = 1, and 1 < 2 ✓
+    /// If theType < 8 (e.g., 7): 7 - 8 = type(uint256).max (wraps), and type(uint256).max < 2 is false ✓
+    /// If theType >= 10: result is >= 2, and fails the check ✓
+    function _isPrevalidationHookType(uint256 moduleTypeId) internal pure returns (bool res) {
+        assembly {
+            res := lt(sub(moduleTypeId, 8), 2)
         }
     }
 
