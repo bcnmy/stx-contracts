@@ -99,6 +99,30 @@ contract MeeK1Validator_Simple_Mode_Test is MeeK1Validator_Base_Test {
         }
     }
 
+    /**
+     *
+     * For claude:
+     *
+     * I want to add a multichain test for the simple mode.
+     * It should test that a 712 simple mode signature is valid on all chains.
+     * It should be valid because the domain separator is the same for all chains (has no chain id, address, or version)
+     *
+     * Approach to take here:
+     *
+     * 1) use vm.chainId cheatcode to set the chain id
+     * 2) deploy new smart account on the new chain, make sure it is deployed to the different address on the new chain,
+     * owner should be the same across chains
+     * 3) create a superTxn that consists of two userOps, each with a different chain id
+     * 4) sign the superTxn as a eip-712 data structure with the owner's private key
+     * 5) call EP.handleOps on both chains to makes sure both userOps are handled correctly
+     *
+     * Analyze this file, as well as the K1MEEValidatorTest.t.sol file, MeeK1Validator_Base_Test.t.sol file,
+     * K1MeeValidator.sol, SimpleValidatorLib.sol, HashLib.sol files
+     *
+     *
+     *
+     */
+
     // ==== SIMPLE SUPER TX UTILS ====
 
     /**
