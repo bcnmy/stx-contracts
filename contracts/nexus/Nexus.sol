@@ -305,10 +305,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
             _uninstallExecutor(module, deInitData);
         } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
             _uninstallFallbackHandler(module, deInitData);
-        } else if (
-            moduleTypeId == MODULE_TYPE_HOOK || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
-                || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
-        ) {
+        } else if (moduleTypeId == MODULE_TYPE_HOOK || _isPrevalidationHookType(moduleTypeId)) {
             _uninstallHook(module, moduleTypeId, deInitData);
         }
         emit ModuleUninstalled(moduleTypeId, module);
@@ -321,11 +318,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         (uint256 hookType, address hook, bytes calldata deInitData) = (data.hookType, data.hook, data.deInitData);
 
         // Validate the hook is of a supported type and is installed
-        require(
-            hookType == MODULE_TYPE_HOOK || hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
-                || hookType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
-            UnsupportedModuleType(hookType)
-        );
+        require(hookType == MODULE_TYPE_HOOK || _isPrevalidationHookType(hookType), UnsupportedModuleType(hookType));
         require(_isModuleInstalled(hookType, hook, deInitData), ModuleNotInstalled(hookType, hook));
 
         // Get the account storage

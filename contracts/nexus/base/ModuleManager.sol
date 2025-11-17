@@ -43,7 +43,6 @@ import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { EmergencyUninstall } from "../../types/DataTypes.sol";
-import { ECDSA } from "solady/utils/ECDSA.sol";
 
 /// @title Nexus - ModuleManager
 /// @notice Manages Validator, Executor, Hook, and Fallback modules within the Nexus suite, supporting
@@ -58,7 +57,6 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
     using LocalCallDataParserLib for bytes;
     using ExecLib for address;
     using ExcessivelySafeCall for address;
-    using ECDSA for bytes32;
 
     /// @dev The default validator address.
     /// @notice To explicitly initialize the default validator, Nexus.execute(_DEFAULT_VALIDATOR.onInstall(...)) should
