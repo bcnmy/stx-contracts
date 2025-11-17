@@ -397,7 +397,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         assembly {
             if iszero(success) {
                 mstore(0x00, 0x315927c5) // NexusInitializationFailed()
-                revert(0x00, 0x04)
+                revert(0x1c, 0x04)
             }
         }
         if (!_amIERC7702()) {
