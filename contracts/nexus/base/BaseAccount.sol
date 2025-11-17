@@ -93,13 +93,6 @@ contract BaseAccount is IBaseAccount {
         }
     }
 
-    /// @notice Gets the nonce for a particular key.
-    /// @param key The nonce key.
-    /// @return The nonce associated with the key.
-    function nonce(uint192 key) external view virtual returns (uint256) {
-        return IEntryPoint(_ENTRYPOINT).getNonce(address(this), key);
-    }
-
     /// @notice Returns the current deposit balance of this account on the EntryPoint.
     /// @return result The current balance held at the EntryPoint.
     function getDeposit() external view virtual returns (uint256 result) {
