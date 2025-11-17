@@ -138,7 +138,7 @@ read -r -p "Do you want to rebuild Stx-contracts artifacts from your local sourc
 if [ $proceed = "y" ]; then
     ### BUILD ARTIFACTS ###
     printf "Building Stx-contracts artifacts\n"
-    { (forge build --sizes 1> ./deploy-logs/build/forge-build.log 2> ./deploy-logs/build/forge-build-errors.log) } || {
+    { (forge build 1> ./deploy-logs/build/forge-build.log 2> ./deploy-logs/build/forge-build-errors.log) } || {
         printf "Build failed\n See logs for more details\n"
         exit 1
     }

@@ -13,28 +13,28 @@ import { CreateX } from "script/deploy/util/CreateX.sol";
 
 contract DeployStxContracts is Script, Config {
     /* ===== salts ===== */
-    bytes32 constant MEE_K1_VALIDATOR_SALT = 0x00000000000000000000000000000000000000005ec01b7f9f6e300427d823ea; //=>
+    bytes32 constant MEE_K1_VALIDATOR_SALT = 0x00000000000000000000000000000000000000005ec01b7f9f6e300427d823e3; //=>
     // 0x00000002987de8E966e1202534f018B028384eaC;
 
-    bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000657b02ac499d6d001a3fda49; // =>
+    bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000657b02ac499d6d001a3fda43; // =>
     // 0x00000099da5B22B6d0D64f966f7138e0c70FAf57;
 
-    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x0000000000000000000000000000000000000000d1daf021ab489402fcf69290; // =>
+    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x0000000000000000000000000000000000000000d1daf021ab489402fcf69293; // =>
     // 0x000000dD827476e7Ba18C12d0a754124Fe84d6f6
 
     bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000b41ef430bf3b3b04dcce4193; //
     // => 0x0000009FD552C6c8D9F2F139b254Ec9b0C132360;
 
     bytes32 constant COMPOSABLE_EXECUTION_MODULE_SALT =
-        0x0000000000000000000000000000000000000000a7f26e3d794af2032a4a54a4; // =>
+        0x0000000000000000000000000000000000000000a7f26e3d794af2032a4a54a3; // =>
     // 0x000000e0Ac0Bcd4Cbc716B152fecbA0F706d6605
-    bytes32 constant COMPOSABLE_STORAGE_SALT = 0x00000000000000000000000000000000000000000e67edf598940102c215065c; // =>
+    bytes32 constant COMPOSABLE_STORAGE_SALT = 0x00000000000000000000000000000000000000000e67edf598940102c2150653; // =>
     // 0x0000000671eb337E12fe5dB0e788F32e1D71B183;
 
-    bytes32 constant ETH_FORWARDER_SALT = 0x0000000000000000000000000000000000000000f9941fb84509c0031a6fc104; //=>
+    bytes32 constant ETH_FORWARDER_SALT = 0x0000000000000000000000000000000000000000f9941fb84509c0031a6fc103; //=>
     // 0x000000Afe527A978Ecb761008Af475cfF04132a1;
 
-    bytes32 constant NODE_PMF_SALT = 0x0000000000000000000000000000000000000000b2c8417146408700c86d4370; // =>
+    bytes32 constant NODE_PMF_SALT = 0x0000000000000000000000000000000000000000b2c8417146408700c86d4373; // =>
     // 0x000000006fcc00f06a507E4284cc17e767189b04
 
     bytes32 public constant DISPERSE_SALT = 0xfd73487f4e6544007a3ce4000000000000000000000000000000000000000000;
@@ -95,36 +95,36 @@ contract DeployStxContracts is Script, Config {
      */
     function run(uint256 chainId, bool isDryRun) external {
         bytes memory bytecode = vm.getCode("script/deploy/artifacts/K1MeeValidator/K1MeeValidator.json");
-        address expectedAddress = DeterministicDeployerLib.computeAddress(bytecode, MEE_K1_VALIDATOR_SALT);
-        checkAndLogContractStatus(chainId, expectedAddress, "K1MeeValidator", isDryRun);
+        address expectedK1MeeValidatorAddress = DeterministicDeployerLib.computeAddress(bytecode, MEE_K1_VALIDATOR_SALT);
+        checkAndLogContractStatus(chainId, expectedK1MeeValidatorAddress, "K1MeeValidator", isDryRun);
         if (isDryRun) {
             console.logBytes32(keccak256(bytecode));
         }
 
         bytecode = vm.getCode("script/deploy/artifacts/Nexus/Nexus.json");
         bytes memory args = abi.encode(
-            ENTRYPOINT_ADDRESS, deployedContractsPerChain[chainId].meeK1Validator, abi.encodePacked(EEEEEE_ADDRESS)
+            ENTRYPOINT_ADDRESS, expectedK1MeeValidatorAddress, abi.encodePacked(EEEEEE_ADDRESS)
         );
-        expectedAddress = DeterministicDeployerLib.computeAddress(bytecode, args, NEXUS_SALT);
-        checkAndLogContractStatus(chainId, expectedAddress, "Nexus", isDryRun);
+        address expectedNexusAddress = DeterministicDeployerLib.computeAddress(bytecode, args, NEXUS_SALT);
+        checkAndLogContractStatus(chainId, expectedNexusAddress, "Nexus", isDryRun);
         if (isDryRun) {
             console2.logBytes(args);
             console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
         }
 
         bytecode = vm.getCode("script/deploy/artifacts/NexusBootstrap/NexusBootstrap.json");
-        args = abi.encode(deployedContractsPerChain[chainId].meeK1Validator, abi.encodePacked(EEEEEE_ADDRESS));
-        expectedAddress = DeterministicDeployerLib.computeAddress(bytecode, args, NEXUSBOOTSTRAP_SALT);
-        checkAndLogContractStatus(chainId, expectedAddress, "NexusBootstrap", isDryRun);
+        args = abi.encode(expectedK1MeeValidatorAddress, abi.encodePacked(EEEEEE_ADDRESS));
+        address expectedNexusBootstrapAddress = DeterministicDeployerLib.computeAddress(bytecode, args, NEXUSBOOTSTRAP_SALT);
+        checkAndLogContractStatus(chainId, expectedNexusBootstrapAddress, "NexusBootstrap", isDryRun);
         if (isDryRun) {
             console2.logBytes(args);
             console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
         }
 
         bytecode = vm.getCode("script/deploy/artifacts/NexusAccountFactory/NexusAccountFactory.json");
-        args = abi.encode(deployedContractsPerChain[chainId].nexus, FACTORY_OWNER_ADDRESS);
-        expectedAddress = DeterministicDeployerLib.computeAddress(bytecode, args, NEXUS_ACCOUNT_FACTORY_SALT);
-        checkAndLogContractStatus(chainId, expectedAddress, "NexusAccountFactory", isDryRun);
+        args = abi.encode(expectedNexusAddress, FACTORY_OWNER_ADDRESS);
+        address expectedNexusAccountFactoryAddress = DeterministicDeployerLib.computeAddress(bytecode, args, NEXUS_ACCOUNT_FACTORY_SALT);
+        checkAndLogContractStatus(chainId, expectedNexusAccountFactoryAddress, "NexusAccountFactory", isDryRun);
         if (isDryRun) {
             console2.logBytes(args);
             console2.logBytes32(keccak256(abi.encodePacked(bytecode, args)));
@@ -132,7 +132,7 @@ contract DeployStxContracts is Script, Config {
 
         bytecode = vm.getCode("script/deploy/artifacts/ComposableExecutionModule/ComposableExecutionModule.json");
         args = abi.encode(ENTRYPOINT_ADDRESS);
-        expectedAddress = DeterministicDeployerLib.computeAddress(bytecode, args, COMPOSABLE_EXECUTION_MODULE_SALT);
+        address expectedAddress = DeterministicDeployerLib.computeAddress(bytecode, args, COMPOSABLE_EXECUTION_MODULE_SALT);
         checkAndLogContractStatus(chainId, expectedAddress, "ComposableExecutionModule", isDryRun);
         if (isDryRun) {
             console2.logBytes(args);
@@ -201,7 +201,7 @@ contract DeployStxContracts is Script, Config {
             ) {
                 deployedContractsPerChain[chainId].composableExecutionModule = deployComposableExecutionModule();
             }
-            if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("StorageContract"))) {
+            if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("ComposableStorage"))) {
                 deployedContractsPerChain[chainId].composableStorage = deployComposableStorage();
             }
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("EtherForwarder"))) {
@@ -209,6 +209,9 @@ contract DeployStxContracts is Script, Config {
             }
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("Disperse"))) {
                 deployedContractsPerChain[chainId].disperse = deployDisperse();
+            }
+            if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("NodePaymasterFactory"))) {
+                deployedContractsPerChain[chainId].nodePaymasterFactory = deployNodePaymasterFactory();
             }
         }
     }
