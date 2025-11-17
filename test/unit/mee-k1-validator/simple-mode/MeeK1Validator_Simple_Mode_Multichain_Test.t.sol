@@ -24,8 +24,8 @@ contract MeeK1Validator_Simple_Mode_Multichain_Test is MeeK1Validator_Base_Test 
     using EfficientHashLib for *;
 
     // Chain IDs for testing
-    uint256 constant CHAIN_1 = 1; // Ethereum mainnet
-    uint256 constant CHAIN_2 = 137; // Polygon
+    uint256 constant CHAIN_1 = 8888;
+    uint256 constant CHAIN_2 = 2517;
 
     // Mock accounts per chain
     MockAccount mockAccountChain1;
