@@ -12,7 +12,6 @@ pragma solidity ^0.8.27;
 // Nexus: A suite of contracts for Modular Smart Accounts compliant with ERC-7579 and ERC-4337, developed by Biconomy.
 // Learn more at https://biconomy.io. To report security issues, please contact us at: security@biconomy.io
 
-import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { IBaseAccount } from "../../interfaces/nexus/base/IBaseAccount.sol";
 
 /// @title Nexus - BaseAccount
@@ -24,9 +23,6 @@ import { IBaseAccount } from "../../interfaces/nexus/base/IBaseAccount.sol";
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
 contract BaseAccount is IBaseAccount {
-    /// @notice Identifier for this implementation on the network
-    string internal constant _ACCOUNT_IMPLEMENTATION_ID = "biconomy.nexus.1.3.0";
-
     /// @notice The canonical address for the ERC4337 EntryPoint contract, version 0.7.
     /// This address is consistent across all supported networks.
     address internal immutable _ENTRYPOINT;
@@ -91,13 +87,6 @@ contract BaseAccount is IBaseAccount {
             }
             mstore(0x34, 0) // Restore the part of the free memory pointer that was overwritten.
         }
-    }
-
-    /// @notice Gets the nonce for a particular key.
-    /// @param key The nonce key.
-    /// @return The nonce associated with the key.
-    function nonce(uint192 key) external view virtual returns (uint256) {
-        return IEntryPoint(_ENTRYPOINT).getNonce(address(this), key);
     }
 
     /// @notice Returns the current deposit balance of this account on the EntryPoint.

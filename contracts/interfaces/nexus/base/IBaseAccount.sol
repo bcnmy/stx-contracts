@@ -31,11 +31,6 @@ interface IBaseAccount is IBaseAccountEventsAndErrors {
     /// @param amount The amount to withdraw.
     function withdrawDepositTo(address to, uint256 amount) external payable;
 
-    /// @notice Gets the nonce for a particular key.
-    /// @param key The nonce key.
-    /// @return The nonce associated with the key.
-    function nonce(uint192 key) external view returns (uint256);
-
     /// @notice Returns the current deposit balance of this account on the EntryPoint.
     /// @return The current balance held at the EntryPoint.
     function getDeposit() external view returns (uint256);

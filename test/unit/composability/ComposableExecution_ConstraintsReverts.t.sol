@@ -404,10 +404,10 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
         if (address(account) == address(mockFallbackAccount)) {
             expectedRevertReason = abi.encodeWithSelector(
                 MockFallbackAccount.FallbackFailed.selector,
-                abi.encodePacked(ComposableExecutionLib.ComposableExecutionFailed.selector)
+                abi.encodePacked(bytes4(0x6533cc8d)) // ComposableExecutionLib.ComposableExecutionFailed.selector
             );
         } else {
-            expectedRevertReason = abi.encodePacked(ComposableExecutionLib.ComposableExecutionFailed.selector);
+            expectedRevertReason = abi.encodePacked(bytes4(0x6533cc8d)); // ComposableExecutionLib.ComposableExecutionFailed.selector
         }
         vm.expectRevert(expectedRevertReason);
         IComposableExecution(address(account)).executeComposable(executions);

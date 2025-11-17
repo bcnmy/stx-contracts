@@ -5,6 +5,7 @@ coverage
 out
 storageLayout
 deployments
+temp
 
 # dependencies
 node_modules/

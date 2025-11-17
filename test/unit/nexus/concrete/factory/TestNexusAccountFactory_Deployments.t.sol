@@ -108,7 +108,7 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
         address payable firstAccountAddress = FACTORY.createAccount(_initData, salt);
 
         vm.prank(user.addr); // Even owner cannot reinitialize the account
-        vm.expectRevert(NexusInitializationFailed.selector);
+        vm.expectRevert(bytes4(0x315927c5)); // NexusInitializationFailed()
         INexus(firstAccountAddress).initializeAccount(_initData);
     }
 

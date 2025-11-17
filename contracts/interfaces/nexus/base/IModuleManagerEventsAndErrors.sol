@@ -34,15 +34,6 @@ interface IModuleManagerEventsAndErrors {
     /// @param module The address of the uninstalled module.
     event ModuleUninstalled(uint256 moduleTypeId, address module);
 
-    /// @notice Thrown when attempting to remove the last validator.
-    error CanNotRemoveLastValidator();
-
-    /// @dev Thrown when the specified module address is not recognized as valid.
-    error ValidatorNotInstalled(address module);
-
-    /// @dev Thrown when there is no installed validator detected.
-    error NoValidatorInstalled();
-
     /// @dev Thrown when the specified module address is not recognized as valid.
     error InvalidModule(address module);
 
@@ -77,17 +68,8 @@ interface IModuleManagerEventsAndErrors {
     /// installed.
     error FallbackNotInstalledForSelector(bytes4 selector);
 
-    /// @dev Thrown when a fallback handler fails to uninstall properly.
-    error FallbackHandlerUninstallFailed();
-
-    /// @dev Thrown when no fallback handler is available for a given selector.
-    error MissingFallbackHandler(bytes4 selector);
-
     /// @dev Thrown when Invalid data is provided for MultiType install flow
     error InvalidInput();
-
-    /// @dev Thrown when unable to validate Module Enable Mode signature
-    error EnableModeSigError();
 
     /// @dev Thrown when unable to validate Emergency Uninstall signature
     error EmergencyUninstallSigError();

@@ -17,7 +17,6 @@ import { IExecutionHelper } from "./base/IExecutionHelper.sol";
 import { INexusEventsAndErrors } from "./INexusEventsAndErrors.sol";
 import { IERC1271 } from "../standard/IERC1271.sol";
 import { IAccount } from "account-abstraction/interfaces/IAccount.sol";
-import { IAccountExecute } from "account-abstraction/interfaces/IAccountExecute.sol";
 
 /// @title Nexus - INexus Interface
 /// @notice Integrates ERC-4337 and ERC-7579 standards to manage smart accounts within the Nexus suite.
@@ -33,7 +32,7 @@ import { IAccountExecute } from "account-abstraction/interfaces/IAccountExecute.
 /// @author @filmakarov | Biconomy | filipp.makarov@biconomy.io
 /// @author @zeroknots | Rhinestone.wtf | zeroknots.eth
 /// Special thanks to the Solady team for foundational contributions: https://github.com/Vectorized/solady
-interface INexus is IAccountConfig, IExecutionHelper, IERC1271, IAccount, IAccountExecute, INexusEventsAndErrors {
+interface INexus is IAccountConfig, IExecutionHelper, IERC1271, IAccount, INexusEventsAndErrors {
     /// @notice Initializes the smart account with a validator and custom data.
     /// @dev This method sets up the account for operation, linking it with a validator and initializing it with
     /// specific

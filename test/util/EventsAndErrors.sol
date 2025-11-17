@@ -44,10 +44,8 @@ contract EventsAndErrors {
     error FactoryNotWhitelisted();
     error InvalidFactoryAddress();
     error InvalidEntryPointAddress();
-    error InnerCallFailed();
     error EmergencyUninstallSigError();
     error CallToDeployWithFactoryFailed();
-    error NexusInitializationFailed();
     error AccountAlreadyInitialized();
 
     // ==========================
@@ -69,7 +67,6 @@ contract EventsAndErrors {
     // Module Errors
     // ==========================
     error CanNotRemoveLastValidator();
-    error ValidatorNotInstalled(address module);
     error InvalidModuleTypeId(uint256 moduleTypeId);
     error ModuleAlreadyInstalled(uint256 moduleTypeId, address module);
     error ModuleNotInstalled(uint256 moduleTypeId, address module);
