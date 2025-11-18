@@ -57,12 +57,14 @@ library ProxyLib {
         returns (address payable predictedAddress)
     {
         // Get the init code hash
+        /// forge-lint:disable-start(asm-keccak256)
         bytes32 initCodeHash = keccak256(
             abi.encodePacked(
                 type(NexusProxy).creationCode,
                 abi.encode(implementation, abi.encodeCall(INexus.initializeAccount, initData))
             )
         );
+        /// forge-lint:disable-end(asm-keccak256)
 
         // Compute the predicted address
         predictedAddress = payable(address(

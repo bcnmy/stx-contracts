@@ -8,6 +8,8 @@
     "url": "https://github.com/bcnmy"
   },
   "scripts": {
+    "build:via-ir": "export FOUNDRY_PROFILE='via-ir' && forge build",
+    "test:via-ir": "export FOUNDRY_PROFILE='via-ir' && pnpm test",
     "test": "forge test --match-path 'test/unit/node-paymaster/**' --isolate && forge test --no-match-path 'test/unit/node-paymaster/**'",
     "test:nexus": "forge test --match-path 'test/*/nexus/**'",
     "test:fork": "forge test --match-path 'test/fork/**'",

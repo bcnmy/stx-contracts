@@ -39,6 +39,6 @@ jobs:
       run: pnpm install --frozen-lockfile
     
     - name: Run Forge tests
-      run: pnpm test
+      run: export FOUNDRY_PROFILE="via-ir" && pnpm test
       env:
         FOUNDRY_PROFILE: ci

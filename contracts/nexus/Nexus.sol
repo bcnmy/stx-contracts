@@ -358,7 +358,12 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                 // Remove the signature  from the initData
                 initData = initData[65:];
                 // Calculate the hash of the initData
-                bytes32 initDataHash = keccak256(initData);
+                bytes32 initDataHash;
+                assembly {
+                    let ptr := mload(0x40)
+                    calldatacopy(ptr, initData.offset, initData.length)
+                    initDataHash := keccak256(ptr, initData.length)
+                }
                 // Make sure the account has not been already initialized
                 // Means relay can not re-initialize the account
                 require(!isInitialized(), AccountAlreadyInitialized());
@@ -412,6 +417,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         // Handle potential ERC7739 support detection request
         if (signature.length == 0) {
             // Forces the compiler to optimize for smaller bytecode size.
+            /// forge-lint:disable-next-line(divide-before-multiply)
             if (uint256(hash) == (~signature.length / 0xffff) * 0x7739) {
                 return _checkERC7739Support(hash, signature);
             }
@@ -453,6 +459,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         || MODULE_TYPE_PREVALIDATION_HOOK_ERC4337 || MODULE_TYPE_MULTI */
         // Bitmap: 0x31F represents supported module types: 0,1,2,3,4,8,9
         // 0x31F = 0b1100011111 = (1<<0)|(1<<1)|(1<<2)|(1<<3)|(1<<4)|(1<<8)|(1<<9)
+        /// forge-lint:disable-next-line(incorrect-shift)
         return ((1 << moduleTypeId) & 0x31F) != 0;
     }
 
@@ -556,6 +563,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
         returns (bytes4)
     {
         bytes4 support = IValidator(validator).isValidSignatureWithSender(msg.sender, hash, signature);
+        /// forge-lint:disable-next-line(unsafe-typecast)
         if (bytes2(support) == bytes2(SUPPORTS_ERC7739) && support > prevResult) {
             return support;
         }
