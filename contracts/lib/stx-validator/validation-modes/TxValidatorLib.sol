@@ -327,8 +327,10 @@ library TxValidatorLib {
         if (v >= EIP_155_MIN_V_VALUE) {
             return uint8((v - 2 * _extractChainIdFromV(v) - 35) + 27);
         } else if (v <= 1) {
+            /// forge-lint:disable-next-line(unsafe-typecast)
             return uint8(v + 27);
         } else {
+            /// forge-lint:disable-next-line(unsafe-typecast)
             return uint8(v);
         }
     }

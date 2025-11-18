@@ -68,8 +68,8 @@ library SimpleValidatorLib {
             return SIG_VALIDATION_FAILED;
         }
 
-        /// forge-lint:disable-next-line(unsafe-typecast)
         /// timestamps are never big enough to overflow uint48
+        /// forge-lint:disable-next-line(unsafe-typecast)
         return _packValidationData(false, uint48(upperBoundTimestamp), uint48(lowerBoundTimestamp));
     }
 
