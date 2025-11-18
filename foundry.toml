@@ -77,9 +77,9 @@
   optimism = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "10"}
   optimism-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "11155420"}
 
-  # BSC
-  bsc = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "56"}
-  bsc-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "97"}
+  # BNB
+  bnb = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "56"}
+  bnb-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "97"}
 
   # SONIC
   sonic = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "146"}
@@ -143,4 +143,4 @@
   # arc-testnet = { key = "", url = "", chain = "1244"}
 
   # SOPHON
-  # sophon-zk-testnet = { key = "", url = "", chain = "531050204"} 
+  sophon-zk-testnet = { key = "", url = "https://block-explorer-api.zksync-os-testnet-sophon.zksync.dev/api", chain = "531050204"} 

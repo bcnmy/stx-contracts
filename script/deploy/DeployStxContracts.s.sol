@@ -76,16 +76,21 @@ contract DeployStxContracts is Script, Config {
      * @param contractNames Array of contract names to deploy (empty array = all contracts)
      */
     function run(uint256 chainId, string[] memory contractNames) external {
-        // Load configuration and setup forks (enable write-back to save deployed addresses)
+        
         string memory fullConfigPath = string.concat(vm.projectRoot(), configPath);
         console.log("Loading config from:", fullConfigPath);
-        _loadConfigAndForks(fullConfigPath, true);
+        
+        // load config
+        _loadConfig(fullConfigPath, false);
+
+        // create fork
+        console.log("Creating fork for chain:", chainId);
+        uint256 forkId = vm.createFork(config.getRpcUrl(chainId));
+        forkOf[chainId] = forkId;
+        console.log("Fork successfully created");
 
         // Load configuration for each chain
-        loadConfigurations(chainId, contractNames);
-
-        // Move above to the base contract
-
+        loadConfiguration(chainId);
         deployContracts(chainId, contractNames);
     }
 
@@ -170,11 +175,12 @@ contract DeployStxContracts is Script, Config {
         console.log("Chain ID:", chainId);
         console.log("=====================================\n");
 
-        // Use the RPC_{chainId} environment variable directly
-        string memory rpcUrl = vm.envString(string.concat("RPC_", vm.toString(chainId)));
 
+        // Fallback flow of creating a fork not via config but from .env file
+        // Use the RPC_{chainId} environment variable directly
+        // string memory rpcUrl = vm.envString(string.concat("RPC_", vm.toString(chainId)));
         // Create and switch to fork for the chain
-        vm.createSelectFork(rpcUrl);
+        // vm.createSelectFork(rpcUrl);
 
         // Verify chain ID
         require(block.chainid == chainId, "Chain ID mismatch");
@@ -310,9 +316,9 @@ contract DeployStxContracts is Script, Config {
     // ============
 
     /**
-     * @notice Load configurations for all target chains
+     * @notice Load configurations for a given chain
      */
-    function loadConfigurations(uint256 chainId, string[] memory contractNames) internal {
+    function loadConfiguration(uint256 chainId) internal {
         // Switch to the fork for this chain (already created by _loadConfigAndForks)
         vm.selectFork(forkOf[chainId]);
 

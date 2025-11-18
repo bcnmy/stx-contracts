@@ -179,10 +179,10 @@ chain_id = 11155420
 name = "Optimism Sepolia"
 
 # ===============
-# BSC
+# BNB
 # ===============
 
-### BSC Mainnet (56)
+### BNB Mainnet (56)
 [56]
 endpoint_url = "${RPC_56}"
 
@@ -194,9 +194,9 @@ verify = true
 chain_id = 56
 
 [56.string]
-name = "BSC Mainnet"
+name = "BNB Mainnet"
 
-### BSC Testnet (97)
+### BNB Testnet (97)
 [97]
 endpoint_url = "${RPC_97}"
 
@@ -208,7 +208,7 @@ verify = true
 chain_id = 97
 
 [97.string]
-name = "BSC Testnet"
+name = "BNB Testnet"
 
 # ===============
 # SONIC

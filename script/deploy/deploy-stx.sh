@@ -110,15 +110,6 @@ if [ -z "$TESTNET_PRIVATE_KEY" ]; then
     exit 1
 fi
 
-# Check RPC URLs for requested chains
-for chain_id in "${REQUESTED_CHAINS[@]}"; do
-    RPC_VAR="RPC_${chain_id}"
-    if [ -z "${!RPC_VAR}" ]; then
-        log_error "$RPC_VAR is not set in .env for chain $chain_id"
-        log_info "Please set $RPC_VAR in your .env file"
-        exit 1
-    fi
-done
 
 # Check if CREATEX_ADDRESS is set in .env
 if [ -z "$CREATEX_ADDRESS" ]; then
@@ -131,6 +122,40 @@ if [ -z "$EXPECTED_DISPERSE_ADDRESS" ]; then
     log_error "EXPECTED_DISPERSE_ADDRESS is not set in .env"
     exit 1
 fi
+
+
+log_info "Checking RPC URLs for the requested chains..."
+# Check RPC URLs for requested chains
+for chain_id in "${REQUESTED_CHAINS[@]}"; do
+    RPC_VAR="RPC_${chain_id}"
+    if [ -z "${!RPC_VAR}" ]; then
+        log_error "$RPC_VAR is not set in .env for chain $chain_id"
+        log_info "Please set $RPC_VAR in your .env file"
+        exit 1
+    fi
+done
+
+log_info "Trying to create forks for the requested chains..."
+# Build the chain array in the format Solidity expects: [1,10,137]
+CHAIN_ARRAY="["
+for i in "${!REQUESTED_CHAINS[@]}"; do
+    if [ $i -gt 0 ]; then
+        CHAIN_ARRAY="${CHAIN_ARRAY},"
+    fi
+    CHAIN_ARRAY="${CHAIN_ARRAY}${REQUESTED_CHAINS[$i]}"
+done
+CHAIN_ARRAY="${CHAIN_ARRAY}]"
+
+# Try to create forks for the requested chains
+{ 
+    forge script ./util/ValidateForks.s.sol:ValidateForks --sig "run(uint256[])" "$CHAIN_ARRAY" 1> ./deploy-logs/validate-forks.log 2> ./deploy-logs/validate-forks-errors.log 
+} || {
+    log_error "Failed to create forks for the requested chains, see logs for more details"
+    log_error "The reason is most likely that some of the RPC URL for the chains you are about to deploy to is not valid"
+    exit 1
+}
+
+log_info "Forks successfully created, all RPC's from config are accessible"
 
 # Check if we have to recompile the artifacts
 export FOUNDRY_PROFILE="via-ir"
@@ -182,15 +207,6 @@ if [ $proceed = "y" ]; then
 else 
     log_info "Using precompiled artifacts"
 fi
-
-CHAIN_ARRAY="["
-for i in "${!REQUESTED_CHAINS[@]}"; do
-    if [ $i -gt 0 ]; then
-        CHAIN_ARRAY="${CHAIN_ARRAY},"
-    fi
-    CHAIN_ARRAY="${CHAIN_ARRAY}${REQUESTED_CHAINS[$i]}"
-done
-CHAIN_ARRAY="${CHAIN_ARRAY}]"
 
 # Check the expected addresses for the contracts and record the bytecode hashes
 log_info "Getting expected addresses for the contracts..."
