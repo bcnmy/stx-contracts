@@ -328,8 +328,7 @@ contract DeployStxContracts is Script, Config {
      * @param chainId The chain ID we're loading config for
      */
     function loadChainConfigFromStdConfig(
-        uint256 chainId,
-        string[] memory contractNames
+        uint256 chainId
     )
         internal
         view
@@ -360,6 +359,7 @@ contract DeployStxContracts is Script, Config {
         uint256 codeLength
     )
         internal
+        pure
     {
         console2.log(
             string.concat(
