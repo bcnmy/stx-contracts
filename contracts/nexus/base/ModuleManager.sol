@@ -713,7 +713,25 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
         pure
         returns (bytes32)
     {
-        return keccak256(abi.encode(MODULE_ENABLE_MODE_TYPE_HASH, module, moduleType, userOpHash, keccak256(initData)));
+        bytes32 structHash;
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, MODULE_ENABLE_MODE_TYPE_HASH)
+            mstore(add(ptr, 0x20), module)
+            mstore(add(ptr, 0x40), moduleType)
+            mstore(add(ptr, 0x60), userOpHash)
+
+            // Hash initData and store at ptr + 0x80
+            // calldatacopy to copy initData to memory, then hash it
+            let initDataPtr := add(ptr, 0xa0)
+            calldatacopy(initDataPtr, initData.offset, initData.length)
+            let initDataHash := keccak256(initDataPtr, initData.length)
+            mstore(add(ptr, 0x80), initDataHash)
+
+            // Hash the entire struct
+            structHash := keccak256(ptr, 0xa0)
+        }
+        return structHash;
     }
 
     function _fallback(bytes calldata callData) private {
