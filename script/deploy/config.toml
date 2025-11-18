@@ -54,7 +54,7 @@ name = "Eth Sepolia"
 # BASE
 # ===============
 
-### Base(8453)
+### Base Mainnet (8453)
 [8453]
 endpoint_url = "${RPC_8453}"
 
@@ -68,9 +68,185 @@ chain_id = 8453
 [8453.string]
 name = "Base Mainnet"
 
+### Base Sepolia (84532)
+[84532]
+endpoint_url = "${RPC_84532}"
+
+[84532.bool]
+is_testnet = true
+verify = true
+
+[84532.uint]
+chain_id = 84532
+
+[84532.string]
+name = "Base Sepolia"
+
+# ===============
+# POLYGON
+# ===============
+
+### Polygon Mainnet (137)
+[137]
+endpoint_url = "${RPC_137}"
+
+[137.bool]
+is_testnet = false
+verify = true
+
+[137.uint]
+chain_id = 137
+
+[137.string]
+name = "Polygon Mainnet"
+
+### Polygon Amoy Testnet (80002)
+[80002]
+endpoint_url = "${RPC_80002}"
+
+[80002.bool]
+is_testnet = true
+verify = true
+
+[80002.uint]
+chain_id = 80002
+
+[80002.string]
+name = "Polygon Amoy"
+
+# ===============
+# ARBITRUM
+# ===============
+
+### Arbitrum One (42161)
+[42161]
+endpoint_url = "${RPC_42161}"
+
+[42161.bool]
+is_testnet = false
+verify = true
+
+[42161.uint]
+chain_id = 42161
+
+[42161.string]
+name = "Arbitrum One"
+
+### Arbitrum Sepolia (421614)
+[421614]
+endpoint_url = "${RPC_421614}"
+
+[421614.bool]
+is_testnet = true
+verify = true
+
+[421614.uint]
+chain_id = 421614
+
+[421614.string]
+name = "Arbitrum Sepolia"
+
+# ===============
+# OPTIMISM
+# ===============
+
+### Optimism Mainnet (10)
+[10]
+endpoint_url = "${RPC_10}"
+
+[10.bool]
+is_testnet = false
+verify = true
+
+[10.uint]
+chain_id = 10
+
+[10.string]
+name = "Optimism Mainnet"
+
+### Optimism Sepolia (11155420)
+[11155420]
+endpoint_url = "${RPC_11155420}"
+
+[11155420.bool]
+is_testnet = true
+verify = true
+
+[11155420.uint]
+chain_id = 11155420
+
+[11155420.string]
+name = "Optimism Sepolia"
+
+# ===============
+# BSC
+# ===============
+
+### BSC Mainnet (56)
+[56]
+endpoint_url = "${RPC_56}"
+
+[56.bool]
+is_testnet = false
+verify = true
+
+[56.uint]
+chain_id = 56
+
+[56.string]
+name = "BSC Mainnet"
+
+### BSC Testnet (97)
+[97]
+endpoint_url = "${RPC_97}"
+
+[97.bool]
+is_testnet = true
+verify = true
+
+[97.uint]
+chain_id = 97
+
+[97.string]
+name = "BSC Testnet"
+
+# ===============
+# SONIC
+# ===============
+
+### Sonic Mainnet (146)
+[146]
+endpoint_url = "${RPC_146}"
+
+[146.bool]
+is_testnet = false
+verify = true
+
+[146.uint]
+chain_id = 146
+
+[146.string]
+name = "Sonic Mainnet"
+
+### Sonic Blaze Testnet (57054)
+[57054]
+endpoint_url = "${RPC_57054}"
+
+[57054.bool]
+is_testnet = true
+verify = true
+
+[57054.uint]
+chain_id = 57054
+
+[57054.string]
+name = "Sonic Blaze Testnet"
+
 # ===============
 # SCROLL
 # ===============
+
+### Scroll Mainnet (534352)
 [534352]
 endpoint_url = "${RPC_534352}"
 
@@ -83,3 +259,417 @@ chain_id = 534352
 
 [534352.string]
 name = "Scroll Mainnet"
+
+### Scroll Sepolia (534351)
+[534351]
+endpoint_url = "${RPC_534351}"
+
+[534351.bool]
+is_testnet = true
+verify = true
+
+[534351.uint]
+chain_id = 534351
+
+[534351.string]
+name = "Scroll Sepolia"
+
+# ===============
+# GNOSIS
+# ===============
+
+### Gnosis Mainnet (100)
+[100]
+endpoint_url = "${RPC_100}"
+
+[100.bool]
+is_testnet = false
+verify = true
+
+[100.uint]
+chain_id = 100
+
+[100.string]
+name = "Gnosis Mainnet"
+
+### Gnosis Chiado Testnet (10200)
+[10200]
+endpoint_url = "${RPC_10200}"
+
+[10200.bool]
+is_testnet = true
+verify = true
+
+[10200.uint]
+chain_id = 10200
+
+[10200.string]
+name = "Gnosis Chiado Testnet"
+
+# ===============
+# AVALANCHE
+# ===============
+
+### Avalanche C-Chain Mainnet (43114)
+[43114]
+endpoint_url = "${RPC_43114}"
+
+[43114.bool]
+is_testnet = false
+verify = true
+
+[43114.uint]
+chain_id = 43114
+
+[43114.string]
+name = "Avalanche C-Chain"
+
+### Avalanche Fuji Testnet (43113)
+[43113]
+endpoint_url = "${RPC_43113}"
+
+[43113.bool]
+is_testnet = true
+verify = true
+
+[43113.uint]
+chain_id = 43113
+
+[43113.string]
+name = "Avalanche Fuji"
+
+# ===============
+# APECHAIN
+# ===============
+
+### Apechain Mainnet (33139)
+[33139]
+endpoint_url = "${RPC_33139}"
+
+[33139.bool]
+is_testnet = false
+verify = true
+
+[33139.uint]
+chain_id = 33139
+
+[33139.string]
+name = "Apechain Mainnet"
+
+### Apechain Curtis Testnet (33111)
+[33111]
+endpoint_url = "${RPC_33111}"
+
+[33111.bool]
+is_testnet = true
+verify = true
+
+[33111.uint]
+chain_id = 33111
+
+[33111.string]
+name = "Apechain Curtis Testnet"
+
+# ===============
+# HYPEREVM
+# ===============
+
+### HyperEvm Mainnet (999)
+[999]
+endpoint_url = "${RPC_999}"
+
+[999.bool]
+is_testnet = false
+verify = true
+
+[999.uint]
+chain_id = 999
+
+[999.string]
+name = "HyperEvm Mainnet"
+
+# ===============
+# CORE
+# ===============
+
+### Core Testnet 2 (1114)
+[1114]
+endpoint_url = "${RPC_1114}"
+
+[1114.bool]
+is_testnet = true
+verify = true
+
+[1114.uint]
+chain_id = 1114
+
+[1114.string]
+name = "Core Testnet 2"
+
+# ===============
+# NEURA
+# ===============
+
+### Neura Testnet (267)
+[267]
+endpoint_url = "${RPC_267}"
+
+[267.bool]
+is_testnet = true
+verify = true
+
+[267.uint]
+chain_id = 267
+
+[267.string]
+name = "Neura Testnet"
+
+# ===============
+# SEI
+# ===============
+
+### Sei Mainnet (1329)
+[1329]
+endpoint_url = "${RPC_1329}"
+
+[1329.bool]
+is_testnet = false
+verify = true
+
+[1329.uint]
+chain_id = 1329
+
+[1329.string]
+name = "Sei Mainnet"
+
+### Sei Testnet (1328)
+[1328]
+endpoint_url = "${RPC_1328}"
+
+[1328.bool]
+is_testnet = true
+verify = true
+
+[1328.uint]
+chain_id = 1328
+
+[1328.string]
+name = "Sei Testnet"
+
+# ===============
+# UNICHAIN
+# ===============
+
+### Unichain Mainnet (130)
+[130]
+endpoint_url = "${RPC_130}"
+
+[130.bool]
+is_testnet = false
+verify = true
+
+[130.uint]
+chain_id = 130
+
+[130.string]
+name = "Unichain Mainnet"
+
+### Unichain Sepolia (1301)
+[1301]
+endpoint_url = "${RPC_1301}"
+
+[1301.bool]
+is_testnet = true
+verify = true
+
+[1301.uint]
+chain_id = 1301
+
+[1301.string]
+name = "Unichain Sepolia"
+
+# ===============
+# KATANA
+# ===============
+
+### Katana Mainnet (747474)
+[747474]
+endpoint_url = "${RPC_747474}"
+
+[747474.bool]
+is_testnet = false
+verify = true
+
+[747474.uint]
+chain_id = 747474
+
+[747474.string]
+name = "Katana Mainnet"
+
+# ===============
+# LISK
+# ===============
+
+### Lisk Mainnet (1135)
+[1135]
+endpoint_url = "${RPC_1135}"
+
+[1135.bool]
+is_testnet = false
+verify = true
+
+[1135.uint]
+chain_id = 1135
+
+[1135.string]
+name = "Lisk Mainnet"
+
+# ===============
+# WORLDCHAIN
+# ===============
+
+### Worldchain Mainnet (480)
+[480]
+endpoint_url = "${RPC_480}"
+
+[480.bool]
+is_testnet = false
+verify = true
+
+[480.uint]
+chain_id = 480
+
+[480.string]
+name = "Worldchain Mainnet"
+
+### Worldchain Sepolia (4801)
+[4801]
+endpoint_url = "${RPC_4801}"
+
+[4801.bool]
+is_testnet = true
+verify = true
+
+[4801.uint]
+chain_id = 4801
+
+[4801.string]
+name = "Worldchain Sepolia"
+
+# ===============
+# FLUENT
+# ===============
+
+### Fluent Testnet (20994)
+[20994]
+endpoint_url = "${RPC_20994}"
+
+[20994.bool]
+is_testnet = true
+verify = true
+
+[20994.uint]
+chain_id = 20994
+
+[20994.string]
+name = "Fluent Testnet"
+
+# ===============
+# MONAD
+# ===============
+
+### Monad Mainnet (143)
+[143]
+endpoint_url = "${RPC_143}"
+
+[143.bool]
+is_testnet = false
+verify = true
+
+[143.uint]
+chain_id = 143
+
+[143.string]
+name = "Monad Mainnet"
+
+### Monad Testnet (10143)
+[10143]
+endpoint_url = "${RPC_10143}"
+
+[10143.bool]
+is_testnet = true
+verify = true
+
+[10143.uint]
+chain_id = 10143
+
+[10143.string]
+name = "Monad Testnet"
+
+# ===============
+# PLASMA
+# ===============
+
+### Plasma Mainnet (9745)
+[9745]
+endpoint_url = "${RPC_9745}"
+
+[9745.bool]
+is_testnet = false
+verify = true
+
+[9745.uint]
+chain_id = 9745
+
+[9745.string]
+name = "Plasma Mainnet"
+
+### Plasma Testnet (9746)
+[9746]
+endpoint_url = "${RPC_9746}"
+
+[9746.bool]
+is_testnet = true
+verify = true
+
+[9746.uint]
+chain_id = 9746
+
+[9746.string]
+name = "Plasma Testnet"
+
+# ===============
+# ARC
+# ===============
+
+### Arc Testnet (1244)
+[1244]
+endpoint_url = "${RPC_1244}"
+
+[1244.bool]
+is_testnet = true
+verify = true
+
+[1244.uint]
+chain_id = 1244
+
+[1244.string]
+name = "Arc Testnet"
+
+# ===============
+# SOPHON
+# ===============
+
+### Sophon ZK Testnet (531050204)
+[531050204]
+endpoint_url = "${RPC_531050204}"
+
+[531050204.bool]
+is_testnet = true
+verify = true
+
+[531050204.uint]
+chain_id = 531050204
+
+[531050204.string]
+name = "Sophon ZK Testnet"
