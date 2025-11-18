@@ -27,6 +27,7 @@ import { CallType, CALLTYPE_SINGLE, CALLTYPE_STATIC } from "../../lib/erc-7579/M
 import { ExecLib } from "../../lib/erc-7579/ExecLib.sol";
 import { LocalCallDataParserLib } from "../../lib/nexus/local/LocalCallDataParserLib.sol";
 import { IModuleManager } from "../../interfaces/nexus/base/IModuleManager.sol";
+// solhint-disable no-unused-import
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -39,6 +40,7 @@ import {
     EMERGENCY_UNINSTALL_TYPE_HASH,
     ERC1271_SUCCESS
 } from "../../types/Constants.sol";
+// solhint-enable no-unused-import
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { ExcessivelySafeCall } from "excessively-safe-call/ExcessivelySafeCall.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
