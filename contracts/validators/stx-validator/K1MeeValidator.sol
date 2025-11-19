@@ -294,7 +294,7 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
     /// - supports appended 65-bytes signature for on-chain fusion mode
     /// - supports erc7702-delegated EOAs as owners
     function version() external pure returns (string memory) {
-        return "1.0.5";
+        return "1.1.0";
     }
 
     /// @notice Checks if the module is of the specified type

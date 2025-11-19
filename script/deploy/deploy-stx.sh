@@ -157,57 +157,6 @@ CHAIN_ARRAY="${CHAIN_ARRAY}]"
 
 log_info "Forks successfully created, all RPC's from config are accessible"
 
-# Check if we have to recompile the artifacts
-export FOUNDRY_PROFILE="via-ir"
-read -r -p "Do you want to rebuild Stx-contracts artifacts from your local sources? (y/n): " proceed
-if [ $proceed = "y" ]; then
-    ### BUILD ARTIFACTS ###
-    printf "Building Stx-contracts artifacts\n"
-    { (forge build 1> ./deploy-logs/build/forge-build.log 2> ./deploy-logs/build/forge-build-errors.log) } || {
-        printf "Build failed\n See logs for more details\n"
-        exit 1
-    }
-    printf "Copying Stx-contracts artifacts\n"
-    
-    mkdir -p ./artifacts/K1MeeValidator
-    mkdir -p ./artifacts/Nexus
-    mkdir -p ./artifacts/NexusBootstrap
-    mkdir -p ./artifacts/NexusAccountFactory
-    mkdir -p ./artifacts/NexusProxy
-    mkdir -p ./artifacts/ComposableExecutionModule
-    mkdir -p ./artifacts/ComposableStorage
-    mkdir -p ./artifacts/EtherForwarder
-    mkdir -p ./artifacts/NodePaymasterFactory
-    
-    cp ../../out/K1MeeValidator.sol/K1MeeValidator.json ./artifacts/K1MeeValidator/.
-    cp ../../out/Nexus.sol/Nexus.json ./artifacts/Nexus/.
-    cp ../../out/NexusBootstrap.sol/NexusBootstrap.json ./artifacts/NexusBootstrap/.
-    cp ../../out/NexusAccountFactory.sol/NexusAccountFactory.json ./artifacts/NexusAccountFactory/.
-    cp ../../out/NexusProxy.sol/NexusProxy.json ./artifacts/NexusProxy/.
-    cp ../../out/ComposableExecutionModule.sol/ComposableExecutionModule.json ./artifacts/ComposableExecutionModule/.
-    cp ../../out/ComposableStorage.sol/ComposableStorage.json ./artifacts/ComposableStorage/.
-    cp ../../out/EtherForwarder.sol/EtherForwarder.json ./artifacts/EtherForwarder/.
-    cp ../../out/NodePaymasterFactory.sol/NodePaymasterFactory.json ./artifacts/NodePaymasterFactory/.
-    
-    printf "Artifacts copied\n"
-
-    ### CREATE VERIFICATION ARTIFACTS ###
-    printf "Creating verification artifacts\n"
-    forge verify-contract --show-standard-json-input $(cast address-zero) K1MeeValidator > ./artifacts/K1MeeValidator/verify.json    
-    forge verify-contract --show-standard-json-input $(cast address-zero) Nexus > ./artifacts/Nexus/verify.json
-    forge verify-contract --show-standard-json-input $(cast address-zero) NexusBootstrap > ./artifacts/NexusBootstrap/verify.json
-    forge verify-contract --show-standard-json-input $(cast address-zero) NexusAccountFactory > ./artifacts/NexusAccountFactory/verify.json
-    forge verify-contract --show-standard-json-input $(cast address-zero) NexusProxy > ./artifacts/NexusProxy/verify.json
-    forge verify-contract --show-standard-json-input $(cast address-zero) ComposableExecutionModule > ./artifacts/ComposableExecutionModule/verify.json
-    forge verify-contract --show-standard-json-input $(cast address-zero) ComposableStorage > ./artifacts/ComposableStorage/verify.json
-    forge verify-contract --show-standard-json-input $(cast address-zero) EtherForwarder > ./artifacts/EtherForwarder/verify.json
-    forge verify-contract --show-standard-json-input $(cast address-zero) NodePaymasterFactory > ./artifacts/NodePaymasterFactory/verify.json
-    
-    log_info "Artifacts created"
-else 
-    log_info "Using precompiled artifacts"
-fi
-
 # Check the expected addresses for the contracts and record the bytecode hashes
 log_info "Getting expected addresses for the contracts..."
 { 

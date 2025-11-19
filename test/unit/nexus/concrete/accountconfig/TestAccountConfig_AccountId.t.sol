@@ -14,7 +14,7 @@ contract TestAccountConfig_AccountId is NexusTestBase {
 
     /// @notice Tests if the account ID returns the expected value
     function test_WhenCheckingTheAccountID() external {
-        string memory expected = "biconomy.nexus.1.3.0";
+        string memory expected = "biconomy.nexus.1.3.1";
         assertEq(ACCOUNT_IMPLEMENTATION.accountId(), expected, "AccountConfig should return the expected account ID.");
     }
 }
