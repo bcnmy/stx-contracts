@@ -57,8 +57,90 @@
   severity = ["high", "med", "gas"]
 
 [etherscan]
+  # ETHEREUM
   mainnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "1"}
-  sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "11155111"} 
+  sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "11155111"}
+
+  # BASE
   base = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "8453"}
-  # base-sepolia
-  scroll = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "534352"} 
+  base-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "84532"}
+
+  # POLYGON
+  polygon = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "137"}
+  polygon-amoy = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "80002"}
+
+  # ARBITRUM
+  arbitrum-one = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "42161"}
+  arbitrum-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "421614"}
+
+  # OPTIMISM
+  optimism = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "10"}
+  optimism-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "11155420"}
+
+  # BNB
+  bnb = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "56"}
+  bnb-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "97"}
+
+  # SONIC
+  sonic = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "146"}
+  # sonic-blaze = { key = "", url = "", chain = "57054"}
+
+  # SCROLL
+  scroll = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "534352"}
+  scroll-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "534351"}
+
+  # GNOSIS
+  gnosis = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "100"}
+  # gnosis-chiado = { key = "", url = "", chain = "10200"}
+
+  # AVALANCHE
+  avalanche = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "43114"}
+  avalanche-fuji = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "43113"}
+
+  # APECHAIN
+  apechain = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "33139"}
+  apechain-curtis = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "33111"}
+
+  # HYPEREVM
+  hyperevm = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "999"}
+
+  # CORE
+  # core-testnet-2 = { key = "", url = "", chain = "1114"}
+
+  # NEURA
+  # neura-testnet = { key = "", url = "", chain = "267"}
+
+  # SEI
+  sei = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "1329"}
+  sei-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "1328"}
+
+  # UNICHAIN
+  unichain = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "130"}
+  unichain-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "1301"}
+
+  # KATANA
+  katana = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "747474"}
+
+  # LISK
+  # lisk = { key = "", url = "", chain = "1135"}
+
+  # WORLDCHAIN
+  worldchain = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "480"}
+  worldchain-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "4801"}
+
+  # FLUENT
+  # fluent-testnet = { key = "", url = "", chain = "20994"}
+
+  # MONAD
+  # monad = { key = "", url = "", chain = "143"}
+  monad-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "10143"}
+
+  # PLASMA
+  # plasma = { key = "", url = "", chain = "9745"}
+  # plasma-testnet = { key = "", url = "", chain = "9746"}
+
+  # ARC
+  # arc-testnet = { key = "", url = "", chain = "1244"}
+
+  # SOPHON
+  sophon-zk-testnet = { key = "", url = "https://block-explorer-api.zksync-os-testnet-sophon.zksync.dev/api", chain = "531050204"} 
