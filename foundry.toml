@@ -140,7 +140,7 @@
   # plasma-testnet = { key = "", url = "", chain = "9746"}
 
   # ARC
-  # arc-testnet = { key = "", url = "", chain = "1244"}
+  # arc-testnet = { key = "", url = "", chain = "5042002"}
 
   # SOPHON
   sophon-zk-testnet = { key = "", url = "https://block-explorer-api.zksync-os-testnet-sophon.zksync.dev/api", chain = "531050204"} 

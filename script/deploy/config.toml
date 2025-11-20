@@ -568,19 +568,7 @@ name = "Worldchain Sepolia"
 # FLUENT
 # ===============
 
-### Fluent Testnet (20994)
-[20994]
-endpoint_url = "${RPC_20994}"
-
-[20994.bool]
-is_testnet = true
-verify = true
-
-[20994.uint]
-chain_id = 20994
-
-[20994.string]
-name = "Fluent Testnet"
+## !! Fluent requires custom deployment tooling so ignored for now
 
 # ===============
 # MONAD
@@ -650,18 +638,20 @@ name = "Plasma Testnet"
 # ARC
 # ===============
 
-### Arc Testnet (1244)
-[1244]
-endpoint_url = "${RPC_1244}"
+### Arc Testnet (5042002)
+[5042002]
+endpoint_url = "${RPC_5042002}"
 
-[1244.bool]
+[5042002.bool]
 is_testnet = true
 verify = true
+# skipping createx for this chain because pre-signed txn stucks by some reason
+skip_createx = true
 
-[1244.uint]
-chain_id = 1244
+[5042002.uint]
+chain_id = 5042002
 
-[1244.string]
+[5042002.string]
 name = "Arc Testnet"
 
 # ===============

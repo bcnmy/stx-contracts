@@ -197,8 +197,12 @@ done
 
 # Special flow for the Disperse contract
 ## Verify if CreateX is present
+SKIP_CREATEX=$(awk -v id="$CHAIN_ID" '/^\['"$CHAIN_ID"'\.bool\]/{flag=1;next} /^\[/{flag=0} flag && /^skip_createx =/{gsub(/"/, "", $3); print $3}' config.toml)
+if [ -z "$SKIP_CREATEX" ]; then
+    SKIP_CREATEX="false"
+fi
 CREATEX_SIZE=$(cast codesize --rpc-url $RPC_VAR $CREATEX_ADDRESS)
-if [ $CREATEX_SIZE -eq 0 ]; then
+if [ $CREATEX_SIZE -eq 0 ] && [ "$SKIP_CREATEX" = "false" ]; then
     log_warning "CreateX is not deployed on chain $CHAIN_ID. Deploying it..." 
     { 
         # estimate the gas cost of the CreateX deployment transaction
@@ -244,6 +248,9 @@ if [ $CREATEX_SIZE -eq 0 ]; then
         log_warning "Continuing with deployment without CreateX."
         log_warning "Disperse contract will not be deployed."  
     } 
+elif [ "$SKIP_CREATEX" = "true" ]; then
+    log_info "CreateX is not deployed on chain $CHAIN_ID. Skipping its deployment because it is skipped in config.toml"
+    log_info "Disperse contract will not be deployed ."
 else
     # createx has already been deployed
     log_info "CreateX is already deployed on chain $CHAIN_ID"
