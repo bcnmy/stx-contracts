@@ -202,14 +202,14 @@ if [ $CREATEX_SIZE -eq 0 ]; then
     log_warning "CreateX is not deployed on chain $CHAIN_ID. Deploying it..." 
     { 
         # estimate the gas cost of the CreateX deployment transaction
-        CREATEX_GAS_ESTIMATE=$(cast estimate --rpc-url $RPC_VAR --create $(cat script/deploy/util/createx-hex/contract-createx-bytescode.json | jq -r))
+        CREATEX_GAS_ESTIMATE=$(cast estimate --rpc-url $RPC_VAR --create $(cat ./util/createx-hex/contract-createx-bytescode.json | jq -r))
         CREATEX_DEPLOY_PRESIGNED_TX="" 
         if [ $CREATEX_GAS_ESTIMATE -lt 3000000 ]; then # 3M gas
-            CREATEX_DEPLOY_PRESIGNED_TX=$(cat script/deploy/util/createx-hex/signed_serialised_transaction_gaslimit_3000000_.json | jq -r)
+            CREATEX_DEPLOY_PRESIGNED_TX=$(cat ./util/createx-hex/signed_serialised_transaction_gaslimit_3000000_.json | jq -r)
         elif [ $CREATEX_GAS_ESTIMATE -lt 25000000 ]; then # 25M gas
-            CREATEX_DEPLOY_PRESIGNED_TX=$(cat script/deploy/util/createx-hex/signed_serialised_transaction_gaslimit_25000000_ | jq -r)
+            CREATEX_DEPLOY_PRESIGNED_TX=$(cat ./util/createx-hex/signed_serialised_transaction_gaslimit_25000000_ | jq -r)
         elif [ $CREATEX_GAS_ESTIMATE -lt 45000000 ]; then # 45M gas
-            CREATEX_DEPLOY_PRESIGNED_TX=$(cat script/deploy/util/createx-hex/signed_serialised_transaction_gaslimit_45000000_.json | jq -r)
+            CREATEX_DEPLOY_PRESIGNED_TX=$(cat ./util/createx-hex/signed_serialised_transaction_gaslimit_45000000_.json | jq -r)
         else
             log_warning "CreateX deployment transaction gas cost is too high. Disperse contract will not be deployed."
             log_warning "Continuing with deployment without CreateX." 
@@ -308,9 +308,15 @@ if forge script ./DeployStxContracts.s.sol:DeployStxContracts  \
     --private-key $PRIVATE_KEY \
     $VERIFY_FLAG \
     $GAS_SUFFIX \
+    $GAS_ESTIMATE_MULTIPLY_SUFFIX \
     -vv --broadcast --slow; then
-    # successfully deployed and verified
-    log_info "Deployment and verification completed successfully for chain $CHAIN_ID"
+    # successfully deployed and (if VERIFY_FLAG is set) verified
+    if [ "$VERIFY_BOOL" = "true" ]; then
+        WAS_VERIFIED="and verified"
+    else
+        WAS_VERIFIED="No verification was requested."
+    fi
+    log_info "Deployment completed successfully for chain $CHAIN_ID. $WAS_VERIFIED"
     exit 0
 else
     # forge script failed

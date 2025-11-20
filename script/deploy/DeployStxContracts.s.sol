@@ -308,7 +308,9 @@ contract DeployStxContracts is Script, Config {
     function deployDisperse() internal returns (address) {
         address expectedCreateXAddress = vm.envAddress("CREATEX_ADDRESS");
         CreateX createX = CreateX(expectedCreateXAddress);
+        vm.startBroadcast();
         address disperse = createX.deployCreate2(DISPERSE_SALT, DISPERSE_INITCODE);
+        vm.stopBroadcast();
         console.log("Disperse deployed to:", disperse);
         return disperse;
     }

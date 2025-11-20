@@ -188,7 +188,8 @@ fi
 # For every chain in the REQUESTED_CHAINS array, deploy the Stx contracts
 # by callig the deploy-chain.sh script and logging the output to a file
 for chain_id in "${REQUESTED_CHAINS[@]}"; do
-    chain_name=$(awk -v id="$chain_id" '/^\['"$chain_id"'\.string\]/{flag=1;next} /^\[/{flag=0} flag && /^name =/{gsub(/"/, "", $3); print $3}' config.toml)
+    chain_name=$(awk -v id="$chain_id" '/^\['"$chain_id"'\.string\]/{flag=1;next} /^\[/{flag=0} flag && /^name =/{sub(/^name = /, ""); gsub(/"/, ""); print; exit}' config.toml)
+    chain_name=$(echo $chain_name | tr ' ' '-')
     
     # Temporarily disable exit on error to handle deployment failures gracefully
     set +e

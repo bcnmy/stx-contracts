@@ -104,7 +104,7 @@ Built on the ERC-4337 account abstraction standard, the Node Paymaster uses a fa
 
 ## Security Audits
 The Stx contracts suite is carefully audited by lead researchers in blockchain security.
-Please explore the `/audit/` folder to find the reports.
+Please explore the [`/audit/`](audit) folder to find the reports.
 
 ## Usage
 
@@ -119,3 +119,6 @@ $ forge build
 ```shell
 $ pnpm test
 ```
+
+### Deployments
+See [`script/deploy/README.MD`](script/deploy/README.MD) to learn how to deploy the stx contracts to your chain.

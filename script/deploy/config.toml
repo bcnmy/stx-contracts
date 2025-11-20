@@ -209,8 +209,6 @@ chain_id = 97
 # gas prices in gwei
 base_gas_price = 1
 priority_gas_price = 1
-# gas units multiplier in %
-gas_estimate_multiply = 110
 
 [97.string]
 name = "BNB Testnet"
@@ -261,6 +259,9 @@ verify = true
 
 [534352.uint]
 chain_id = 534352
+# gas units multiplier in %
+gas_estimate_multiply = 101 
+# scroll doesn't need it, it's just for demo purposes
 
 [534352.string]
 name = "Scroll Mainnet"
@@ -407,6 +408,8 @@ verify = true
 
 [1114.uint]
 chain_id = 1114
+base_gas_price = 2
+priority_gas_price = 2
 
 [1114.string]
 name = "Core Testnet 2"
@@ -521,7 +524,7 @@ endpoint_url = "${RPC_1135}"
 
 [1135.bool]
 is_testnet = false
-verify = true
+verify = false
 
 [1135.uint]
 chain_id = 1135
