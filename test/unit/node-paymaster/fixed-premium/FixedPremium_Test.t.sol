@@ -5,7 +5,7 @@ import { BaseTest } from "../../../Base.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
 import { MockTarget } from "../../../mock/MockTarget.sol";
-import { MockAccount } from "../../../mock/MockAccount.sol";
+import { MockAccount } from "../../../mock/accounts/MockAccount.sol";
 import "../../../../contracts/types/Constants.sol";
 import "forge-std/console2.sol";
 
@@ -40,7 +40,7 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         bytes memory callData =
             abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
 
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: address(mockAccount),
             callData: callData,
             wallet: wallet,
@@ -151,7 +151,7 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.setValue.selector, valueToSet);
         bytes memory callData =
             abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: address(mockAccount),
             callData: callData,
             wallet: wallet,
@@ -224,7 +224,8 @@ contract FixedPremium_Paymaster_Test is BaseTest {
         // deposit decrease = refund to sponsor (if any) + gas cost refund to beneficiary (EXECUTOR_EOA) =>
         actualRefund = (nodePMDepositBefore - getDeposit(address(EMITTING_NODE_PAYMASTER))) - actualGasCostFromEP;
 
-        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by executor
+        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by
+        // executor
         // EOA)
         meeNodeEarnings = (maxGasCost + _premium) - (actualRefund + gasSpentByExecutorEOA * actualGasPrice);
 

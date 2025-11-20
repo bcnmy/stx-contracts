@@ -32,7 +32,7 @@ jobs:
     
     - name: Lint with Solhint
       run: |
-        pnpm lint
+        pnpm lint:prod
         echo "✅ Linting passed with no errors, warnings or suggestions still may be present"
     
     

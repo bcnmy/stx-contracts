@@ -5,7 +5,7 @@ import { BaseTest } from "../../../Base.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
 import { MockTarget } from "../../../mock/MockTarget.sol";
-import { MockAccount } from "../../../mock/MockAccount.sol";
+import { MockAccount } from "../../../mock/accounts/MockAccount.sol";
 import "../../../../contracts/types/Constants.sol";
 
 import "forge-std/console2.sol";
@@ -64,7 +64,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         bytes memory callData =
             abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
 
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: address(mockAccount),
             callData: callData,
             wallet: wallet,
@@ -109,7 +109,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
     // test percentage user single
     function test_percentage_user_single() public {
         _premiumPercentage = 1_700_000;
-        uint128 pmValidationGasLimit = 25_000;
+        uint128 pmValidationGasLimit = 15_000;
         // ~ 12_000 is raw PM.postOp gas spent
         // here we add more for emitting events in the wrapper + refunds etc in EP
         uint128 pmPostOpGasLimit = 37_000;
@@ -176,7 +176,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.setValue.selector, valueToSet);
         bytes memory callData =
             abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: address(mockAccount),
             callData: callData,
             wallet: wallet,
@@ -268,7 +268,8 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         // deposit decrease = refund to sponsor (if any) + gas cost refund to beneficiary (EXECUTOR_EOA) =>
         actualRefund = (nodePMDepositBefore - getDeposit(address(EMITTING_NODE_PAYMASTER))) - actualGasCostFromEP;
 
-        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by executor
+        // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by
+        // executor
         // EOA)
         meeNodeEarnings =
             applyPremium(maxGasCost, meeNodePremiumPercentage) - actualRefund - gasSpentByExecutorEOA * actualGasPrice;

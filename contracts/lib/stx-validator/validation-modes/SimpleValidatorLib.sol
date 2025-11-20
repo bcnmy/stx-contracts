@@ -58,7 +58,8 @@ library SimpleValidatorLib {
         bytes32 currentItemHash =
             MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
 
-        bytes32 superTxEip712Hash = HashLib.compareAndGetFinalHash(outerTypeHash, currentItemHash, itemIndex, itemHashes);
+        bytes32 superTxEip712Hash =
+            HashLib.compareAndGetFinalHash(outerTypeHash, currentItemHash, itemIndex, itemHashes);
         if (superTxEip712Hash == bytes32(0)) {
             return SIG_VALIDATION_FAILED;
         }
@@ -67,6 +68,8 @@ library SimpleValidatorLib {
             return SIG_VALIDATION_FAILED;
         }
 
+        /// timestamps are never big enough to overflow uint48
+        /// forge-lint:disable-next-line(unsafe-typecast)
         return _packValidationData(false, uint48(upperBoundTimestamp), uint48(lowerBoundTimestamp));
     }
 

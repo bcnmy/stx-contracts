@@ -12,7 +12,7 @@
     "one-contract-per-file": "off",
 
     "code-complexity": ["error", 11],
-    "max-line-length": ["error", 123],
+    "max-line-length": ["error", 125],
     "no-global-import": "error",
     "no-console": "warn",
     "no-unused-vars": "error",

@@ -6,7 +6,7 @@ import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/
 import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 import { MockTarget } from "../../mock/MockTarget.sol";
-import { EIP1271_SUCCESS } from "contracts/types/Constants.sol";
+import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 
 contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
     using UserOperationLib for PackedUserOperation;
@@ -25,9 +25,11 @@ contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
 
         vm.deal(address(mockAccount), 100 ether);
 
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: address(mockAccount),
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
+            callData: abi.encodeWithSelector(
+                mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
+            ),
             wallet: wallet,
             preVerificationGasLimit: 3e5,
             verificationGasLimit: 500e3,
@@ -47,7 +49,9 @@ contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
     function test_nonMEEFlow_validateSignatureWithData_success() public view {
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
-            callData: abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData),
+            callData: abi.encodeWithSelector(
+                mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
+            ),
             account: address(mockAccount),
             userOpSigner: wallet
         });
@@ -61,10 +65,11 @@ contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
         bytes32 dataToSign = toERC1271Hash(t.contents, address(mockAccount));
         (t.v, t.r, t.s) = vm.sign(wallet.privateKey, dataToSign);
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature =
-            abi.encodePacked(t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+        bytes memory signature = abi.encodePacked(
+            t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
+        );
         bytes4 ret = mockAccount.isValidSignature(toContentsHash(t.contents), signature);
-        assertEq(ret, bytes4(EIP1271_SUCCESS));
+        assertEq(ret, bytes4(ERC1271_SUCCESS));
     }
 
     // ================================
@@ -101,7 +106,7 @@ contract K1MEEValidatorTest is MeeK1Validator_Base_Test {
     /// @return The encoded EIP-712 domain struct fields.
     function accountDomainStructFields(address account) internal view returns (bytes memory) {
         AccountDomainStruct memory t;
-        ( /*fields*/ , t.name, t.version, t.chainId, t.verifyingContract, t.salt, /*extensions*/ ) =
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
             EIP712(account).eip712Domain();
 
         return abi.encode(

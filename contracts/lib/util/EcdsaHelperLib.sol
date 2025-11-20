@@ -22,7 +22,15 @@ library EcdsaHelperLib {
      */
     // solhint-disable-next-line gas-named-return-values
 
-    function isValidSignature(address expectedSigner, bytes32 hash, bytes memory signature) internal view returns (bool) {
+    function isValidSignature(
+        address expectedSigner,
+        bytes32 hash,
+        bytes memory signature
+    )
+        internal
+        view
+        returns (bool)
+    {
         if (hash.tryRecover(signature) == expectedSigner) return true;
         if (hash.toEthSignedMessageHash().tryRecover(signature) == expectedSigner) return true;
         return false;

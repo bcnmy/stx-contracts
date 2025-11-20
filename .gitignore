@@ -2,11 +2,14 @@
 cache
 cache_forge
 coverage
-node_modules
 out
-docs
 storageLayout
 deployments
+temp
+
+# dependencies
+node_modules/
+/lib/
 
 # env
 *.env
@@ -18,8 +21,6 @@ deployments
 .DS_Store
 .pnp.*
 lcov.info
-package-lock.json
-pnpm-lock.yaml
 *.bak
 
 # broadcasts
@@ -33,16 +34,18 @@ cache_forge/solidity-files-cache.json
 # VSCode settings
 .vscode/settings.json
 
-# Bash deploy helper logs
-scripts/bash-deploy/logs/*
-!scripts/bash-deploy/logs/.gitkeep
-
-# helper scripts
-scripts/viem/
-
 # Claude
 .claude
 CLAUDE.MD
 
 # Solhint
 solhint-report.txt
+
+# Bash deploy helper logs
+script/deploy/deploy-logs/*.log
+script/deploy/deploy-logs/build/*.log
+script/deploy/deploy-logs/precalc/*.log
+!script/deploy/deploy-logs/.gitkeep
+!script/deploy/deploy-logs/build/.gitkeep
+!script/deploy/deploy-logs/precalc/.gitkeep
+

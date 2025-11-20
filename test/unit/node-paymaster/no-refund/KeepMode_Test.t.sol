@@ -5,7 +5,7 @@ import { BaseTest } from "../../../Base.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
 import { MockTarget } from "../../../mock/MockTarget.sol";
-import { MockAccount } from "../../../mock/MockAccount.sol";
+import { MockAccount } from "../../../mock/accounts/MockAccount.sol";
 import "../../../../contracts/types/Constants.sol";
 import "forge-std/console2.sol";
 
@@ -31,7 +31,7 @@ contract KeepMode_Paymaster_Test is BaseTest {
         bytes memory callData =
             abi.encodeWithSelector(mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData);
 
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: address(mockAccount),
             callData: callData,
             wallet: wallet,
@@ -64,7 +64,8 @@ contract KeepMode_Paymaster_Test is BaseTest {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // parse UserOperationEvent
-        (,, uint256 actualGasCostFromEP,) = abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
+        (,, uint256 actualGasCostFromEP,) =
+            abi.decode(entries[entries.length - 1].data, (uint256, bool, uint256, uint256));
 
         assertEq(mockTarget.value(), valueToSet);
         // refund receiver balance is same as before
