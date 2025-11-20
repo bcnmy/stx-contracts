@@ -206,6 +206,11 @@ verify = true
 
 [97.uint]
 chain_id = 97
+# gas prices in gwei
+base_gas_price = 1
+priority_gas_price = 1
+# gas units multiplier in %
+gas_estimate_multiply = 110
 
 [97.string]
 name = "BNB Testnet"

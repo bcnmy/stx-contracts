@@ -102,6 +102,15 @@ else
     GAS_SUFFIX_SEND="$GAS_SUFFIX"
 fi
 
+# Build gas estimate multiply suffix
+#parse config.toml to find the gas_estimate_multiply for the given chain ID
+GAS_ESTIMATE_MULTIPLY=$(awk -v id="$CHAIN_ID" '/^\['"$CHAIN_ID"'\.uint\]/{flag=1;next} /^\[/{flag=0} flag && /^gas_estimate_multiply =/{gsub(/"/, "", $3); print $3}' config.toml)
+if [ -z "$GAS_ESTIMATE_MULTIPLY" ]; then
+    GAS_ESTIMATE_MULTIPLY_SUFFIX=""
+else
+    GAS_ESTIMATE_MULTIPLY_SUFFIX="--gas-estimate-multiplier ${GAS_ESTIMATE_MULTIPLY}"
+fi
+
 #### ================= START DEPLOYMENT LOGIC =================
 
 # STEP 1: Verify / Deploy prerequisites
@@ -278,6 +287,11 @@ if [ "$CONTRACT_NAMES" = "[]" ]; then
     log_info "All contracts are already deployed on chain $CHAIN_ID. Skipping deployment."
     exit 0
 fi
+
+# Log the parameters to the main log file
+printf "VERIFY_FLAG: $VERIFY_FLAG\n"
+printf "GAS_SUFFIX: $GAS_SUFFIX\n"
+printf "GAS_ESTIMATE_MULTIPLY_SUFFIX: $GAS_ESTIMATE_MULTIPLY_SUFFIX\n"
 
 # Try to deploy and verify the contracts
 # If the script has been run successfully, exit with code 0
