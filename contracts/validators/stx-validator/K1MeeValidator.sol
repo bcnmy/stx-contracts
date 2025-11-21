@@ -11,6 +11,7 @@ import {
     SIG_TYPE_SIMPLE,
     SIG_TYPE_ON_CHAIN,
     SIG_TYPE_ERC20_PERMIT,
+    SIG_TYPE_SAFE_ACCOUNT,
     ERC1271_SUCCESS,
     ERC1271_FAILED,
     MODULE_TYPE_STATELESS_VALIDATOR,
@@ -20,6 +21,7 @@ import {
 import { PermitValidatorLib } from "../../lib/stx-validator/validation-modes/PermitValidatorLib.sol";
 import { TxValidatorLib } from "../../lib/stx-validator/validation-modes/TxValidatorLib.sol";
 import { SimpleValidatorLib } from "../../lib/stx-validator/validation-modes/SimpleValidatorLib.sol";
+import { SafeAccountValidatorLib } from "../../lib/stx-validator/validation-modes/SafeAccountValidatorLib.sol";
 import { NoMeeFlowLib } from "../../lib/stx-validator/validation-modes/NoMeeFlowLib.sol";
 import { EcdsaHelperLib } from "../../lib/util/EcdsaHelperLib.sol";
 
@@ -64,9 +66,6 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
     /// @notice Error to indicate the module is already initialized
     error ModuleAlreadyInitialized();
 
-    /// @notice Error to indicate that the new owner cannot be a contract address
-    error NewOwnerIsNotEoa();
-
     /// @notice Error to indicate that the owner cannot be the zero address
     error OwnerCannotBeZeroAddress();
 
@@ -90,9 +89,6 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
         require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
         address newOwner = address(bytes20(data[:20]));
         require(newOwner != address(0), OwnerCannotBeZeroAddress());
-        if (_isNotEoa(newOwner)) {
-            revert NewOwnerIsNotEoa();
-        }
         smartAccountOwners[msg.sender] = newOwner;
         if (data.length > 20) {
             _fillSafeSenders(data[20:]);
@@ -111,9 +107,6 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
     /// @param newOwner The address of the new owner
     function transferOwnership(address newOwner) external {
         require(newOwner != address(0), ZeroAddressNotAllowed());
-        if (_isNotEoa(newOwner)) {
-            revert NewOwnerIsNotEoa();
-        }
         smartAccountOwners[msg.sender] = newOwner;
     }
 
@@ -187,6 +180,8 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
                 );
             } else if (sigType == SIG_TYPE_ERC20_PERMIT) {
                 vd = PermitValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
+            } else if (sigType == SIG_TYPE_SAFE_ACCOUNT) {
+                vd = SafeAccountValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
             } else {
                 // fallback flow => non MEE flow => no prefix
                 vd = NoMeeFlowLib.validateUserOp(userOpHash, userOp.signature, owner);
@@ -227,16 +222,19 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
         } else {
             // MEE flow:
             // 1) in simple mode, domain separator used for 712 is the domain separator
-            // of the smart account, which includes the account address,
-            // so 7739 is not needed for simple mode
-            // 2) for permit mode and on-chain mode we still need the secure hash
+            // of the smart account, which includes the account address
+            // so 7739 is not needed for simple mode and safe account mode
+            // 2) for permit mode, on-chain mode and safe account mode (all modes except simple mode)
+            // we still need the secure hash
             bytes4 sigType = bytes4(signature[0:4]);
-            if (sigType == SIG_TYPE_ERC20_PERMIT || sigType == SIG_TYPE_ON_CHAIN) {
-                // since we do not know if the underlying hash is safe or not,
+            if (sigType != SIG_TYPE_SIMPLE) {
+                // since we do not know if the underlying hash is safe (in terms of having SA hashed into it) or not,
                 // and :
-                // - for permit mode it is blind anyways since it is packed into the deadline field
-                // - for on-chain mode it is blind anyways since it is packed into the txn data
-                // so we can hash the SA into the final hash to protect against two SA's with same owner vector
+                // for permit mode, on-chain mode and safe account mode the data struct (intent etc) hash
+                // is hashed into the blind Merkle tree root (because in those modes we can not inject 712 stx struct
+                // into permit, on-chain txn or safe txn).
+                // So we can hash the SA into the data struct (intent etc) hash to protect
+                // against two SA's with same owner vector without losing transparency.
                 // dataHash = keccak256(abi.encodePacked(dataHash, msg.sender))
                 assembly {
                     let ptr := mload(0x40)
@@ -349,18 +347,6 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
         for (uint256 i; i < length / 20; ++i) {
             _safeSenders.add(msg.sender, address(bytes20(data[20 * i:20 * (i + 1)])));
         }
-    }
-
-    /// @notice Checks if the address is a contract
-    /// @param account The address to check
-    /// @return True if the address is a contract, false otherwise
-    function _isNotEoa(address account) private view returns (bool) {
-        uint256 size;
-        assembly {
-            size := extcodesize(account)
-        }
-        // has code and is not delegated via eip-7702
-        return (size > 0) && (size != 23);
     }
 
     /// @dev Returns whether the `hash` and `signature` are valid.

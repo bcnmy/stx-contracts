@@ -3,6 +3,8 @@ pragma solidity ^0.8.27;
 
 import { SafeEnumLib } from "./SafeEnumLib.sol";
 
+bytes32 constant SAFE_TX_TYPEHASH = 0xbb8310d486368db6bd6f849402fdd73ad53d316b5a4b2644ad6efe0f941286d8;
+
 /**
  * @title Safe Interface
  * @notice A multi-signature wallet with support for confirmations using signed messages based on EIP-712.

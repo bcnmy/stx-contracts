@@ -7,6 +7,9 @@ bytes3 constant SIG_TYPE_MEE_FLOW = 0x177eee;
 bytes4 constant SIG_TYPE_SIMPLE = 0x177eee00;
 bytes4 constant SIG_TYPE_ON_CHAIN = 0x177eee01;
 bytes4 constant SIG_TYPE_ERC20_PERMIT = 0x177eee02;
+// bytes4 constant SIG_TYPE_MM_DELEGATION = 0x177eee03; // reserved for MM delegation support
+bytes4 constant SIG_TYPE_SAFE_ACCOUNT = 0x177eee04;
+
 // ...other sig types: ERC-7683, Permit2, etc
 
 // EIP-1271 constants

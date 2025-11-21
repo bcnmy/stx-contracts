@@ -5,10 +5,11 @@ import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { MEEUserOpHashLib } from "../MEEUserOpHashLib.sol";
 import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
 
-import { ISafe } from "../../../interfaces/external/safe-smart-account/ISafe.sol";
+import { ISafe, SAFE_TX_TYPEHASH } from "../../../interfaces/external/safe-smart-account/ISafe.sol";
 import { SafeEnumLib } from "../../../interfaces/external/safe-smart-account/SafeEnumLib.sol";
 
 struct SafeTxnData {
+    bytes32 ogDomainSeparator;
     address to;
     uint256 value;
     bytes data;
@@ -174,24 +175,105 @@ library SafeAccountValidatorLib {
         view
         returns (bool)
     {
-        bytes32 safeTxnDataHash = ISafe(safeAccount)
-            .getTransactionHash({
-                to: safeTxnData.to,
-                value: safeTxnData.value,
-                data: safeTxnData.data,
-                operation: safeTxnData.operation,
-                safeTxGas: safeTxnData.safeTxGas,
-                baseGas: safeTxnData.baseGas,
-                gasPrice: safeTxnData.gasPrice,
-                gasToken: safeTxnData.gasToken,
-                refundReceiver: safeTxnData.refundReceiver,
-                _nonce: safeTxnData.nonce
-            });
+        bytes32 safeTxHash = _getSafeTxHashWithDomainSeparator({
+            domainSeparator: safeTxnData.ogDomainSeparator,
+            to: safeTxnData.to,
+            value: safeTxnData.value,
+            data: safeTxnData.data,
+            operation: safeTxnData.operation,
+            safeTxGas: safeTxnData.safeTxGas,
+            baseGas: safeTxnData.baseGas,
+            gasPrice: safeTxnData.gasPrice,
+            gasToken: safeTxnData.gasToken,
+            refundReceiver: safeTxnData.refundReceiver,
+            _nonce: safeTxnData.nonce
+        });
 
-        try ISafe(safeAccount).checkSignatures(safeAccount, safeTxnDataHash, safeTxnData.signatures) {
+        try ISafe(safeAccount).checkSignatures(safeAccount, safeTxHash, safeTxnData.signatures) {
             return true;
         } catch {
             return false;
+        }
+    }
+
+    /**
+     * @dev Get the safe tx hash with the provided domain separator
+     * @param domainSeparator the domain separator to use
+     * @param to the to address
+     * @param value the value
+     * @param data the data
+     * @param operation the operation
+     * @param safeTxGas the safe tx gas
+     * @param baseGas the base gas
+     * @param gasPrice the gas price
+     * @param gasToken the gas token
+     * @param refundReceiver the refund receiver
+     * @param _nonce the nonce
+     * @return safeTxHash the safe tx hash
+     */
+    function _getSafeTxHashWithDomainSeparator(
+        bytes32 domainSeparator,
+        address to,
+        uint256 value,
+        bytes calldata data,
+        SafeEnumLib.Operation operation,
+        uint256 safeTxGas,
+        uint256 baseGas,
+        uint256 gasPrice,
+        address gasToken,
+        address refundReceiver,
+        uint256 _nonce
+    )
+        private
+        pure
+        returns (bytes32 safeTxHash)
+    {
+        // Mimics the ISafe.getTransactionHash function
+        // except it uses the provided domain separator
+        assembly {
+            // Get the free memory pointer.
+            let ptr := mload(0x40)
+
+            // Step 1: Hash the transaction data.
+            // Copy transaction data to memory and hash it.
+            calldatacopy(ptr, data.offset, data.length)
+            let calldataHash := keccak256(ptr, data.length)
+
+            // Step 2: Prepare the SafeTX struct for hashing.
+            // Layout in memory:
+            // ptr +   0: `SAFE_TX_TYPEHASH` (constant defining the Safe transaction struct hash)
+            // ptr +  32: `to`
+            // ptr +  64: `value`
+            // ptr +  96: `calldataHash = keccak256(data)`
+            // ptr + 128: `operation`
+            // ptr + 160: `safeTxGas`
+            // ptr + 192: `baseGas`
+            // ptr + 224: `gasPrice`
+            // ptr + 256: `gasToken`
+            // ptr + 288: `refundReceiver`
+            // ptr + 320: `nonce`
+            mstore(ptr, SAFE_TX_TYPEHASH)
+            mstore(add(ptr, 32), to)
+            mstore(add(ptr, 64), value)
+            mstore(add(ptr, 96), calldataHash)
+            mstore(add(ptr, 128), operation)
+            mstore(add(ptr, 160), safeTxGas)
+            mstore(add(ptr, 192), baseGas)
+            mstore(add(ptr, 224), gasPrice)
+            mstore(add(ptr, 256), gasToken)
+            mstore(add(ptr, 288), refundReceiver)
+            mstore(add(ptr, 320), _nonce)
+
+            // Step 3: Calculate the final EIP-712 hash.
+            // First, hash the SafeTX struct (352 bytes total length).
+            mstore(add(ptr, 64), keccak256(ptr, 352))
+            // Store the EIP-712 prefix (`0x1901`), note that integers are left-padded with 0's,
+            // so the EIP-712 encoded data starts at `add(ptr, 30)`.
+            mstore(ptr, 0x1901)
+            // Store the domain separator.
+            mstore(add(ptr, 32), domainSeparator)
+            // Calculate the hash.
+            safeTxHash := keccak256(add(ptr, 30), 66)
         }
     }
 
