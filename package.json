@@ -46,15 +46,15 @@
     "solidity-bytes-utils": "GNSPS/solidity-bytes-utils#v0.8.4",
     "solidity-rlp": "hamdiallam/Solidity-RLP#v2.0.8",
     "@rhinestone/module-bases": "github:rhinestonewtf/module-bases",
-    "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall"
+    "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall",
+    "solarray": "github:sablier-labs/solarray"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "solhint": "^6.0.1",
     "tsx": "^4.19.2",
     "typescript": "^5.4.0",
-    "viem": "^2.22.17",
-    "solarray": "github:sablier-labs/solarray"
+    "viem": "^2.22.17"
   },
   "pnpm": {
     "overrides": {
