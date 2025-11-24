@@ -8,6 +8,8 @@ import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/
 import { ISafe, SAFE_TX_TYPEHASH } from "../../../interfaces/external/safe-smart-account/ISafe.sol";
 import { SafeEnumLib } from "../../../interfaces/external/safe-smart-account/SafeEnumLib.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 struct SafeTxnData {
     bytes32 ogDomainSeparator;
     address to;
@@ -189,10 +191,15 @@ library SafeAccountValidatorLib {
             _nonce: safeTxnData.nonce
         });
 
-        try ISafe(safeAccount).checkSignatures(safeAccount, safeTxHash, safeTxnData.signatures) {
+        try ISafe(safeAccount).checkSignatures(safeTxHash, hex"", safeTxnData.signatures) {
             return true;
         } catch {
-            return false;
+            // if it reverts, maybe should try the legacy interface
+            try ISafe(safeAccount).checkSignatures(msg.sender, safeTxHash, safeTxnData.signatures) {
+                return true;
+            } catch {
+                return false;
+            }
         }
     }
 

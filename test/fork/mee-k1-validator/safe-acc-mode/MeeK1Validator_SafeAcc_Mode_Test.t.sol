@@ -30,9 +30,10 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
     MockAccount orchestrator;
     ISafe safe;
 
-    Vm.Wallet signer1; // 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc = anvil account
-    Vm.Wallet signer2; // 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 = anvil account
-    Vm.Wallet signer3; // 0x531b827c1221EC7CE13266e8F5CB1ec6Ae470be5 = biconomy account
+    // signers should be sorted!
+    Vm.Wallet signer1; // 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 = anvil account
+    Vm.Wallet signer2; // 0x531b827c1221EC7CE13266e8F5CB1ec6Ae470be5 = biconomy account
+    Vm.Wallet signer3; // 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc = anvil account
 
     MockERC20PermitToken erc20;
 
@@ -49,13 +50,13 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         safe = ISafe(0x6D0Cc55Ac8F3d86e6e50de2d8eF06127d39B8Ab0);
 
         uint256 bicoPrivateKey = vm.envUint("TESTNET_PRIVATE_KEY");
-        signer1 = vm.createWallet(uint256(0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba));
-        signer2 = vm.createWallet(uint256(0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356));
-        signer3 = vm.createWallet(bicoPrivateKey);
+        signer1 = vm.createWallet(uint256(0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356)); // 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955
+        signer2 = vm.createWallet(bicoPrivateKey);
+        signer3 = vm.createWallet(uint256(0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba)); // 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc
 
-        vm.label(signer1.addr, "signer1");
-        vm.label(signer2.addr, "signer2");
-        vm.label(signer3.addr, "signer3");
+        vm.label(signer1.addr, "signer1 anvil");
+        vm.label(signer2.addr, "signer2 biconomy");
+        vm.label(signer3.addr, "signer3 anvil");
 
         vm.selectFork(baseSepolia);
         _setupOrchestration();
@@ -67,15 +68,17 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
     function _setupOrchestration() internal {
         super.setUp();
 
+        // ensures consistent addresses for the contracts
+        // since they are deployed with CREATE thus addresses depend on the nonce
+        vm.startPrank(address(0xa11ce));
         k1MeeValidator = new K1MeeValidator();
-        // ensures consistent address for orchestrator since it is deployed with create and depends on the nonce
-        vm.prank(address(0xa11ce));
         orchestrator = deployMockAccount({ validator: address(k1MeeValidator), handler: address(0) });
-
-        vm.prank(address(mockAccount));
-        k1MeeValidator.transferOwnership(address(safe));
-
         mockTarget = new MockTarget();
+        erc20 = new MockERC20PermitToken("test", "TEST");
+        vm.stopPrank();
+
+        vm.prank(address(orchestrator));
+        k1MeeValidator.transferOwnership(address(safe));
 
         vm.deal(address(safe), 100 ether);
         vm.deal(address(orchestrator), 100 ether);
@@ -83,7 +86,6 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         vm.deal(signer2.addr, 100 ether);
         vm.deal(signer3.addr, 100 ether);
 
-        erc20 = new MockERC20PermitToken("test", "TEST");
         deal(address(erc20), address(safe), 100 ether);
 
         //make sure initial balance of receiver is 0
@@ -133,8 +135,9 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         signers[2] = signer3;
 
         // transfer required amount of tokens to the orchestrator
-        bytes memory safeTxnCalldata =
-            abi.encodeWithSelector(erc20.transfer.selector, address(orchestrator), amountToTransfer * (numOfClones + 1));
+        bytes memory safeTxnCalldata = abi.encodeWithSelector(
+            erc20.transfer.selector, address(orchestrator), amountToTransfer * (numOfClones + 1)
+        );
 
         PackedUserOperation[] memory safeOps = _makeSafeAccSuperTx(userOps, signers, safe, safeTxnCalldata);
 
@@ -178,12 +181,41 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
     {
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
-        bytes32[] memory leaves = _buildLeavesOutOfUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
+
+        bytes32[] memory leaves = new bytes32[](userOps.length);
+
+        // We have to switch forks because building leaves involves getting the userOpHash, which is chain specific
+        {
+            // base sepolia
+            vm.selectFork(baseSepolia);
+            bytes32[] memory leaves_baseSepolia =
+                _buildLeavesOutOfUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
+            // sepolia
+            vm.selectFork(sepolia);
+            bytes32[] memory leaves_sepolia =
+                _buildLeavesOutOfUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
+
+            uint256 halfLength = leaves_baseSepolia.length / 2;
+
+            // combine the leaves
+            // we take only the first half of the leaves from base sepolia
+            // and the second half from sepolia
+            // because they are build with appropriate chain id for each chain
+            for (uint256 i = 0; i < halfLength; i++) {
+                leaves[i] = leaves_baseSepolia[i];
+            }
+            for (uint256 i = halfLength; i < leaves_sepolia.length; i++) {
+                leaves[i] = leaves_sepolia[i];
+            }
+        }
 
         // make a tree
         bytes32[] memory tree = leaves.build();
         bytes32 root = tree.root();
 
+        // we need those params for the source chain
+        // so => switch to the base sepolia fork
+        vm.selectFork(baseSepolia);
         uint256 curNonce = safeAccount.nonce();
         bytes32 domainSeparator = safeAccount.domainSeparator();
 
@@ -206,7 +238,10 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         // add the super tx root hash to the data
         safeTxnData.data = abi.encodePacked(safeTxnData.data, root);
 
-        vm.selectFork(baseSepolia);
+        // current fork is base sepolia
+        // we are signing for the source chain
+        // which is base sepolia, so the safe txn hash should be built on the base sepolia fork
+        // since it is also chain specific
         bytes32 safeTxHash = ISafe(safe)
             .getTransactionHash({
                 to: safeTxnData.to,
