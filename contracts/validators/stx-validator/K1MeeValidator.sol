@@ -327,6 +327,8 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
             isValidSig = TxValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
         } else if (sigType == SIG_TYPE_ERC20_PERMIT) {
             isValidSig = PermitValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
+        } else if (sigType == SIG_TYPE_SAFE_ACCOUNT) {
+            isValidSig = SafeAccountValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
         } else {
             // fallback flow => non MEE flow => no prefix
             isValidSig = NoMeeFlowLib.validateSignatureForOwner(owner, hash, signature);

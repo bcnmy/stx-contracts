@@ -164,13 +164,13 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         assertEq(erc20.balanceOf(receiver), amountToTransfer * (numOfClones + 1));
     }
 
-    /*
-    function test_superTxFlow_safeAcc_mode_1271_and_WithData_success(uint256 numOfObjs) public {
+    function test_superTxFlow_safeAcc_mode_1271_and_WithData_success( /*uint256 numOfObjs*/ ) public {
         // Test isValidSignature and validateSignatureWithData flows for Safe Account mode
         // Similar to the permit mode test but using Safe Account signatures
         vm.selectFork(baseSepolia);
 
-        numOfObjs = bound(numOfObjs, 2, 25);
+        //numOfObjs = bound(numOfObjs, 2, 25);
+        uint256 numOfObjs = 8;
 
         bytes[] memory meeSigs = new bytes[](numOfObjs);
         bytes32 baseHash = keccak256(abi.encode("test"));
@@ -180,38 +180,27 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
             total: numOfObjs,
             signers: _getSigners(),
             safeAccount: safe,
-            safeTxnCalldata: abi.encodeWithSelector(
-                erc20.transfer.selector,
-                address(orchestrator),
-                1 ether
-            )
+            safeTxnCalldata: abi.encodeWithSelector(erc20.transfer.selector, address(orchestrator), 1 ether)
         });
 
         // Test both isValidSignature (ERC-1271) and validateSignatureWithData flows
-        for (uint256 i = 0; i < numOfObjs; i++) {
+        for (uint256 i; i < numOfObjs; i++) {
             bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
 
             if (i % 2 == 0) {
                 // Test validateSignatureWithData (stateless validator interface)
-                // For validateSignatureWithData, we use the raw hash without smart account address
                 assertTrue(
                     orchestrator.validateSignatureWithData(
-                        includedLeafHash,
-                        meeSigs[i],
-                        abi.encodePacked(address(safe))
+                        includedLeafHash, meeSigs[i], abi.encodePacked(address(safe))
                     )
                 );
             } else {
                 // Test isValidSignature (ERC-1271 interface)
-                // For isValidSignature with Safe Account mode, we need to hash with the smart account address
-                // as per K1MeeValidator line 239-244
-                bytes32 safeHash = keccak256(abi.encodePacked(includedLeafHash, address(orchestrator)));
-                bytes4 result = orchestrator.isValidSignature(safeHash, meeSigs[i]);
+                bytes4 result = orchestrator.isValidSignature(includedLeafHash, meeSigs[i]);
                 assertTrue(result == ERC1271_SUCCESS);
             }
         }
     }
-    */
 
     // ================================ UTILS ================================
 
@@ -342,7 +331,6 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         return superTxUserOps;
     }
 
-    /*
     function _makeSafeAccSuperTxSignatures(
         bytes32 baseHash,
         uint256 total,
@@ -359,14 +347,12 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
 
         bytes32[] memory leaves = new bytes32[](total);
 
-        // Build leaves with different hashing schemes similar to permit mode
-        for (uint256 i = 0; i < total; i++) {
+        for (uint256 i; i < total; i++) {
             if (i % 2 == 0) {
                 // For validateSignatureWithData (even indices)
                 leaves[i] = keccak256(abi.encode(baseHash, i));
             } else {
                 // For isValidSignature (odd indices) - hash with smart account address
-                // This mimics the safe hash preparation for ERC-1271
                 leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), address(orchestrator)));
             }
         }
@@ -380,6 +366,7 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         bytes32 domainSeparator = safeAccount.domainSeparator();
 
         // Create safe txn data
+        /*
         SafeTxnData memory safeTxnData = SafeTxnData({
             ogDomainSeparator: domainSeparator,
             to: address(erc20),
@@ -394,38 +381,56 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
             nonce: curNonce,
             signatures: ""
         });
+        */
 
         // Add the super tx root hash to the data
-        safeTxnData.data = abi.encodePacked(safeTxnData.data, root);
+        safeTxnCalldata = abi.encodePacked(safeTxnCalldata, root);
 
-        // Get safe transaction hash
-        bytes32 safeTxHash = ISafe(safeAccount).getTransactionHash({
-            to: safeTxnData.to,
-            value: safeTxnData.value,
-            data: safeTxnData.data,
-            operation: safeTxnData.operation,
-            safeTxGas: safeTxnData.safeTxGas,
-            baseGas: safeTxnData.baseGas,
-            gasPrice: safeTxnData.gasPrice,
-            gasToken: safeTxnData.gasToken,
-            refundReceiver: safeTxnData.refundReceiver,
-            _nonce: safeTxnData.nonce
-        });
+        bytes memory signatures = "";
+        {
+            // Get safe transaction hash
+            bytes32 safeTxHash = ISafe(safeAccount)
+                .getTransactionHash({
+                    to: address(erc20),
+                    value: 0,
+                    data: safeTxnCalldata,
+                    operation: SafeEnumLib.Operation.Call,
+                    safeTxGas: 0,
+                    baseGas: 0,
+                    gasPrice: 0,
+                    gasToken: address(0),
+                    refundReceiver: payable(address(0)),
+                    _nonce: curNonce
+                });
 
-        // Sign with all safe signers
-        for (uint256 i = 0; i < signers.length; i++) {
-            (uint8 v, bytes32 r, bytes32 s) = vm.sign(signers[i].privateKey, safeTxHash);
-            safeTxnData.signatures = abi.encodePacked(safeTxnData.signatures, r, s, v);
+            // Sign with all safe signers
+            for (uint256 i = 0; i < signers.length; i++) {
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(signers[i].privateKey, safeTxHash);
+                signatures = abi.encodePacked(signatures, r, s, v);
+            }
         }
 
-        // Build signatures for each leaf
-        for (uint256 i = 0; i < total; i++) {
+        // Encode signatures for each leaf
+        for (uint256 i; i < total; i++) {
             bytes32[] memory proof = tree.leafProof(i);
             bytes memory signature = abi.encodePacked(
                 SIG_TYPE_SAFE_ACCOUNT,
                 abi.encode(
                     DecodedSafeAccountSignatureShort({
-                        safeTxnData: safeTxnData,
+                        safeTxnData: SafeTxnData({
+                            ogDomainSeparator: domainSeparator,
+                            to: address(erc20),
+                            value: 0,
+                            data: safeTxnCalldata,
+                            operation: SafeEnumLib.Operation.Call,
+                            safeTxGas: 0,
+                            baseGas: 0,
+                            gasPrice: 0,
+                            gasToken: address(0),
+                            refundReceiver: payable(address(0)),
+                            nonce: curNonce,
+                            signatures: signatures
+                        }),
                         proof: proof
                     })
                 )
@@ -434,5 +439,4 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         }
         return meeSigs;
     }
-    */
 }

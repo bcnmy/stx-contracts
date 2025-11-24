@@ -8,8 +8,6 @@ import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/
 import { ISafe, SAFE_TX_TYPEHASH } from "../../../interfaces/external/safe-smart-account/ISafe.sol";
 import { SafeEnumLib } from "../../../interfaces/external/safe-smart-account/SafeEnumLib.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 struct SafeTxnData {
     bytes32 ogDomainSeparator;
     address to;
