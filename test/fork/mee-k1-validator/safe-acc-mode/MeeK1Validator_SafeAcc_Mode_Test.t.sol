@@ -14,9 +14,10 @@ import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
 import { CopyUserOpLib } from "../../../util/CopyUserOpLib.sol";
 import {
     DecodedSafeAccountSignatureFull,
+    DecodedSafeAccountSignatureShort,
     SafeTxnData
 } from "contracts/lib/stx-validator/validation-modes/SafeAccountValidatorLib.sol";
-import { SIG_TYPE_SAFE_ACCOUNT } from "contracts/types/Constants.sol";
+import { SIG_TYPE_SAFE_ACCOUNT, ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 import { console2 } from "forge-std/console2.sol";
 
 contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
@@ -51,7 +52,7 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
 
         uint256 bicoPrivateKey = vm.envUint("TESTNET_PRIVATE_KEY");
         signer1 = vm.createWallet(uint256(0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356)); // 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955
-        signer2 = vm.createWallet(bicoPrivateKey);
+        signer2 = vm.createWallet(bicoPrivateKey); // 0x531b827c1221EC7CE13266e8F5CB1ec6Ae470be5
         signer3 = vm.createWallet(uint256(0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba)); // 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc
 
         vm.label(signer1.addr, "signer1 anvil");
@@ -92,10 +93,8 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         assertEq(erc20.balanceOf(receiver), 0);
     }
 
-    function test_superTxFlow_safeAcc_mode_ValidateUserOp_success() public {
-        // create user Ops on each chain to transfer tokens to receiver
-
-        uint256 numOfClones = 5;
+    function test_superTxFlow_safeAcc_mode_ValidateUserOp_success(uint256 numOfClones) public {
+        numOfClones = bound(numOfClones, 1, 25);
 
         bytes memory innerCallData = abi.encodeWithSelector(erc20.transfer.selector, receiver, amountToTransfer);
 
@@ -129,10 +128,7 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
             userOps[userOps_baseSepolia.length + i] = userOps_sepolia[i].deepCopy();
         }
 
-        Vm.Wallet[] memory signers = new Vm.Wallet[](3);
-        signers[0] = signer1;
-        signers[1] = signer2;
-        signers[2] = signer3;
+        Vm.Wallet[] memory signers = _getSigners();
 
         // transfer required amount of tokens to the orchestrator
         bytes memory safeTxnCalldata = abi.encodeWithSelector(
@@ -168,7 +164,64 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         assertEq(erc20.balanceOf(receiver), amountToTransfer * (numOfClones + 1));
     }
 
+    /*
+    function test_superTxFlow_safeAcc_mode_1271_and_WithData_success(uint256 numOfObjs) public {
+        // Test isValidSignature and validateSignatureWithData flows for Safe Account mode
+        // Similar to the permit mode test but using Safe Account signatures
+        vm.selectFork(baseSepolia);
+
+        numOfObjs = bound(numOfObjs, 2, 25);
+
+        bytes[] memory meeSigs = new bytes[](numOfObjs);
+        bytes32 baseHash = keccak256(abi.encode("test"));
+
+        meeSigs = _makeSafeAccSuperTxSignatures({
+            baseHash: baseHash,
+            total: numOfObjs,
+            signers: _getSigners(),
+            safeAccount: safe,
+            safeTxnCalldata: abi.encodeWithSelector(
+                erc20.transfer.selector,
+                address(orchestrator),
+                1 ether
+            )
+        });
+
+        // Test both isValidSignature (ERC-1271) and validateSignatureWithData flows
+        for (uint256 i = 0; i < numOfObjs; i++) {
+            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
+
+            if (i % 2 == 0) {
+                // Test validateSignatureWithData (stateless validator interface)
+                // For validateSignatureWithData, we use the raw hash without smart account address
+                assertTrue(
+                    orchestrator.validateSignatureWithData(
+                        includedLeafHash,
+                        meeSigs[i],
+                        abi.encodePacked(address(safe))
+                    )
+                );
+            } else {
+                // Test isValidSignature (ERC-1271 interface)
+                // For isValidSignature with Safe Account mode, we need to hash with the smart account address
+                // as per K1MeeValidator line 239-244
+                bytes32 safeHash = keccak256(abi.encodePacked(includedLeafHash, address(orchestrator)));
+                bytes4 result = orchestrator.isValidSignature(safeHash, meeSigs[i]);
+                assertTrue(result == ERC1271_SUCCESS);
+            }
+        }
+    }
+    */
+
     // ================================ UTILS ================================
+
+    function _getSigners() internal view returns (Vm.Wallet[] memory) {
+        Vm.Wallet[] memory signers = new Vm.Wallet[](3);
+        signers[0] = signer1;
+        signers[1] = signer2;
+        signers[2] = signer3;
+        return signers;
+    }
 
     function _makeSafeAccSuperTx(
         PackedUserOperation[] memory userOps,
@@ -179,23 +232,27 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         internal
         returns (PackedUserOperation[] memory)
     {
-        uint48 lowerBoundTimestamp = uint48(block.timestamp);
-        uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
+        // setting fixed timestamps
+        // because block.timestamp turned out to be not deterministic in the multifork environment
+        uint48 lowerBoundTimestamp = 0;
+        uint48 upperBoundTimestamp = 2_763_994_636;
 
         bytes32[] memory leaves = new bytes32[](userOps.length);
 
         // We have to switch forks because building leaves involves getting the userOpHash, which is chain specific
         {
+
+            uint256 halfLength = userOps.length / 2;
+
             // base sepolia
             vm.selectFork(baseSepolia);
             bytes32[] memory leaves_baseSepolia =
                 _buildLeavesOutOfUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
+
             // sepolia
             vm.selectFork(sepolia);
             bytes32[] memory leaves_sepolia =
                 _buildLeavesOutOfUserOps(userOps, lowerBoundTimestamp, upperBoundTimestamp);
-
-            uint256 halfLength = leaves_baseSepolia.length / 2;
 
             // combine the leaves
             // we take only the first half of the leaves from base sepolia
@@ -204,7 +261,7 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
             for (uint256 i = 0; i < halfLength; i++) {
                 leaves[i] = leaves_baseSepolia[i];
             }
-            for (uint256 i = halfLength; i < leaves_sepolia.length; i++) {
+            for (uint256 i = halfLength; i < userOps.length; i++) {
                 leaves[i] = leaves_sepolia[i];
             }
         }
@@ -284,4 +341,98 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
         }
         return superTxUserOps;
     }
+
+    /*
+    function _makeSafeAccSuperTxSignatures(
+        bytes32 baseHash,
+        uint256 total,
+        Vm.Wallet[] memory signers,
+        ISafe safeAccount,
+        bytes memory safeTxnCalldata
+    )
+        internal
+        view
+        returns (bytes[] memory)
+    {
+        bytes[] memory meeSigs = new bytes[](total);
+        require(total > 0, "total must be greater than 0");
+
+        bytes32[] memory leaves = new bytes32[](total);
+
+        // Build leaves with different hashing schemes similar to permit mode
+        for (uint256 i = 0; i < total; i++) {
+            if (i % 2 == 0) {
+                // For validateSignatureWithData (even indices)
+                leaves[i] = keccak256(abi.encode(baseHash, i));
+            } else {
+                // For isValidSignature (odd indices) - hash with smart account address
+                // This mimics the safe hash preparation for ERC-1271
+                leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), address(orchestrator)));
+            }
+        }
+
+        // Build merkle tree
+        bytes32[] memory tree = leaves.build();
+        bytes32 root = tree.root();
+
+        // Get Safe transaction parameters
+        uint256 curNonce = safeAccount.nonce();
+        bytes32 domainSeparator = safeAccount.domainSeparator();
+
+        // Create safe txn data
+        SafeTxnData memory safeTxnData = SafeTxnData({
+            ogDomainSeparator: domainSeparator,
+            to: address(erc20),
+            value: 0,
+            data: safeTxnCalldata,
+            operation: SafeEnumLib.Operation.Call,
+            safeTxGas: 0,
+            baseGas: 0,
+            gasPrice: 0,
+            gasToken: address(0),
+            refundReceiver: payable(address(0)),
+            nonce: curNonce,
+            signatures: ""
+        });
+
+        // Add the super tx root hash to the data
+        safeTxnData.data = abi.encodePacked(safeTxnData.data, root);
+
+        // Get safe transaction hash
+        bytes32 safeTxHash = ISafe(safeAccount).getTransactionHash({
+            to: safeTxnData.to,
+            value: safeTxnData.value,
+            data: safeTxnData.data,
+            operation: safeTxnData.operation,
+            safeTxGas: safeTxnData.safeTxGas,
+            baseGas: safeTxnData.baseGas,
+            gasPrice: safeTxnData.gasPrice,
+            gasToken: safeTxnData.gasToken,
+            refundReceiver: safeTxnData.refundReceiver,
+            _nonce: safeTxnData.nonce
+        });
+
+        // Sign with all safe signers
+        for (uint256 i = 0; i < signers.length; i++) {
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(signers[i].privateKey, safeTxHash);
+            safeTxnData.signatures = abi.encodePacked(safeTxnData.signatures, r, s, v);
+        }
+
+        // Build signatures for each leaf
+        for (uint256 i = 0; i < total; i++) {
+            bytes32[] memory proof = tree.leafProof(i);
+            bytes memory signature = abi.encodePacked(
+                SIG_TYPE_SAFE_ACCOUNT,
+                abi.encode(
+                    DecodedSafeAccountSignatureShort({
+                        safeTxnData: safeTxnData,
+                        proof: proof
+                    })
+                )
+            );
+            meeSigs[i] = signature;
+        }
+        return meeSigs;
+    }
+    */
 }

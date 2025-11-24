@@ -10,6 +10,7 @@ import { MockAccount } from "../../mock/accounts/MockAccount.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
 import "contracts/types/Constants.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract MeeK1Validator_Base_Test is BaseTest {
     using CopyUserOpLib for PackedUserOperation;
