@@ -83,7 +83,7 @@
 
   # SONIC
   sonic = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "146"}
-  # sonic-blaze = { key = "", url = "", chain = "57054"}
+  sonic-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "14601"}
 
   # SCROLL
   scroll = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "534352"}

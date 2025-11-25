@@ -4,7 +4,7 @@ pragma solidity ^0.8.27;
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { MEEUserOpHashLib } from "../MEEUserOpHashLib.sol";
 import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
-
+// solhint-disable no-unused-import
 import { ISafe, SAFE_TX_TYPEHASH } from "../../../interfaces/external/safe-smart-account/ISafe.sol";
 import { SafeEnumLib } from "../../../interfaces/external/safe-smart-account/SafeEnumLib.sol";
 
