@@ -42,3 +42,6 @@ jobs:
       run: export FOUNDRY_PROFILE="via-ir" && pnpm test
       env:
         FOUNDRY_PROFILE: ci
+        RPC_84532: https://sepolia.base.org
+        RPC_11155111_TEST: https://0xrpc.io/sep
+        TESTNET_PRIVATE_KEY: ${{ secrets.TESTNET_PRIVATE_KEY }}
