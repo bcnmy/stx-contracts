@@ -37,7 +37,7 @@ enum ValidationType {
 }
 
 struct ValidationConfig {
-    address statelessValidator;
+    address validatorAddress;
     ValidationType validationType;
     FlatBytesLib.Bytes validationData;
 }
@@ -184,27 +184,13 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
         override
         returns (uint256)
     {
+        bytes32 activeConfigId;
+        uint48 lowerBoundTimestamp;
+        uint48 upperBoundTimestamp;
         bytes memory signature;
         bytes32 signedHash;
-        uint256 upperBoundTimestamp;
-        uint256 lowerBoundTimestamp;
         bool sigValidationFailed = true; // do not validate by default
 
-        // backwards compatibility mode
-        if (userOp.signature.length == 65 && userOp.signature[0:3] != SIG_TYPE_MEE_FLOW) {
-            // pure AA erc4337 flow with single EOA as owner
-            // so no sig type and config id are expected to be present
-
-            ValidationConfig memory config = configs[DEFAULT_CONFIG_ID][msg.sender];
-
-            address expectedSigner = config.validationData.decodeEoaAddress();
-            require(expectedSigner != address(0), NoOwnerProvided());
-
-            // do a simple ecrecover
-            sigValidationFailed = !EcdsaHelperLib.isValidSignature(expectedSigner, userOpHash, userOp.signature);
-        }
-
-        bytes32 activeConfigId;
         // stx modes
         if (userOp.signature.length >= ENCODED_DATA_OFFSET) {
             if (userOp.signature.length < ENCODED_DATA_OFFSET + 32) {
@@ -224,28 +210,31 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
 
             // call mode libraries: they validate the current userOp is the part of the SuperTxn
             // and returns the data (signed hash and signature) for the further sig validation
+            // no mee flow is also handled there
+            (signedHash, lowerBoundTimestamp, upperBoundTimestamp, signature) =
+                _validateStxUserOp(userOpHash, userOp.signature);
+
+            /*
             bytes4 sigType = bytes4(userOp.signature[0:ENCODED_DATA_OFFSET]);
             if (sigType == SIG_TYPE_SIMPLE) {
-                vd = SimpleValidatorLib.validateStxUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
-            } /*
-                else if (sigType == SIG_TYPE_ON_CHAIN) {
-                    vd = TxValidatorLib.validateUserOp(
-                        userOpHash, userOp.signature[ENCODED_DATA_OFFSET:userOp.signature.length], owner
-                    );
-                } else if (sigType == SIG_TYPE_ERC20_PERMIT) {
-                    vd = PermitValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
-                } else if (sigType == SIG_TYPE_SAFE_ACCOUNT) {
-                    vd = SafeAccountValidatorLib.validateUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
-                } */
+                = SimpleValidatorLib.validateStxUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
+            }
+            else if (sigType == SIG_TYPE_ON_CHAIN) {
+                TxValidatorLib.validateStxUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:userOp.signature.length], owner);
+            } else if (sigType == SIG_TYPE_ERC20_PERMIT) {
+                PermitValidatorLib.validateStxUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
+            } else if (sigType == SIG_TYPE_SAFE_ACCOUNT) {
+                SafeAccountValidatorLib.validateStxUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
+            }*/
+
+            sigValidationFailed = !configs.validateSignature({
+                smartAccount: msg.sender, configId: activeConfigId, userOpHash: signedHash, signature: signature
+            });
+
+            return _packValidationData(sigValidationFailed, upperBoundTimestamp, lowerBoundTimestamp);
         }
 
-        // get config by config id
-        Config config = configs[activeConfigId][msg.sender];
-        require(config.statelessValidator != address(0), NoConfigsEnabledForAccount(msg.sender));
-
-        // do a validation via 7780 or 1271
-
-        return _packValidationData(sigValidationFailed, upperBoundTimestamp, lowerBoundTimestamp);
+        revert InvalidDataLength();
     }
 
     /**
