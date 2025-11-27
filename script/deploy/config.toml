@@ -231,19 +231,19 @@ chain_id = 146
 [146.string]
 name = "Sonic Mainnet"
 
-### Sonic Blaze Testnet (57054)
-[57054]
-endpoint_url = "${RPC_57054}"
+### Sonic Testnet (14601)
+[14601]
+endpoint_url = "${RPC_14601}"
 
-[57054.bool]
+[14601.bool]
 is_testnet = true
 verify = true
 
-[57054.uint]
+[14601.uint]
 chain_id = 57054
 
-[57054.string]
-name = "Sonic Blaze Testnet"
+[14601.string]
+name = "Sonic Testnet"
 
 # ===============
 # SCROLL
