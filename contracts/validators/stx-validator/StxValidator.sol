@@ -85,14 +85,21 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
      * @param data The data to initialize the module with
      */
     function onInstall(bytes calldata data) external override {
+
+        // first bytes are always a flag:
+        // 4 bytes - mode flag
+        // 1 byte - safe senders length (n)
+        // 20 bytes - custom validator address if mode flag is `custom`
+        // n*20 bytes - safe senders if any
+        // config validation data
+
         /**
          *   onInstall always uses the default configId
          *   if more configs are needed, they should be added later
          *
          *   no backwards compatibility features are needed
          *
-         *
-         * new initdata format:
+         *   new initdata format:
          *
          *][init data]
          *     statelss validator address is required for the custom setup mode, for example for
