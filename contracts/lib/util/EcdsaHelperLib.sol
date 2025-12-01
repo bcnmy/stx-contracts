@@ -57,7 +57,6 @@ library EcdsaHelperLib {
             mstore(add(ptr, 0x02), domainSeparator)
             mstore(add(ptr, 0x22), structHash)
             digest := keccak256(ptr, 0x42)
-            mstore(0x40, add(ptr, 0x42))
         }
     }
 }

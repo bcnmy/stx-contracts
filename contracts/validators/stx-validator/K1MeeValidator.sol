@@ -243,7 +243,6 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
                     mstore(ptr, dataHash)
                     mstore(add(ptr, 0x20), shl(96, caller()))
                     dataHash := keccak256(ptr, 0x34)
-                    mstore(0x40, add(ptr, 0x34))
                 }
             }
             return _validateSignatureForOwner(getOwner(msg.sender), dataHash, _erc1271UnwrapSignature(signature))
