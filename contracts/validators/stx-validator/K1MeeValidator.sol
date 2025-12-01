@@ -243,6 +243,7 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
                     mstore(ptr, dataHash)
                     mstore(add(ptr, 0x20), shl(96, caller()))
                     dataHash := keccak256(ptr, 0x34)
+                    // restore free memory ptr
                     mstore(0x40, add(ptr, 0x34))
                 }
             }

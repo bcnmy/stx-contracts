@@ -363,6 +363,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
                     let ptr := mload(0x40)
                     calldatacopy(ptr, initData.offset, initData.length)
                     initDataHash := keccak256(ptr, initData.length)
+                    // restore free memory ptr
                     mstore(0x40, add(ptr, initData.length))
                 }
                 // Make sure the account has not been already initialized

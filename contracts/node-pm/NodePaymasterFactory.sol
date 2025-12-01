@@ -101,6 +101,7 @@ contract NodePaymasterFactory {
             mstore(add(ptr, 0x15), index)
             mstore(add(ptr, 0x35), initCodeHash)
             predictedAddress := keccak256(ptr, 0x55)
+            // restore free memory ptr
             mstore(0x40, add(ptr, 0x55))
         }
         /// forge-lint:disable-next-line(unsafe-typecast)
