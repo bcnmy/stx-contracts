@@ -93,4 +93,13 @@ interface IModuleManagerEventsAndErrors {
 
     /// @notice Error thrown when the default validator is already installed.
     error DefaultValidatorAlreadyInstalled();
+
+    /// @notice Error thrown when the validator is not installed.
+    error ValidatorNotInstalled();
+
+    /// @notice Error thrown when the enable mode signature is invalid.
+    error EnableModeSigError();
+
+    /// @notice Error thrown when a fallback handler is not installed for a given selector.
+    error MissingFallbackHandler(bytes4 selector);
 }
