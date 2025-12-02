@@ -732,6 +732,8 @@ abstract contract ModuleManager is Storage, EIP712, IModuleManager {
 
             // Hash the entire struct
             structHash := keccak256(ptr, 0xa0)
+            // restore free memory ptr
+            mstore(0x40, add(add(ptr, 0xa0), initData.length))
         }
         return structHash;
     }
