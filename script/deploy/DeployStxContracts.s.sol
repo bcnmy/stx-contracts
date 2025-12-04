@@ -14,30 +14,30 @@ import { CreateX } from "script/deploy/util/CreateX.sol";
 
 contract DeployStxContracts is Script, Config {
     /* ===== salts ===== */
-    bytes32 constant MEE_K1_VALIDATOR_SALT = 0x0000000000000000000000000000000000000000972d15c771cbed0134f06e96; //=>
-    // 0x0000000055C766a7060797FBc7Be40c08B296b72;
+    bytes32 constant MEE_K1_VALIDATOR_SALT = 0x00000000000000000000000000000000000000005fe96fc53eb11e03ebc158a0; //=>
+    // 0x00000000D9eb4Bbe6BbBfBA94c1fde95Ca01a179;
 
-    bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000d778ccb0fcb1a100ad59b1f4; // =>
-    // 0x00000000561Dd60aEa485cDb26E4618B1E40Fd6E;
+    bytes32 constant NEXUS_SALT = 0x0000000000000000000000000000000000000000aad794d47b804303b6ad8771; // =>
+    // 0x000000f10639E057e36e9fDE8751F80416AEE010;
 
-    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x00000000000000000000000000000000000000007ddd91bf179d32003c6b22f9; // =>
-    // 0x000000006f105FED549ee4304269Cc4a6111Fa6e
+    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x000000000000000000000000000000000000000051bdc79e23198d03b9474a14; // =>
+    // 0x000000008b64F4F3084C066aF715d24518Bd8797
 
-    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x0000000000000000000000000000000000000000cfbb4facaad7260297eca2fc; //
-    // => 0x00000000976b6E105D5237DcE5d65C4F6DB60200;
+    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x000000000000000000000000000000000000000050ffe23fa5f7a10347ab64f6; //
+    // => 0x0000000000caA13A4d8c95ec96c6d15d46fdeDa1;
 
     bytes32 constant COMPOSABLE_EXECUTION_MODULE_SALT =
-        0x000000000000000000000000000000000000000093ca75554c2a3c03ef8aebc4; // =>
-    // 0x00000042e9416FB078530A34f6d4F22D2Cc585f2
+        0x00000000000000000000000000000000000000008d04585764673a01ecb09ecd; // =>
+    // 0x00000000f61636C0CA71d21a004318502283aB2d
 
-    bytes32 constant COMPOSABLE_STORAGE_SALT = 0x0000000000000000000000000000000000000000465fbd534a6e5803cde982a7; // =>
-    // 0x000000773e37c4E78f4a4d98ee44f8259d64226D;
+    bytes32 constant COMPOSABLE_STORAGE_SALT = 0x000000000000000000000000000000000000000070fef65fd06ba40009ce0acc; // =>
+    // 0x0000000078994c6ef6A4596BE53A728b255352c2;
 
     bytes32 constant ETH_FORWARDER_SALT = 0x00000000000000000000000000000000000000002f5763a1f79af7033892e88a; //=>
     // 0x000000C48Cdf2b46bEc062483dBD27046dfE3b8d;
 
-    bytes32 constant NODE_PMF_SALT = 0x000000000000000000000000000000000000000043d5c4fb34feeb02c1d49524; // =>
-    // 0x000000A04da3b610fE1ce06C154A8B8A4c1CAaea
+    bytes32 constant NODE_PMF_SALT = 0x0000000000000000000000000000000000000000a59717b95fe60f015cd48181; // =>
+    // 0x000000003c7824c9842b71F0cD390b1805A7EF90
 
     bytes32 public constant DISPERSE_SALT = 0xfd73487f4e6544007a3ce4000000000000000000000000000000000000000000;
     bytes public constant DISPERSE_INITCODE =
@@ -160,10 +160,6 @@ contract DeployStxContracts is Script, Config {
                 uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), expectedNexusAccountFactoryAddress, NEXUS_PROXY_SALT, initCodeHash))))
             ));
         checkAndLogContractStatus(chainId, expectedNexusProxyAddress, "NexusProxy", isDryRun);
-        if (isDryRun) {
-            console2.logBytes(initData);
-            console2.logBytes32(keccak256(abi.encodePacked(bytecode, initData)));
-        }
 
         bytecode = vm.getCode("script/deploy/artifacts/ComposableExecutionModule/ComposableExecutionModule.json");
         args = abi.encode(ENTRYPOINT_ADDRESS);
@@ -229,7 +225,11 @@ contract DeployStxContracts is Script, Config {
                 deployedContractsPerChain[chainId].nexusAccountFactory = deployNexusAccountFactory(chainId);
             }
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("NexusProxy"))) {
-                deployedContractsPerChain[chainId].nexusProxy = deployNexusProxy(chainId);
+                if (deployedContractsPerChain[chainId].nexus != address(0) && deployedContractsPerChain[chainId].nexusAccountFactory != address(0) && deployedContractsPerChain[chainId].nexusBootstrap != address(0)) {
+                    deployedContractsPerChain[chainId].nexusProxy = deployNexusProxy(chainId);
+                } else {
+                    console.log("Nexus, NexusAccountFactory, and NexusBootstrap must be deployed along with the NexusProxy. If they have been deployed before, please provide the addresses manually in the DeployStxContracts.s.sol file.");
+                }
             }
             if (
                 keccak256(abi.encodePacked(contractNames[i]))

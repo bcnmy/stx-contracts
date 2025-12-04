@@ -18,11 +18,12 @@ interface IERC5267 {
         );
 }
 
-// keccak256("SuperTx(MeeUserOp[] meeUserOps)");
+// keccak256("SuperTx(MeeUserOp[] meeUserOps)MeeUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256
+// upperBoundTimestamp)");
 bytes32 constant SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH =
-    0x07bdf0267970db0d5b9acc9d9fa8ef0cbb5b543fb897017542bfb306f5e46ad0;
-// keccak256("EIP712Domain(string name");
-bytes32 constant _DOMAIN_TYPEHASH = 0x95e78ac088fa46a576911187c70ccdc0642491fdb90b2ed8674182c4aabca91d;
+    0x1a58b0b3453f5d21f63e55d5c1efc085fbe3b770821fbf528477956a4c0deb0a;
+// keccak256("EIP712Domain(string name)");
+bytes32 constant _DOMAIN_TYPEHASH = 0xb2178a58fb1eefb359ecfdd57bb19c0bdd0f4e6eed8547f46600e500ed111af3;
 uint256 constant STATIC_HEAD_LENGTH = 0x80; // introduced to re-use it in the contracts that use this library
 
 library HashLib {
@@ -53,13 +54,13 @@ library HashLib {
             itemIndex := calldataload(add(packedSignatureData.offset, 0x20))
             let u := calldataload(add(packedSignatureData.offset, 0x40)) // local offset of the array of hashes
             let s := add(packedSignatureData.offset, u) // global offset of the array of hashes
-            itemHashes.offset := add(s, 0x20) // account for 20 bytes length
+            itemHashes.offset := add(s, 0x20) // account for 32 bytes length
             itemHashes.length := calldataload(s) // get the length
             u := calldataload(add(packedSignatureData.offset, sub(STATIC_HEAD_LENGTH, 0x20))) // load local offset of
             // the
             // signature
             s := add(packedSignatureData.offset, u) // global offset of the signature
-            signature.offset := add(s, 0x20) // account for 20 bytes length
+            signature.offset := add(s, 0x20) // account for 32 bytes length
             signature.length := calldataload(s) // get the length
         }
     }
