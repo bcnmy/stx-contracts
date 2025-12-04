@@ -21,7 +21,7 @@ interface IERC5267 {
 // keccak256("SuperTx(MeeUserOp[] meeUserOps)MeeUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256
 // upperBoundTimestamp)");
 bytes32 constant SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH =
-    0x1a58b0b3453f5d21f63e55d5c1efc085fbe3b770821fbf528477956a4c0deb0a;
+    0x18920ab59b79e66eb8250f08215198bc72e5a4b3822706ea145ae8f0cbb22526;
 // keccak256("EIP712Domain(string name)");
 bytes32 constant _DOMAIN_TYPEHASH = 0xb2178a58fb1eefb359ecfdd57bb19c0bdd0f4e6eed8547f46600e500ed111af3;
 uint256 constant STATIC_HEAD_LENGTH = 0x80; // introduced to re-use it in the contracts that use this library
