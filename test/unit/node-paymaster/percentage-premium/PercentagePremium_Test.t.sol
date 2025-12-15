@@ -135,7 +135,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         uint128 pmValidationGasLimit = 20_000;
         // ~ 12_000 is raw PM.postOp gas spent
         // here we add more for emitting events in the wrapper + refunds etc in EP
-        uint128 pmPostOpGasLimit = 38_000;
+        uint128 pmPostOpGasLimit = 40_000;
 
         bytes memory pmAndData = abi.encodePacked(
             address(EMITTING_NODE_PAYMASTER),
