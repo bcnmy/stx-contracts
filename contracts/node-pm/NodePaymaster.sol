@@ -118,7 +118,8 @@ contract NodePaymaster is BaseNodePaymaster {
     /**
      * @notice Check if a list of worker EOAs are whitelisted
      * @param workerEOAs The list of worker EOAs to check
-     * @return An array of booleans, where each element corresponds to the whitelist status of the corresponding worker EOA
+     * @return An array of booleans, where each element corresponds to the whitelist status of the corresponding worker
+     * EOA
      */
     /* solhint-disable-next-line gas-named-return-values */
     function areWorkerEOAsWhitelisted(address[] calldata workerEOAs) external view returns (bool[] memory) {

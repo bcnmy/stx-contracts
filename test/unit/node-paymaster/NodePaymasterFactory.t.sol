@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { Vm } from "forge-std/Test.sol";
 import { NodePaymasterFactory } from "../../../contracts/node-pm/NodePaymasterFactory.sol";
-import { BaseTest, ENTRYPOINT_V07_ADDRESS } from "../../Base.t.sol";
+import { BaseTest } from "../../Base.t.sol";
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 
 contract NodePaymasterFactoryTest is BaseTest {

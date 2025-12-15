@@ -18,11 +18,12 @@ interface IERC5267 {
         );
 }
 
-// keccak256("SuperTx(MeeUserOp[] meeUserOps)");
-bytes32 constant SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH = 0x07bdf0267970db0d5b9acc9d9fa8ef0cbb5b543fb897017542bfb306f5e46ad0;
-// keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract,bytes32 salt,uint256[]
-// extensions)");
-bytes32 constant _DOMAIN_TYPEHASH = 0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f;
+// keccak256("SuperTx(MeeUserOp[] meeUserOps)MeeUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256
+// upperBoundTimestamp)");
+bytes32 constant SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH =
+    0x18920ab59b79e66eb8250f08215198bc72e5a4b3822706ea145ae8f0cbb22526;
+// keccak256("EIP712Domain(string name)");
+bytes32 constant _DOMAIN_TYPEHASH = 0xb2178a58fb1eefb359ecfdd57bb19c0bdd0f4e6eed8547f46600e500ed111af3;
 uint256 constant STATIC_HEAD_LENGTH = 0x80; // introduced to re-use it in the contracts that use this library
 
 library HashLib {
@@ -53,12 +54,13 @@ library HashLib {
             itemIndex := calldataload(add(packedSignatureData.offset, 0x20))
             let u := calldataload(add(packedSignatureData.offset, 0x40)) // local offset of the array of hashes
             let s := add(packedSignatureData.offset, u) // global offset of the array of hashes
-            itemHashes.offset := add(s, 0x20) // account for 20 bytes length
+            itemHashes.offset := add(s, 0x20) // account for 32 bytes length
             itemHashes.length := calldataload(s) // get the length
-            u := calldataload(add(packedSignatureData.offset, sub(STATIC_HEAD_LENGTH, 0x20))) // load local offset of the
-                // signature
+            u := calldataload(add(packedSignatureData.offset, sub(STATIC_HEAD_LENGTH, 0x20))) // load local offset of
+            // the
+            // signature
             s := add(packedSignatureData.offset, u) // global offset of the signature
-            signature.offset := add(s, 0x20) // account for 20 bytes length
+            signature.offset := add(s, 0x20) // account for 32 bytes length
             signature.length := calldataload(s) // get the length
         }
     }
@@ -116,9 +118,9 @@ library HashLib {
             /*bytes1 fields*/
             ,
             string memory name,
-            string memory version,
-            uint256 chainId,
-            address verifyingContract,
+            /*string memory version*/,
+            /*uint256 chainId*/,
+            /*address verifyingContract*/,
             /*bytes32 salt*/
             ,
             /*uint256[] memory extensions*/
@@ -130,10 +132,7 @@ library HashLib {
             let m := mload(0x40) // Load the free memory pointer.
             mstore(m, _DOMAIN_TYPEHASH)
             mstore(add(m, 0x20), keccak256(add(name, 0x20), mload(name))) // Name hash.
-            mstore(add(m, 0x40), keccak256(add(version, 0x20), mload(version))) // Version hash.
-            mstore(add(m, 0x60), chainId)
-            mstore(add(m, 0x80), verifyingContract)
-            digest := keccak256(m, 0xa0) //domain separator
+            digest := keccak256(m, 0x40) //domain separator
 
             // Hash typed data
             mstore(0x00, 0x1901000000000000) // Store "\x19\x01".

@@ -4,8 +4,8 @@ pragma solidity ^0.8.27;
 import { MeeK1Validator_Base_Test } from "../MeeK1Validator_Base_Test.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
-import { MockERC20PermitToken } from "../../../mock/MockERC20PermitToken.sol";
-import { EIP1271_SUCCESS } from "contracts/types/Constants.sol";
+import { MockERC20PermitToken } from "test/mock/tokens/MockERC20PermitToken.sol";
+import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 import { CopyUserOpLib } from "../../../util/CopyUserOpLib.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
 import { SIG_TYPE_ON_CHAIN } from "contracts/types/Constants.sol";
@@ -27,7 +27,7 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
         uint256 amountToTransfer = 1 ether; // 1 token
 
         bytes memory innerCallData = abi.encodeWithSelector(erc20.transfer.selector, bob, amountToTransfer); // mock
-            // Account transfers tokens to bob
+        // Account transfers tokens to bob
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
             callData: abi.encodeWithSelector(mockAccount.execute.selector, address(erc20), uint256(0), innerCallData),
             account: address(mockAccount),
@@ -77,7 +77,7 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
                     mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], abi.encodePacked(wallet.addr))
                 );
             } else {
-                assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == EIP1271_SUCCESS);
+                assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == ERC1271_SUCCESS);
             }
         }
     }
@@ -174,22 +174,22 @@ contract MeeK1Validator_On_Chain_Mode_Test is MeeK1Validator_Base_Test {
     {
         LibRLP.List memory accessList = LibRLP.p();
 
-        LibRLP.List memory serializedTxList = LibRLP.p(block.chainid).p(0).p(uint256(1)).p(uint256(20)).p(uint256(50_000))
-            .p(to).p(uint256(0)).p(txnData) // chainId
-                // nonce
-                // maxPriorityFeePerGas
-                // maxFeePerGas
-                // gasLimit
-                // to
-                // value
-                // txn data
+        LibRLP.List memory serializedTxList = LibRLP.p(block.chainid).p(0).p(uint256(1)).p(uint256(20))
+            .p(uint256(50_000)).p(to).p(uint256(0)).p(txnData) // chainId
+            // nonce
+            // maxPriorityFeePerGas
+            // maxFeePerGas
+            // gasLimit
+            // to
+            // value
+            // txn data
             .p(accessList); // empty access list
 
         bytes32 uTxHash = keccak256(abi.encodePacked(hex"02", serializedTxList.encode()));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, uTxHash);
 
         serializedTxList = serializedTxList.p(v == 28 ? true : false).p(uint256(r)).p(uint256(s)); // add v, r, s to the
-            // list
+        // list
         return abi.encodePacked(hex"02", serializedTxList.encode()); // add tx type to the list
     }
 }

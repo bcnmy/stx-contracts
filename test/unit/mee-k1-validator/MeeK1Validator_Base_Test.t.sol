@@ -6,7 +6,7 @@ import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.s
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { BaseTest } from "../../Base.t.sol";
 import { MEEUserOpHashLib } from "../../../contracts/lib/stx-validator/MEEUserOpHashLib.sol";
-import { MockAccount } from "../../mock/MockAccount.sol";
+import { MockAccount } from "../../mock/accounts/MockAccount.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
 import "contracts/types/Constants.sol";
@@ -47,7 +47,7 @@ contract MeeK1Validator_Base_Test is BaseTest {
         view
         returns (PackedUserOperation memory)
     {
-        PackedUserOperation memory userOp = buildUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
             account: account,
             callData: callData,
             wallet: userOpSigner,
@@ -213,7 +213,8 @@ contract MeeK1Validator_Base_Test is BaseTest {
         bytes32[] memory itemHashes = new bytes32[](userOps.length);
         for (uint256 i; i < userOps.length; ++i) {
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[i]);
-            itemHashes[i] = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+            itemHashes[i] =
+                MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
         }
         return itemHashes;
     }
@@ -244,7 +245,8 @@ contract MeeK1Validator_Base_Test is BaseTest {
      * @dev Format: SuperTx(Type1 entry1,Type2 entry2,...TypeN entryN)‖Type1Definition‖Type2Definition‖...
      * @param entryTypeNames Array of entry type names in order (e.g., ["MeeUserOp", "EntryTypeA", "MeeUserOp"])
      * @param meeUserOpDefinition The MeeUserOp type definition string
-     * @param otherTypeDefinitions Array of other type definitions (e.g., EntryTypeA, EntryTypeB, EntryTypeC definitions)
+     * @param otherTypeDefinitions Array of other type definitions (e.g., EntryTypeA, EntryTypeB, EntryTypeC
+     * definitions)
      * @return dynamicStructDefinition The complete EIP-712 struct definition string
      */
     function _buildDynamicStxStructDefinition(

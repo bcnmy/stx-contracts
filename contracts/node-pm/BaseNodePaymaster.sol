@@ -159,8 +159,8 @@ abstract contract BaseNodePaymaster is BasePaymaster {
         address refundReceiver;
 
         // Prepare refund info if any
-        if (context.length == 0x00) { // 0 bytes => KEEP mode => NO REFUND
-                // do nothing
+        if (context.length == 0x00) {  // 0 bytes => KEEP mode => NO REFUND
+        // do nothing
         } else if (context.length == 0x54) {
             // 84 bytes => REFUND: fixed premium mode.
             (refundReceiver, refund) = _handleFixedPremium(context, actualGasCost, actualUserOpFeePerGas);

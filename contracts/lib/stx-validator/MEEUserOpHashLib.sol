@@ -8,8 +8,8 @@ pragma solidity ^0.8.27;
 
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 
-// keccak256("MEEUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)");
-bytes32 constant MEE_USER_OP_TYPEHASH = 0xa893e832cd40f0161a05fdeee70845d347394fb92e8ffc59e56e6b2d37605454;
+// keccak256("MeeUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)");
+bytes32 constant MEE_USER_OP_TYPEHASH = 0x15a3822da13714219f4ba907e3daf8f006f6903616b4e7918e84eb2b8faf733d;
 
 library MEEUserOpHashLib {
     /**

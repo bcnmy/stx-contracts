@@ -5,7 +5,7 @@ import { Test, Vm } from "forge-std/Test.sol";
 import { IEntryPoint } from "account-abstraction/interfaces/IEntryPoint.sol";
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 import { PackedUserOperation, UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
-import { MockAccount } from "./mock/MockAccount.sol";
+import { MockAccount } from "./mock/accounts/MockAccount.sol";
 
 import { BaseNodePaymaster } from "../contracts/node-pm/BaseNodePaymaster.sol";
 import { NodePaymaster } from "../contracts/node-pm/NodePaymaster.sol";
@@ -18,26 +18,24 @@ import { LibZip } from "solady/utils/LibZip.sol";
 import { MockTarget } from "./mock/MockTarget.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 
-address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
-
 contract BaseTest is Test {
+    address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
+
     struct TestTemps {
-        bytes32 userOpHash;
         bytes32 contents;
-        address signer;
-        uint256 privateKey;
         uint8 v;
         bytes32 r;
         bytes32 s;
-        uint256 missingAccountFunds;
     }
 
     struct AccountDomainStruct {
+        bytes1 fields;
         string name;
         string version;
         uint256 chainId;
         address verifyingContract;
         bytes32 salt;
+        uint256[] extensions;
     }
 
     using CopyUserOpLib for PackedUserOperation;
@@ -118,7 +116,7 @@ contract BaseTest is Test {
 
     // ============ BUILD USER OP UTILS ============
 
-    function buildUserOpWithCalldata(
+    function buildUserOpWithCalldataAndGasParams(
         address account,
         bytes memory callData,
         Vm.Wallet memory wallet,
@@ -130,13 +128,20 @@ contract BaseTest is Test {
         view
         returns (PackedUserOperation memory userOp)
     {
+        // nonce with default validator and default mode (validation mode) => key = 0x00..00
         uint256 nonce = ENTRYPOINT.getNonce(account, 0);
-        userOp = buildPackedUserOp({
+        userOp = PackedUserOperation({
             sender: account,
             nonce: nonce,
-            verificationGasLimit: verificationGasLimit,
-            callGasLimit: callGasLimit,
-            preVerificationGasLimit: preVerificationGasLimit
+            initCode: "",
+            callData: "",
+            accountGasLimits: bytes32(abi.encodePacked(verificationGasLimit, callGasLimit)), // verification and call
+            // gas limit
+            preVerificationGas: preVerificationGasLimit, // Adjusted preVerificationGas
+            gasFees: bytes32(abi.encodePacked(uint128(11e9), uint128(1e9))), // maxFeePerGas = 11gwei and
+            // maxPriorityFeePerGas = 1gwei
+            paymasterAndData: "",
+            signature: ""
         });
         userOp.callData = callData;
 
@@ -144,44 +149,31 @@ contract BaseTest is Test {
         userOp.signature = signature;
     }
 
-    /// @notice Builds a user operation struct for account abstraction tests
-    /// @param sender The sender address
-    /// @param nonce The nonce
-    /// @return userOp The built user operation
-    function buildPackedUserOp(
-        address sender,
-        uint256 nonce,
-        uint128 verificationGasLimit,
-        uint128 callGasLimit,
-        uint256 preVerificationGasLimit
+    /// @notice Signs a user operation
+    /// @param wallet The wallet to sign the operation
+    /// @param userOp The user operation to sign
+    /// @return The signed user operation
+    function signUserOp(
+        Vm.Wallet memory wallet,
+        PackedUserOperation memory userOp
     )
         internal
-        pure
-        returns (PackedUserOperation memory)
+        view
+        returns (bytes memory)
     {
-        return PackedUserOperation({
-            sender: sender,
-            nonce: nonce,
-            initCode: "",
-            callData: "",
-            accountGasLimits: bytes32(abi.encodePacked(verificationGasLimit, callGasLimit)), // verification and call gas
-                // limit
-            preVerificationGas: preVerificationGasLimit, // Adjusted preVerificationGas
-            gasFees: bytes32(abi.encodePacked(uint128(11e9), uint128(1e9))), // maxFeePerGas = 11gwei and
-                // maxPriorityFeePerGas = 1gwei
-            paymasterAndData: "",
-            signature: ""
-        });
+        bytes32 opHash = ENTRYPOINT.getUserOpHash(userOp);
+        return signMessage(wallet, opHash);
     }
 
-    function signUserOp(Vm.Wallet memory wallet, PackedUserOperation memory userOp) internal view returns (bytes memory) {
-        bytes32 opHash = ECDSA.toEthSignedMessageHash(_getUserOpHash(userOp));
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, opHash);
-        return abi.encodePacked(r, s, v);
-    }
+    /// @notice Signs a message and packs r, s, v into bytes
+    /// @param wallet The wallet to sign the message
+    /// @param messageHash The hash of the message to sign
+    /// @return signature The packed signature
+    function signMessage(Vm.Wallet memory wallet, bytes32 messageHash) internal pure returns (bytes memory signature) {
+        messageHash = ECDSA.toEthSignedMessageHash(messageHash);
 
-    function _getUserOpHash(PackedUserOperation memory userOp) internal view returns (bytes32) {
-        return ENTRYPOINT.getUserOpHash(userOp);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, messageHash);
+        signature = abi.encodePacked(r, s, v);
     }
 
     // ============ WALLET UTILS ============

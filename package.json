@@ -8,7 +8,14 @@
     "url": "https://github.com/bcnmy"
   },
   "scripts": {
-    "test": "forge test --isolate",
+    "build:via-ir": "export FOUNDRY_PROFILE='via-ir' && forge build",
+    "test:via-ir": "export FOUNDRY_PROFILE='via-ir' && pnpm test",
+    "test": "forge test --match-path 'test/unit/node-paymaster/**' --isolate && forge test --no-match-path 'test/unit/node-paymaster/**'",
+    "test:nexus": "forge test --match-path 'test/*/nexus/**'",
+    "test:fork": "forge test --match-path 'test/fork/**'",
+    "test:node-paymaster": "forge test --match-path 'test/*/node-paymaster/**' --isolate",
+    "test:mee-k1-validator": "forge test --match-path 'test/*/mee-k1-validator/**'",
+    "test:composability": "forge test --match-path 'test/*/composability/**'",
     "lint:prod": "solhint 'contracts/**/*.sol'",
     "lint:prod:strict": "solhint 'contracts/**/*.sol' --max-warnings 0",
     "lint:both": "forge lint --force contracts/ --severity high --severity gas --severity med && solhint 'contracts/**/*.sol' 'test/**/*.sol'",
@@ -31,21 +38,23 @@
   "license": "MIT",
   "dependencies": {
     "account-abstraction": "eth-infinitism/account-abstraction#v0.7.0",
-    "enumerablemap4337": "erc7579/enumerablemap",
-    "erc7739-validator-base": "erc7579/erc7739Validator#v1.0.0",
-    "forge-std": "foundry-rs/forge-std#v1.10.0",
+    "@erc7579/enumerablemap4337": "erc7579/enumerablemap",
+    "@erc7579/erc7739-validator-base": "erc7579/erc7739Validator#v1.0.0",
+    "@erc7579/implementation": "erc7579/erc7579-implementation#v0.0.2",
+    "forge-std": "foundry-rs/forge-std#v1.11.0",
     "solady": "vectorized/solady#v0.1.26",
     "solidity-bytes-utils": "GNSPS/solidity-bytes-utils#v0.8.4",
     "solidity-rlp": "hamdiallam/Solidity-RLP#v2.0.8",
-    "erc7579": "erc7579/erc7579-implementation#v0.0.2",
-    "@rhinestone/module-bases": "github:rhinestonewtf/module-bases"
+    "@rhinestone/module-bases": "github:rhinestonewtf/module-bases",
+    "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "solhint": "^6.0.1",
     "tsx": "^4.19.2",
     "typescript": "^5.4.0",
-    "viem": "^2.22.17"
+    "viem": "^2.22.17",
+    "solarray": "github:sablier-labs/solarray"
   },
   "pnpm": {
     "overrides": {

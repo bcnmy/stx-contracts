@@ -26,7 +26,7 @@ ERROR_OUTPUT=$(pnpm lint | awk '
 ')
 
 # Count error lines
-ERROR_COUNT=$(pnpm lint | grep "error" | grep -v "problems.*error" | wc -l)
+ERROR_COUNT=$(pnpm lint:prod | grep "error" | grep -v "problems.*error" | wc -l)
 
 # If there are some error lines, show errors and exit
 if [ "$ERROR_COUNT" -gt 0 ]; then

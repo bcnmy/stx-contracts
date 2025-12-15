@@ -1,4 +1,4 @@
-# @biconomy/mee-contracts
+event Module# @biconomy/mee-contracts
 
 ## 1.1.0
 - MEE K1 Validator 1.1.0

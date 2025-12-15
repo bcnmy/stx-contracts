@@ -22,7 +22,15 @@ library EcdsaHelperLib {
      */
     // solhint-disable-next-line gas-named-return-values
 
-    function isValidSignature(address expectedSigner, bytes32 hash, bytes memory signature) internal view returns (bool) {
+    function isValidSignature(
+        address expectedSigner,
+        bytes32 hash,
+        bytes memory signature
+    )
+        internal
+        view
+        returns (bool)
+    {
         if (hash.tryRecover(signature) == expectedSigner) return true;
         if (hash.toEthSignedMessageHash().tryRecover(signature) == expectedSigner) return true;
         return false;
@@ -49,6 +57,8 @@ library EcdsaHelperLib {
             mstore(add(ptr, 0x02), domainSeparator)
             mstore(add(ptr, 0x22), structHash)
             digest := keccak256(ptr, 0x42)
+            // restore free memory ptr
+            mstore(0x40, add(ptr, 0x42))
         }
     }
 }
