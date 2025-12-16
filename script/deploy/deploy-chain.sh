@@ -207,13 +207,17 @@ if [ $CREATEX_SIZE -eq 0 ] && [ "$SKIP_CREATEX" = "false" ]; then
     { 
         # estimate the gas cost of the CreateX deployment transaction
         CREATEX_GAS_ESTIMATE=$(cast estimate --rpc-url $RPC_VAR --create $(cat ./util/createx-hex/contract-createx-bytescode.json | jq -r))
+        printf "CreateX deployment gas estimate: $CREATEX_GAS_ESTIMATE\n"
         CREATEX_DEPLOY_PRESIGNED_TX="" 
         if [ $CREATEX_GAS_ESTIMATE -lt 3000000 ]; then # 3M gas
             CREATEX_DEPLOY_PRESIGNED_TX=$(cat ./util/createx-hex/signed_serialised_transaction_gaslimit_3000000_.json | jq -r)
+            printf "Using 3M gas presigned transaction\n"
         elif [ $CREATEX_GAS_ESTIMATE -lt 25000000 ]; then # 25M gas
             CREATEX_DEPLOY_PRESIGNED_TX=$(cat ./util/createx-hex/signed_serialised_transaction_gaslimit_25000000_ | jq -r)
+            printf "Using 25M gas presigned transaction\n"
         elif [ $CREATEX_GAS_ESTIMATE -lt 45000000 ]; then # 45M gas
             CREATEX_DEPLOY_PRESIGNED_TX=$(cat ./util/createx-hex/signed_serialised_transaction_gaslimit_45000000_.json | jq -r)
+            printf "Using 45M gas presigned transaction\n"
         else
             log_warning "CreateX deployment transaction gas cost is too high. Disperse contract will not be deployed."
             log_warning "Continuing with deployment without CreateX." 
@@ -227,7 +231,7 @@ if [ $CREATEX_SIZE -eq 0 ] && [ "$SKIP_CREATEX" = "false" ]; then
                 # fund the deployer address 0xeD456e05CaAb11d66C4c797dD6c1D6f9A7F352b5
                 cast send --rpc-url $RPC_VAR 0xeD456e05CaAb11d66C4c797dD6c1D6f9A7F352b5 --private-key $PRIVATE_KEY --value 0.3ether $GAS_SUFFIX_SEND
                 # publish the CreateX deployment transaction
-                cast publish $CREATEX_DEPLOY_PRESIGNED_TX --rpc-url $RPC_VAR
+                timeout 180 cast publish $CREATEX_DEPLOY_PRESIGNED_TX --rpc-url $RPC_VAR
                 CREATEX_SIZE=$(cast codesize --rpc-url $RPC_VAR $CREATEX_ADDRESS)
                 if [ $CREATEX_SIZE -eq 0 ]; then
                     # failed to deploy CreateX

@@ -49,3 +49,5 @@ script/deploy/deploy-logs/precalc/*.log
 !script/deploy/deploy-logs/build/.gitkeep
 !script/deploy/deploy-logs/precalc/.gitkeep
 
+# Debug scripts
+script/debug
