@@ -161,6 +161,16 @@ else
     printf "Entry point has already been deployed\n"
 fi
 
+# Check if Smart Sessions module is deployed at expected address
+SMART_SESSION_ADDRESS=$(awk '/^\[deployments\.singleton\.SmartSession\]/{flag=1;next} /^\[/{flag=0} flag && /^expected_address=/{gsub(/expected_address=/, ""); gsub(/"/, ""); print; exit}' deploy-ss.toml)
+if [ -n "$SMART_SESSION_ADDRESS" ]; then
+    SS_SIZE=$(cast codesize --rpc-url $RPC_VAR "$SMART_SESSION_ADDRESS" 2>/dev/null || echo "0")
+    if [ "$SS_SIZE" -eq 0 ]; then
+        log_warning "Smart Sessions module is NOT deployed at $SMART_SESSION_ADDRESS"
+        log_warning "Run 'bash deploy-ss.sh $CHAIN_ID' to deploy Smart Sessions contracts"
+    fi
+fi
+
 # STEP 2: Identify the contracts to deploy
 echo "========================================================================"
 log_info "STEP 2: Identifying contracts to deploy for chain $CHAIN_ID"

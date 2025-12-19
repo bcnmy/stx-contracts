@@ -130,6 +130,14 @@ else
     GAS_ESTIMATE_MULTIPLY_SUFFIX="--gas-estimate-multiplier ${GAS_ESTIMATE_MULTIPLY}"
 fi
 
+# Setup log directory for this chain
+CHAIN_NAME_SANITIZED=$(echo "$CHAIN_NAME" | tr ' ' '-')
+LOG_DIR="deploy-logs/ss/ss-${CHAIN_NAME_SANITIZED}-${CHAIN_ID}"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/deploy-ss.log"
+ERROR_LOG_FILE="$LOG_DIR/deploy-ss-errors.log"
+log_info "Logs will be written to $LOG_DIR"
+
 # Parse contracts from deploy-ss.toml
 log_info "Parsing contracts from deploy-ss.toml"
 
@@ -220,7 +228,8 @@ for contract_name in "${CONTRACT_NAMES[@]}"; do
         $VERIFY_FLAG \
         $GAS_SUFFIX \
         $GAS_ESTIMATE_MULTIPLY_SUFFIX \
-        -vv --broadcast
+        -vv --broadcast \
+        1>> "$LOG_FILE" 2>> "$ERROR_LOG_FILE"
 
     DEPLOY_STATUS=$?
     set -e
