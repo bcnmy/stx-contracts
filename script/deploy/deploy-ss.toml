@@ -1,0 +1,76 @@
+[deployments.singleton.SmartSession]
+file = "script/deploy/artifacts/SmartSession/SmartSession.json"
+source_file = "script/deploy/artifacts/SmartSession/verify.json"
+salt = "0x0000000000000000000000000000000000000000a64f70421acfdd00e3e3f1c6"
+expected_address="0x00000000008bdaba73cd9815d79069c247eb4bda"
+# bytecode_hash = 0xe15e94ef1e3343e682a9ca391be84f74bc4a960590a407b463427901cfa9856a
+
+[deployments.singleton.SmartSessionCompatibilityFallback]
+file = "script/deploy/artifacts/SmartSessionCompatibilityFallback/SmartSessionCompatibilityFallback.json"
+source_file = "script/deploy/artifacts/SmartSessionCompatibilityFallback/verify.json"
+salt = "0x0000000000000000000000000000000000000000bd02de2f2a620a024262b5ef"
+expected_address="0x000000000052e9685932845660777DF43C2dC496"
+# bytecode_hash = 0x9df82f3193542334672a50228bc84882ff55b6ee8afc5baaf8b55f4b8f774e24
+
+[deployments.singleton.SudoPolicy]
+file = "script/deploy/artifacts/SudoPolicy/SudoPolicy.json"
+source_file = "script/deploy/artifacts/SudoPolicy/verify.json"
+salt = "0x0000000000000000000000000000000000000000d1eec733bed549000f523b0a"
+expected_address="0x0000000000FEEc8D74e3143fBaBbca515358d869"
+# bytecode_hash = 0x732c5b6bb56fff80d9afc3553b637f5402a587d2d8af9548bd32bdd22b0bf560
+
+[deployments.singleton.SimpleGasPolicy]
+file = "script/deploy/artifacts/SimpleGasPolicy/SimpleGasPolicy.json"
+source_file = "script/deploy/artifacts/SimpleGasPolicy/verify.json"
+salt = "0x00000000000000000000000000000000000000000cc403b5373e8c023efc165f"
+expected_address="0x0000000000d14A6F771494592218d8F9c2ddEbB6"
+# bytecode_hash = 0x62890f021ef2c21bcf055f46e1121d9f4d027fc01bc9ebef53ceef3bdaf6d9c4
+
+[deployments.singleton.TimeFramePolicy]
+file = "script/deploy/artifacts/TimeFramePolicy/TimeFramePolicy.json"
+source_file = "script/deploy/artifacts/TimeFramePolicy/verify.json"
+salt = "0x000000000000000000000000000000000000000016827058156274021b2e77a0"
+expected_address="0x0000000000D30f611fA3bf652ac6879428586930"
+# bytecode_hash = 0x833520bd3bffda8e8faa130ea3b0d85da4fa7af5bd6d3c3e45ba0a5010e82ab0
+
+[deployments.singleton.UniActionPolicy]
+file = "script/deploy/artifacts/UniActionPolicy/UniActionPolicy.json"
+source_file = "script/deploy/artifacts/UniActionPolicy/verify.json"
+salt = "0x0000000000000000000000000000000000000000deaafcb2442a840102a52475"
+expected_address="0x0000000000714Cf48FcF88A0bFBa70d313415032"
+# bytecode_hash = 0x0f0cab528f656576ec43373b64563dcae51dbf72baf6f28137fdb37417514ec9
+
+[deployments.singleton.UsageLimitPolicy]
+file = "script/deploy/artifacts/UsageLimitPolicy/UsageLimitPolicy.json"
+source_file = "script/deploy/artifacts/UsageLimitPolicy/verify.json"
+salt = "0x0000000000000000000000000000000000000000f5e289757ebaab02edfbe461"
+expected_address="0x00000000001d4479FA2A947026204d0283ceDe4B"
+# bytecode_hash = 0x708991c466ab1e128a4f3d94f7422a072b6c1742a16bb781c26046339829c832
+
+[deployments.singleton.ValueLimitPolicy]
+file = "script/deploy/artifacts/ValueLimitPolicy/ValueLimitPolicy.json"
+source_file = "script/deploy/artifacts/ValueLimitPolicy/verify.json"
+salt = "0x0000000000000000000000000000000000000000bcd01eac5dfec103e11034b0"
+expected_address="0x000000000021dC45451291BCDfc9f0B46d6f0278"
+# bytecode_hash = 0xc2e2f191717e68c335f769c06d5565d0847a088e2533af0203d5dbe3eb740e14
+
+[deployments.singleton.ContractWhitelistPolicy]
+file = "script/deploy/artifacts/ContractWhitelistPolicy/ContractWhitelistPolicy.json"
+source_file = "script/deploy/artifacts/ContractWhitelistPolicy/verify.json"
+salt = "0x0000000000000000000000000000000000000000e62b22640dfb5f011b8cba18"
+expected_address="0x0000000000d79359D85e62796104D7AE863fFAcb"
+# bytecode_hash = 0x64fbfddbdcf571a139407fb6da798afbaf0988a52b0ce02111c7f6303f71641d
+
+[deployments.singleton.ERC20SpendingLimitPolicy]
+file = "script/deploy/artifacts/ERC20SpendingLimitPolicy/ERC20SpendingLimitPolicy.json"
+source_file = "script/deploy/artifacts/ERC20SpendingLimitPolicy/verify.json"
+salt = "0x000000000000000000000000000000000000000030b6884bb264a803a0602ebb"
+expected_address="0x000000000033212E272655D8a22402Db819477A6"
+# bytecode_hash = 0x5f8b68a5ad1624c52ebbd645a394666489a64eb7d4d9a7288cc19c7ee6647742
+
+[deployments.singleton.ArgPolicy]
+file = "script/deploy/artifacts/ArgPolicy/ArgPolicy.json"
+source_file = "script/deploy/artifacts/ArgPolicy/verify.json"
+salt = "0x0000000000000000000000000000000000000000331937e033a75702af416619"
+expected_address="0x0000000000167edE64D8751daACDdC0312565a73"
+# bytecode_hash = 0x45330a6526b8a62326a3934b25dc39de16c38bcee58777c220a753f1db20b151
