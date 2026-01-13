@@ -143,3 +143,5 @@
   sophon-zk-testnet = { key = "", url = "https://block-explorer-api.zksync-os-testnet-sophon.zksync.dev/api", chain = "531050204"} 
 
   # core nets 1 11155111 8453 84532 137 80002 42161 421614 10 11155420 146 14601 130 1301 143 10143
+
+  # temproraly deployed to : 8453 84532 137 80002 42161 421614 10 11155420 146 14601 130 1301 143 10143 1 11155111
