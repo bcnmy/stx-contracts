@@ -734,7 +734,7 @@ verify = true
 
 [6343.uint]
 chain_id = 6343
-gas_estimate_multiply = 30000
+gas_estimate_multiply = 12000 (120x)
 
 [6343.string]
 name = "Megaeth Testnet"
