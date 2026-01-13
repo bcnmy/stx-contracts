@@ -72,6 +72,11 @@ VERIFY_BOOL=$(awk -v id="$CHAIN_ID" '/^\['"$CHAIN_ID"'\.bool\]/{flag=1;next} /^\
 VERIFY_FLAG=""
 if [ "$VERIFY_BOOL" = "true" ]; then
     VERIFY_FLAG="--verify"
+    # check if via_blockscout is set to true in the config.toml file
+    VIA_BLOCKSCOUT=$(awk -v id="$CHAIN_ID" '/^\['"$CHAIN_ID"'\.bool\]/{flag=1;next} /^\[/{flag=0} flag && /^via_blockscout =/{gsub(/"/, "", $3); print $3}' config.toml)
+    if [ "$VIA_BLOCKSCOUT" = "true" ]; then
+        VERIFY_FLAG="--verify --verifier blockscout"
+    fi
 fi
 
 ### ===== GAS SUFFIX ============

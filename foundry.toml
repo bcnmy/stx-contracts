@@ -140,4 +140,12 @@
   # arc-testnet = { key = "", url = "", chain = "5042002"}
 
   # SOPHON
-  sophon-zk-testnet = { key = "", url = "https://block-explorer-api.zksync-os-testnet-sophon.zksync.dev/api", chain = "531050204"} 
+  sophon-zk-testnet = { key = "", url = "https://block-explorer-api.zksync-os-testnet-sophon.zksync.dev/api", chain = "531050204"}
+
+  # MOCA
+  # mocachain = { key = "", url = "https://moca-mainnet.cloud.blockscout.com/api/", chain = "2288"}
+  # mocachain-testnet = { key = "", url = "https://moca-testnet.cloud.blockscout.com/api/", chain = "222888"}
+
+  # MEGAETH
+  # megaeth-mainnet = { key = "", url = "", chain = "4326"} 
+  # megaeth-testnet = { key = "", url = "", chain = "6343"}
