@@ -24,6 +24,11 @@ import { SimpleValidatorLib } from "../../lib/stx-validator/validation-modes/Sim
 import { SafeAccountValidatorLib } from "../../lib/stx-validator/validation-modes/SafeAccountValidatorLib.sol";
 import { NoMeeFlowLib } from "../../lib/stx-validator/validation-modes/NoMeeFlowLib.sol";
 import { EcdsaHelperLib } from "../../lib/util/EcdsaHelperLib.sol";
+import { FlatBytesLib } from "flatbytes/BytesLib.sol";
+import {
+    ValidationConfigLib,
+    StxModeVerifierAddressCannotBeZeroAddress
+} from "../../lib/stx-validator/ValidationConfigLib.sol";
 
 /**
  * @title K1MeeValidator
@@ -31,19 +36,21 @@ import { EcdsaHelperLib } from "../../lib/util/EcdsaHelperLib.sol";
  *
  */
 
-enum ValidationType {
-    ERC1271,
-    ERC7780
-}
-
 struct ValidationConfig {
-    address validatorAddress;
-    ValidationType validationType;
+    address stxModeVerifierAddress;
+    address statelessValidatorAddress;
     FlatBytesLib.Bytes validationData;
 }
 
-contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
-    using EnumerableSet for EnumerableSet.AddressSet;
+// keccak256("default");
+bytes32 constant DEFAULT_CONFIG_ID = 0xcfee7c08a98f4b565d124c7e4e28acc52e1bc780e3887db0a02a7d2d5bc66728;
+
+contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
+    using EnumerableSet for EnumerableSet.AddressSet; // TODO: remove this?
+
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using FlatBytesLib for FlatBytesLib.Bytes;
+
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
@@ -51,6 +58,7 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
     uint256 private constant ENCODED_DATA_OFFSET = 4;
 
     mapping(bytes32 configId => mapping(address smartAccount => ValidationConfig config)) public configs;
+    EnumerableSet.Bytes32Set internal enabledConfigs;
 
     // address => configId => config (sig validator can be of 1271 or 7780 type)
 
@@ -85,11 +93,9 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
      * @param data The data to initialize the module with
      */
     function onInstall(bytes calldata data) external override {
-
-        // first bytes are always a flag:
-        // 4 bytes - mode flag
+        // 20 bytes - stx mode verifier address
+        // 20 bytes - custom validator address
         // 1 byte - safe senders length (n)
-        // 20 bytes - custom validator address if mode flag is `custom`
         // n*20 bytes - safe senders if any
         // config validation data
 
@@ -99,41 +105,48 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
          *
          *   no backwards compatibility features are needed
          *
-         *   new initdata format:
-         *
-         *][init data]
-         *     statelss validator address is required for the custom setup mode, for example for
-         *     `setup-k1` mode, we can use a pre-encoded k1 stateless validator address
-         *     setup modes: k1 (eoa), r1 (passkey), 1271 (isValidSig), eoa-multisig, custom.
-         *     `custom` is followed by the stateless  validator address
          */
 
-        /*
-        require(data.length != 0, NoOwnerProvided());
         require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
-        address newOwner = address(bytes20(data[:20]));
-        require(newOwner != address(0), OwnerCannotBeZeroAddress());
-        smartAccountOwners[msg.sender] = newOwner;
-        if (data.length > 20) {
-            _fillSafeSenders(data[20:]);
+
+        // sanity check for the data length
+        require(data.length >= 40, InvalidDataLength());
+
+        // 20 bytes - stx mode verifier address
+        address stxModeVerifierAddress = address(bytes20(data[:20]));
+        require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
+
+        // 20 bytes - custom validator address
+        address statelessValidatorAddress = address(bytes20(data[20:40]));
+        // if statelessValidatorAddress is zero, we will use the stxModeVerifierAddress
+        // as the stateless validator address when loading and using the config later
+
+        // check for the safe senders
+        uint8 safeSendersNumber = uint8(bytes1(data[40]));
+        uint256 configValidationDataOffset = 41 + safeSendersNumber * 20;
+        if (safeSendersNumber > 0) {
+            require(data.length >= configValidationDataOffset, InvalidDataLength());
+            _fillSafeSenders(data[21:configValidationDataOffset]);
         }
-        */
+
+        ValidationConfig storage conf = configs[DEFAULT_CONFIG_ID][msg.sender];
+        conf.stxModeVerifierAddress = stxModeVerifierAddress;
+        conf.statelessValidatorAddress = statelessValidatorAddress;
+        conf.validationData.store(data[configValidationDataOffset:]);
+
+        enabledConfigs.add(msg.sender, DEFAULT_CONFIG_ID);
     }
 
     /**
      * De-initialize the module with the given data
      */
     function onUninstall(bytes calldata) external override {
-        delete smartAccountOwners[msg.sender];
+        // TODO: clean configs
         _safeSenders.removeAll(msg.sender);
     }
 
-    /// @notice Transfers ownership of the validator to a new owner
-    /// @param newOwner The address of the new owner
-    function transferOwnership(address newOwner) external {
-        require(newOwner != address(0), ZeroAddressNotAllowed());
-        smartAccountOwners[msg.sender] = newOwner;
-    }
+    // TODO:
+    // impolement a function to replace ownership data within a config
 
     /**
      * Check if the module is initialized
@@ -192,56 +205,36 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
         returns (uint256)
     {
         bytes32 activeConfigId;
-        uint48 lowerBoundTimestamp;
-        uint48 upperBoundTimestamp;
-        bytes memory signature;
-        bytes32 signedHash;
-        bool sigValidationFailed = true; // do not validate by default
-
-        // stx modes
-        if (userOp.signature.length >= ENCODED_DATA_OFFSET) {
-            if (userOp.signature.length < ENCODED_DATA_OFFSET + 32) {
-                //  it means, there's no configId present
-                // at the same time userOp.signature is too short for single eoa sig which is 65 bytes
-                // so this is some custom signature scheme which should be defined under the default configId
-                configId = DEFAULT_CONFIG_ID;
-            }
-
+        bytes calldata parsedSigData;
+        if (userOp.signature.length < 32) {
+            //  it means, there's no configId present
+            // at the same time userOp.signature is too short for single eoa sig which is 65 bytes
+            // so this is some custom signature scheme which should be defined under the default configId
+            activeConfigId = DEFAULT_CONFIG_ID;
+            parsedSigData = userOp.signature;
+        } else {
             // take the first 32 bytes and check
             // if there's no config for this id, try the default configId
             // the default configId should always be set (onInstall)
-            activeConfigId = bytes32(userOp.signature[ENCODED_DATA_OFFSET:ENCODED_DATA_OFFSET + 32]);
-            if (!enabledConfigs.contains(activeConfigId)) {
+            // this is the branch for flows, where we want to use a default config and the sig itself is long enough:
+            // we do not provide an enabled configId => random 32 bytes are used as configId =>
+            // ofc this random configId is not enabled => we use the default configId
+            // the chance that random 32 bytes of the signature data match an enabled configId is very low
+            activeConfigId = bytes32(userOp.signature[0:32]);
+            parsedSigData = userOp.signature[32:];
+            if (!enabledConfigs.contains(msg.sender, activeConfigId)) {
                 activeConfigId = DEFAULT_CONFIG_ID;
+                parsedSigData = userOp.signature; // means there was no configId encoded into the signature
             }
-
-            // call mode libraries: they validate the current userOp is the part of the SuperTxn
-            // and returns the data (signed hash and signature) for the further sig validation
-            // no mee flow is also handled there
-            (signedHash, lowerBoundTimestamp, upperBoundTimestamp, signature) =
-                _validateStxUserOp(userOpHash, userOp.signature);
-
-            /*
-            bytes4 sigType = bytes4(userOp.signature[0:ENCODED_DATA_OFFSET]);
-            if (sigType == SIG_TYPE_SIMPLE) {
-                = SimpleValidatorLib.validateStxUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
-            }
-            else if (sigType == SIG_TYPE_ON_CHAIN) {
-                TxValidatorLib.validateStxUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:userOp.signature.length], owner);
-            } else if (sigType == SIG_TYPE_ERC20_PERMIT) {
-                PermitValidatorLib.validateStxUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
-            } else if (sigType == SIG_TYPE_SAFE_ACCOUNT) {
-                SafeAccountValidatorLib.validateStxUserOp(userOpHash, userOp.signature[ENCODED_DATA_OFFSET:], owner);
-            }*/
-
-            sigValidationFailed = !configs.validateSignature({
-                smartAccount: msg.sender, configId: activeConfigId, userOpHash: signedHash, signature: signature
-            });
-
-            return _packValidationData(sigValidationFailed, upperBoundTimestamp, lowerBoundTimestamp);
         }
 
-        revert InvalidDataLength();
+        return ValidationConfigLib.validateStxSignature({
+            configs: configs,
+            smartAccount: msg.sender,
+            configId: activeConfigId,
+            userOpHash: userOpHash,
+            signature: parsedSigData
+        });
     }
 
     /**
@@ -280,16 +273,6 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
         view
         returns (bool isValidSig)
     { }
-
-    /**
-     * Get the owner of the smart account
-     * @param smartAccount The address of the smart account
-     * @return The owner of the smart account
-     */
-    function getOwner(address smartAccount) public view returns (address) {
-        address owner = smartAccountOwners[smartAccount];
-        return owner == address(0) ? smartAccount : owner;
-    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
@@ -333,35 +316,19 @@ contract K1MeeValidator is IValidator, IStatelessValidator, ERC7739Validator {
         internal
         view
         returns (bool isValidSig)
-    {
-        bytes4 sigType = bytes4(signature[0:4]);
-
-        if (sigType == SIG_TYPE_SIMPLE) {
-            isValidSig = SimpleValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
-        } else if (sigType == SIG_TYPE_ON_CHAIN) {
-            isValidSig = TxValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
-        } else if (sigType == SIG_TYPE_ERC20_PERMIT) {
-            isValidSig = PermitValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
-        } else if (sigType == SIG_TYPE_SAFE_ACCOUNT) {
-            isValidSig = SafeAccountValidatorLib.validateSignatureForOwner(owner, hash, signature[4:]);
-        } else {
-            // fallback flow => non MEE flow => no prefix
-            isValidSig = NoMeeFlowLib.validateSignatureForOwner(owner, hash, signature);
-        }
-    }
+    { }
 
     /// @notice Checks if the smart account is initialized with an owner
     /// @param smartAccount The address of the smart account
     /// @return isInitializedRet True if the smart account has an owner, false otherwise
     function _isInitialized(address smartAccount) private view returns (bool isInitializedRet) {
-        isInitializedRet = smartAccountOwners[smartAccount] != address(0);
+        // TODO: properly implement this check using enabled configs
     }
 
     // @notice Fills the _safeSenders list from the given data
+    // data provided should always be 20*n
     function _fillSafeSenders(bytes calldata data) private {
-        uint256 length = data.length;
-        require(length % 20 == 0, SafeSendersLengthInvalid());
-        for (uint256 i; i < length / 20; ++i) {
+        for (uint256 i; i < data.length / 20; ++i) {
             _safeSenders.add(msg.sender, address(bytes20(data[20 * i:20 * (i + 1)])));
         }
     }

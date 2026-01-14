@@ -2,14 +2,16 @@
 pragma solidity ^0.8.27;
 
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
-import { EcdsaHelperLib } from "../../util/EcdsaHelperLib.sol";
-import { MEEUserOpHashLib } from "../MEEUserOpHashLib.sol";
+import { EcdsaHelperLib } from "../../../lib/util/EcdsaHelperLib.sol";
+import { MEEUserOpHashLib } from "../../../lib/stx-validator/MEEUserOpHashLib.sol";
 import { ERC20 } from "solady/tokens/ERC20.sol";
+import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
+import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
-import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
+import { MODULE_TYPE_STATELESS_VALIDATOR } from "contracts/types/Constants.sol";
 
 /**
- * @dev Library to validate the signature for MEE ERC-2612 Permit mode
+ * @dev Submodule to validate the UserOp/Stx for the MEE ERC-2612 Permit mode
  *      This is the mode where superTx hash is pasted into deadline field of the ERC-2612 Permit
  *      So the whole permit is signed along with the superTx hash
  *      For more details see Fusion docs:
@@ -33,6 +35,7 @@ bytes32 constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae012
 
 struct DecodedErc20PermitSig {
     ERC20 token;
+    address owner;
     address spender;
     bytes32 domainSeparator;
     uint256 amount;
@@ -48,6 +51,7 @@ struct DecodedErc20PermitSig {
 }
 
 struct DecodedErc20PermitSigShort {
+    address owner;
     address spender;
     bytes32 domainSeparator;
     uint256 amount;
@@ -59,67 +63,29 @@ struct DecodedErc20PermitSigShort {
     bytes32[] proof;
 }
 
-library PermitValidatorLib {
-    error PermitFailed();
+error InvalidDataLength();
 
-    uint8 internal constant EIP_155_MIN_V_VALUE = 37;
+contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
+    error PermitFailed();
 
     using EcdsaHelperLib for bytes32;
 
-    /**
-     * This function parses the given userOpSignature into a DecodedErc20PermitSig data structure.
-     *
-     * Once parsed, the function will check for two conditions:
-     *      1. is the userOp part of the merkle tree
-     *      2. is the recovered message signer equal to the expected signer?
-     *
-     * NOTES: This function will revert if either of following is met:
-     *    1. the userOpSignature couldn't be abi.decoded into a valid DecodedErc20PermitSig struct as defined in this
-     * contract
-     *    2. userOp is not part of the merkle tree
-     *    3. recovered Permit message signer wasn't equal to the expected signer
-     *
-     * The function will also perform the Permit approval on the given token in case the
-     * isPermitTx flag was set to true in the decoded signature struct.
-     *
-     * @param userOpHash UserOp hash being validated.
-     * @param parsedSignature Signature provided as the userOp.signature parameter (minus the prepended tx type byte).
-     * @param expectedSigner Signer expected to be recovered when decoding the ERC20OPermit signature.
-     */
-    function validateUserOp(
-        bytes32 userOpHash,
-        bytes calldata parsedSignature,
-        address expectedSigner
-    )
-        internal
-        returns (uint256)
-    {
-        DecodedErc20PermitSig memory decodedSig = _decodeFullPermitSig(parsedSignature);
-
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMEEUserOpHash(
-            userOpHash, decodedSig.lowerBoundTimestamp, decodedSig.upperBoundTimestamp
-        );
-
-        if (!EcdsaHelperLib.isValidSignature(
-                expectedSigner,
-                _getSignedDataHash(expectedSigner, decodedSig),
-                abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v))
-            )) {
-            return SIG_VALIDATION_FAILED;
+    function validateStxUserOp(bytes32 userOpHash, bytes calldata sigData) external returns (bool, bytes memory) {
+        // AA-4337 backwards compatibility flow
+        if (sigData.length == 65) {
+            // if sigData.length == 65, this is a simple EOA signature for the vanilla ERC-4337 flow
+            // in this case, we just have to verify the og userOp.signature against the userOpHash
+            return (true, abi.encode(uint48(0), uint48(0), userOpHash, sigData));
         }
 
-        if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, meeUserOpHash)) {
-            return SIG_VALIDATION_FAILED;
-        }
+        // otherwise, we consider the sigData = userOp.signature is properly encoded
+        // to provide all the data required for the Permit fusion mode validation
+        DecodedErc20PermitSig memory decodedSig = _decodeFullPermitSig(sigData);
 
-        // TODO: if this is a permit tx, we probably do not need to verify the signature above,
-        // because this is already done within the ERC20.permit function
-        // Need to implement a test case for this, that shows that if isPermitTx is true, the wrong signature will
-        // revert even w/o the signature verification above
         if (decodedSig.isPermitTx) {
             try decodedSig.token
                 .permit(
-                    expectedSigner,
+                    decodedSig.owner,
                     decodedSig.spender,
                     decodedSig.amount,
                     uint256(decodedSig.superTxHash),
@@ -131,16 +97,60 @@ library PermitValidatorLib {
             }
             catch {
                 // check if by some reason this permit was already successfully used (and not spent yet)
-                if (ERC20(address(decodedSig.token)).allowance(expectedSigner, decodedSig.spender) < decodedSig.amount)
-                {
+                if (
+                    ERC20(address(decodedSig.token)).allowance(decodedSig.owner, decodedSig.spender) < decodedSig.amount
+                ) {
                     // if the above expectationis not true, revert
                     revert PermitFailed();
                 }
             }
+
+            // if this is a permit tx, we do not need to verify the signature later,
+            // because this is already done within the ERC20.permit function
+
+            // TODO: implement a test case for this, that shows that if isPermitTx is true, the wrong signature will
+            // revert even w/o the separate signature validation with erc-7780 step
+            return (
+                false, // means no further signature validation is required
+                abi.encode(decodedSig.lowerBoundTimestamp, decodedSig.upperBoundTimestamp, bytes32(0), sigData)
+            );
         }
 
-        return _packValidationData(false, decodedSig.upperBoundTimestamp, decodedSig.lowerBoundTimestamp);
+        return (
+            true,
+            abi.encode(
+                decodedSig.lowerBoundTimestamp,
+                decodedSig.upperBoundTimestamp,
+                _getSignedDataHash(decodedSig),
+                abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v))
+            )
+        );
     }
+
+    // ERC2612.permit() function expects a simple EOA signature for most implementations
+    // So this method can be used to validate the signature over the Permit data structure
+    // In case your ERC-2612.permit() function features other potential types of signature verification,
+    // for example, ERC-1271, please use another ERC-7780 validator as a stateless validator in the StxValidator
+    // config instead of this one.
+    function validateSignatureWithData(
+        bytes32 hash,
+        bytes calldata sig,
+        bytes calldata data
+    )
+        external
+        view
+        returns (bool)
+    {
+        require(data.length >= 20, InvalidDataLength());
+        address expectedSigner = address(bytes20(data[:20]));
+        return EcdsaHelperLib.isValidSignature(expectedSigner, hash, sig);
+    }
+
+    function isModuleType(uint256 typeId) external view returns (bool) {
+        return typeId == MODULE_TYPE_STATELESS_VALIDATOR;
+    }
+
+    // ========================================================
 
     function validateSignatureForOwner(
         address expectedSigner,
@@ -155,7 +165,7 @@ library PermitValidatorLib {
 
         if (!EcdsaHelperLib.isValidSignature(
                 expectedSigner,
-                _getSignedDataHash(expectedSigner, decodedSig),
+                _getSignedDataHash(decodedSig),
                 abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v))
             )) {
             return false;
@@ -190,33 +200,19 @@ library PermitValidatorLib {
         return decodedSig;
     }
 
-    function _getSignedDataHash(
-        address expectedSigner,
-        DecodedErc20PermitSig memory decodedSig
-    )
-        private
-        pure
-        returns (bytes32)
-    {
+    function _getSignedDataHash(DecodedErc20PermitSig memory decodedSig) private pure returns (bytes32) {
         return _hashTypedData(
             _hashPermitDataStruct(
-                expectedSigner, decodedSig.spender, decodedSig.amount, decodedSig.nonce, decodedSig.superTxHash
+                decodedSig.owner, decodedSig.spender, decodedSig.amount, decodedSig.nonce, decodedSig.superTxHash
             ),
             decodedSig.domainSeparator
         );
     }
 
-    function _getSignedDataHash(
-        address expectedSigner,
-        DecodedErc20PermitSigShort memory decodedSig
-    )
-        private
-        pure
-        returns (bytes32)
-    {
+    function _getSignedDataHash(DecodedErc20PermitSigShort memory decodedSig) private pure returns (bytes32) {
         return _hashTypedData(
             _hashPermitDataStruct(
-                expectedSigner, decodedSig.spender, decodedSig.amount, decodedSig.nonce, decodedSig.superTxHash
+                decodedSig.owner, decodedSig.spender, decodedSig.amount, decodedSig.nonce, decodedSig.superTxHash
             ),
             decodedSig.domainSeparator
         );
@@ -245,5 +241,20 @@ library PermitValidatorLib {
 
     function _hashTypedData(bytes32 structHash, bytes32 domainSeparator) private pure returns (bytes32) {
         return EcdsaHelperLib.toTypedDataHash(domainSeparator, structHash);
+    }
+
+    // =========== REQUIRED BY ERC-7780/ERC-7579 SPEC ===========
+
+    function onInstall(bytes calldata data) external override {
+        // do nothing
+    }
+
+    function onUninstall(bytes calldata data) external override {
+        // do nothing
+    }
+
+    function isInitialized(address smartAccount) external view returns (bool) {
+        // stateless validator is always initialized
+        return true;
     }
 }

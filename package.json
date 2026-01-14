@@ -46,6 +46,7 @@
     "solidity-bytes-utils": "GNSPS/solidity-bytes-utils#v0.8.4",
     "solidity-rlp": "hamdiallam/Solidity-RLP#v2.0.8",
     "@rhinestone/module-bases": "github:rhinestonewtf/module-bases",
+    "@rhinestone/flatbytes": "github:rhinestonewtf/flatbytes",
     "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall",
     "solarray": "github:sablier-labs/solarray"
   },

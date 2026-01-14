@@ -11,3 +11,4 @@ rlp-reader/=node_modules/solidity-rlp/contracts/
 murky-trees/=node_modules/murky/src/
 solarray/=node_modules/solarray/src/
 excessively-safe-call/=node_modules/excessively-safe-call/src/
+flatbytes/=node_modules/@rhinestone/flatbytes/src/
