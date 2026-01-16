@@ -36,7 +36,7 @@ library SimpleValidatorLib {
     {
         /*
          * packedSignatureData layout :
-         * ======== static head part : 0x61 (97) bytes========
+         * ======== static head part : 0x80 (128) bytes========
          * ... static head part ...
          * ======== static tail for simple mode =====
          * uint256 = 32 bytes : packedTimestamps

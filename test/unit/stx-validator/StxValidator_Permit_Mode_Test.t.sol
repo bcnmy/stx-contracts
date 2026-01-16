@@ -64,6 +64,27 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
         assertEq(erc20.balanceOf(bob), amountToTransfer * numOfClones + 1e18);
     }
 
+    function test_superTxFlow_permit_mode_ERC1271_ERC7739_success(uint256 numOfObjs) public {
+        numOfObjs = bound(numOfObjs, 2, 25);
+        MockERC20PermitToken erc20 = new MockERC20PermitToken("test", "TEST");
+        bytes[] memory meeSigs = new bytes[](numOfObjs);
+        bytes32 baseHash = keccak256(abi.encode("test"));
+
+        meeSigs = _makePermitSuperTxSignatures({
+            baseHash: baseHash,
+            total: numOfObjs,
+            token: erc20,
+            signer: wallet,
+            spender: address(mockAccount),
+            amount: 1e18
+        });
+
+        for (uint256 i = 0; i < numOfObjs; i++) {
+            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i)); // expect every hash to be different
+            assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == ERC1271_SUCCESS);
+        }
+    }
+
     // ==== PERMIT SUPER TX UTILS ====
 
     function _makePermitSuperTx(
@@ -129,5 +150,64 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
             superTxUserOps[i].signature = signature;
         }
         return superTxUserOps;
+    }
+
+    function _makePermitSuperTxSignatures(
+        bytes32 baseHash,
+        uint256 total,
+        ERC20 token,
+        Vm.Wallet memory signer,
+        address spender,
+        uint256 amount
+    )
+        internal
+        view
+        returns (bytes[] memory)
+    {
+        bytes[] memory meeSigs = new bytes[](total);
+        require(total > 0, "total must be greater than 0");
+
+        bytes32[] memory leaves = new bytes32[](total);
+
+        for (uint256 i = 0; i < total; i++) {
+            leaves[i] = keccak256(abi.encode(baseHash, i));
+        }
+
+        bytes32[] memory tree = leaves.build();
+        bytes32 root = tree.root();
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                PERMIT_TYPEHASH,
+                signer.addr,
+                spender,
+                amount,
+                token.nonces(signer.addr), //nonce
+                root //we use deadline field to store the super tx root hash
+            )
+        );
+
+        // now sign with erc-7739
+        bytes32 dataHashToSign = EcdsaHelperLib.toTypedDataHash(token.DOMAIN_SEPARATOR(), structHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, dataHashToSign);
+
+        for (uint256 i = 0; i < total; i++) {
+            bytes32[] memory proof = tree.leafProof(i);
+            bytes memory signature = abi.encode(
+                DecodedErc20PermitSigShort({
+                    spender: spender,
+                    domainSeparator: token.DOMAIN_SEPARATOR(),
+                    amount: amount,
+                    nonce: token.nonces(signer.addr),
+                    superTxHash: root,
+                    v: v,
+                    r: r,
+                    s: s,
+                    proof: proof
+                })
+            );
+            meeSigs[i] = signature;
+        }
+        return meeSigs;
     }
 }

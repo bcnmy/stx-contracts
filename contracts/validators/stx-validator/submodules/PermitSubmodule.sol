@@ -44,6 +44,12 @@ struct DecodedErc20PermitSig {
     bytes32 superTxHash;
     uint48 lowerBoundTimestamp;
     uint48 upperBoundTimestamp;
+    // TODO: REPLACE THIS WITH JUST THE BYTES SIGNATURE FIELD
+    // - in processStxUserOpData mode, it will be just encodePacked(r, s, v) coz no 7739 is applicable, so to call
+    // erc20.permit() we just cust the signature into v,r,s
+    // - in processStxUserOpData (1271/7739) it may be decoded as per 7739.but we do not need to decode it here in this
+    // module anyways we just return it back to the StxValidator to be used with 7739 functions that know how to handle
+    // it.
     uint8 v;
     bytes32 r;
     bytes32 s;
@@ -145,6 +151,12 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
         returns (bool, bytes32, bytes memory)
     {
         if (sigData.length == 65) {
+            // !!!!!!!!!!!!!!!!!!!!!
+            // THIS CHECK IS NOT CORRECT BECAUSE IN  CASE OF 7739,
+            // THE SIGN WILL BE 65bytes + appended 7739 specific data
+            // !!!!!!!!!
+            // TODO: fix this check
+
             // if sigData.length == 65, this is a simple EOA signature over the data object,
             // not a stx flow. ERC-7739 is required in this case.
             return (true, dataHash, sigData);

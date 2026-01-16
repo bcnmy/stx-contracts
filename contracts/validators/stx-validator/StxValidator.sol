@@ -206,7 +206,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         override
         returns (uint256)
     {
-        (bytes32 activeConfigId, bytes calldata parsedSigData) = _parseSignature(userOp.signature);
+        (bytes32 activeConfigId, bytes calldata parsedSigData) = _parseSignatureWithConfigId(userOp.signature);
 
         (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData) =
             _getConfigData(configs, msg.sender, activeConfigId);
@@ -265,10 +265,33 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
             return _erc1271IsValidSignatureWithSender(sender, dataHash, signature);
         }
 
-        (bytes32 activeConfigId, bytes calldata parsedSigData) = _parseSignature(_erc1271UnwrapSignature(signature));
+        (bytes32 activeConfigId, bytes calldata parsedSigData) =
+            _parseSignatureWithConfigId(_erc1271UnwrapSignature(signature));
 
         address stxModeVerifierAddress = configs[activeConfigId][msg.sender].stxModeVerifierAddress;
         require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
+
+        // FLOW IS:
+        // 1. call IStxModeVerifier.processStxDataObject(hash, sig)
+        //    this IStxModeVerifier will decode the signature according to the stx mode
+        //    as a part of this decoding, in applicable modes (for example, simple mode and permit mode)
+        //    it will get a signature that is packed as per eip-7739
+        //    and also it will prepare the pre-7739 hash using the data from the
+        //    decoded signature (like making the Permit struct hash in the permit mode)
+
+        // (( for the on-chain tx mode, we do not need 7739, we just rehash the txn hash with the smart account
+        // address))
+
+        // 2. pass this data to the ERC7739Validator methods (prepend active configId to the signature as well)
+        //    those methods do their magic and call IStatelessValidator via overridden
+        // _erc1271IsValidSignatureNowCalldata method
+
+        // So when we prepare data for this flow off-chain, what we do is:
+        // 1. prepare the meeHash, for example, the Permit struct hash in the permit mode
+        //    or the SuperTx() struct hash in the simple mode
+        // 2. Rebuild 7739 hash out of it and sign it
+        // 3. Prepare the 7739 signature by appending the 7739 specific data to the signature
+        // 4. Prepare the Stx signature by encoding the signature as per stx mode
 
         // meeHash is the hash of some data object required by a given stx mode: it can be erc2612 permit object,
         // on-chain tx object, merkle tree root, SuperTx() eip712 data struct, etc.
@@ -364,7 +387,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
-    function _parseSignature(bytes calldata signature)
+    function _parseSignatureWithConfigId(bytes calldata signature)
         internal
         view
         returns (bytes32 activeConfigId, bytes calldata parsedSigData)
