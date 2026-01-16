@@ -146,7 +146,7 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
     {
         if (sigData.length == 65) {
             // if sigData.length == 65, this is a simple EOA signature over the data object,
-            // not a stx flow
+            // not a stx flow. ERC-7739 is required in this case.
             return (true, dataHash, sigData);
         }
 
@@ -156,6 +156,11 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
             revert MerkleVerificationFailed();
         }
 
+        // still return first value (isErc7739Required) as true,
+        // because technically smart accoiunt address is not always present in the data object
+        // (in most cases Permit.spender is the smart account address, but it can be any other address as well)
+        // so we have to use ERC-7739 to keep the transparent EIP-712 data struct to be signed by the user
+        // and still be protected from the `two accounts, same owner` attack vector.
         return (true, _getSignedDataHash(decodedSig), abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v)));
     }
 

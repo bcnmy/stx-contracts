@@ -267,8 +267,8 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
 
         (bytes32 activeConfigId, bytes calldata parsedSigData) = _parseSignature(_erc1271UnwrapSignature(signature));
 
-        (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData) =
-            _getConfigData(configs, msg.sender, activeConfigId);
+        address stxModeVerifierAddress = configs[activeConfigId][msg.sender].stxModeVerifierAddress;
+        require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
 
         // meeHash is the hash of some data object required by a given stx mode: it can be erc2612 permit object,
         // on-chain tx object, merkle tree root, SuperTx() eip712 data struct, etc.
@@ -276,21 +276,31 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
             IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(dataHash, parsedSigData);
 
         if (isErc7739Required) {
-            // this is the trick to put `cleanSignature` from memory to calldata
+            // Since ERC7739Validator._erc1271IsValidSignatureWithSender and _erc1271IsValidSignatureNowCalldata
+            // functions do not expect any arguments to pass an additional context (like statelessValidatorAddress or
+            // validationData)
+            // we pack the active configId into the signature to later use it and obtain the statelessValidatorAddress
+            // and validationData required to perform the signature validation via erc-7780.
+            // This should be safe because ERC7739Validator's methods only cut data from the LSB's of the signature
+            // (right side) and we pack the active configId into the beginning (left-side, MSB's).
+            // Unfortunately this is the only workaround to pass the additional context to the ERC7739Validator's
+            // methods. ---
+            // !!! TODO: do a thoroughful test for it to make sure it works as expected
+            bytes memory sigWithConfigId = abi.encodePacked(activeConfigId, cleanSignature);
+
+            // the public wrapper function `_validateSignatureViaErc7739` is introduced to put `sigWithConfigId` from
+            // memory to calldata
             (bool success, bytes memory result) = address(this)
-                .staticcall(
-                    abi.encodeCall(
-                        this._validateSignatureViaErc7739,
-                        (sender, statelessValidatorAddress, validationData, meeHash, cleanSignature)
-                    )
-                );
+                .staticcall(abi.encodeCall(this._validateSignatureViaErc7739, (sender, meeHash, sigWithConfigId)));
             return success && result.length == 32
                 ? abi.decode(result, (bytes4))  // if the call is successful and returned proper result => decode it as
                 // bytes4 and return
                 : ERC1271_FAILED; // if something went wrong => return ERC1271_FAILED
         } else {
-            // No erc-7739 needed (hash is already safe in terms of having SA address hashed into it) => use ERC-7780
-            // directly to validate the signature
+            // StxMode verifier reported, that erc-7739 is not needed (hash is already safe in terms of having SA
+            // address hashed into it) => we can use ERC-7780 directly to validate the signature
+            (, address statelessValidatorAddress, bytes memory validationData) =
+                _getConfigData(configs, msg.sender, activeConfigId);
             return _validateSignatureViaErc7780(statelessValidatorAddress, validationData, meeHash, cleanSignature)
                 ? ERC1271_SUCCESS
                 : ERC1271_FAILED;
@@ -301,6 +311,8 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     /// @param hash The hash of the data to validate
     /// @param sig The signature data
     /// @param data The data to validate against (owner address in this case)
+    /// @dev No erc-7739 flow needed, as if this module acts as a stateless validator,
+    /// all the logic related to erc-7739 has already been handled at this point by caller contract.
     function validateSignatureWithData(
         bytes32 hash,
         bytes calldata sig,
@@ -309,7 +321,18 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         external
         view
         returns (bool isValidSig)
-    { }
+    {
+        ValidationConfig memory config = abi.decode(data, (ValidationConfig));
+        // parse the config entries from the data parameter
+        // no sanity checks for the config entries, we expect the caller to provide valid data
+        (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData) =
+            abi.decode(data, (address, address, bytes));
+
+        (, bytes32 meeHash, bytes memory cleanSignature) =
+            IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(hash, sig);
+
+        isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, hash, cleanSignature);
+    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
@@ -406,10 +429,9 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         }
     }
 
+    // @dev wrapper method to convert bytes memory to bytes calldata
     function _validateSignatureViaErc7739(
         address sender,
-        address statelessValidatorAddress,
-        bytes memory validationData,
         bytes32 meeHash,
         bytes calldata cleanSignature
     )
@@ -417,15 +439,29 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         view
         returns (bytes4)
     {
-        assembly {
-            // store validationData to the transient storage (TSTORE)
-            tstore(0x0, statelessValidatorAddress)
-            //
-        }
         // note: ERC7739Validator._erc1271IsValidSignatureWithSender uses _erc1271IsValidSignatureNowCalldata under the
         // hood to validate the signature so see how _erc1271IsValidSignatureNowCalldata is overridden in this contract
         return _erc1271IsValidSignatureWithSender(sender, meeHash, cleanSignature);
     }
+
+    // @dev Wrapper method to validate the signature via erc-7780
+    function _validateSignatureViaErc7780(
+        address statelessValidatorAddress,
+        bytes memory validationData,
+        bytes32 hash,
+        bytes memory signature
+    )
+        internal
+        view
+        returns (bool isValidSig)
+    {
+        bool isValidSig =
+            IStatelessValidator(statelessValidatorAddress).validateSignatureWithData(hash, signature, validationData);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                         ERC-7739 VALIDATOR BASE OVERRIDES
+    //////////////////////////////////////////////////////////////////////////*/
 
     /// @dev Returns whether the `hash` and `signature` are valid.
     ///      Obtains the authorized signer's credentials and calls some
@@ -440,28 +476,14 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         override
         returns (bool isValidSig)
     {
-        // tload statelessValidatorAddress and validationData from the transient storage
-        address statelessValidatorAddress;
-        assembly {
-            statelessValidatorAddress := tload(0x0)
-        }
-        bytes memory validationData;
+        // parse the active configId from the signature
+        bytes32 activeConfigId = bytes32(signature[0:32]);
+        (, address statelessValidatorAddress, bytes memory validationData) =
+            _getConfigData(configs, msg.sender, activeConfigId);
+
+        signature = signature[32:];
 
         isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, hash, signature);
-    }
-
-    function _validateSignatureViaErc7780(
-        address statelessValidatorAddress,
-        bytes memory validationData,
-        bytes32 hash,
-        bytes memory signature
-    )
-        internal
-        view
-        returns (bool isValidSig)
-    {
-        bool isValidSig =
-            IStatelessValidator(statelessValidatorAddress).validateSignatureWithData(hash, signature, validationData);
     }
 
     /// @dev Returns whether the `sender` is considered safe, such
