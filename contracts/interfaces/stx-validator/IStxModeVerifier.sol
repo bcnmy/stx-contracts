@@ -8,14 +8,38 @@ pragma solidity ^0.8.27;
  */
 interface IStxModeVerifier {
     /**
-     * @dev This method is responsible for validating the userOp with regards of a given Stx
+     * @dev This method is responsible for validating the userOp entry of a given Stx
      * It should verify the given UserOp is the part of the given Stx (via merkl tree or a simple list)
      * and it should properly parse the signatureData according to the Stx Mode it implements
      *
-     * @return bool sigValidationRequired
+     * @return isSigValidationRequired
      *      indicates whether the furthersignature validation is required
-     * @return bytes return data: packed data for the further signature validation
+     * @return returnData packed data for the further signature validation
      * via erc-7780. It should include timestamps, signed hash, and a clean signature
      */
-    function validateStxUserOp(bytes32 userOpHash, bytes calldata signatureData) external returns (bool, bytes memory);
+    function processStxUserOpData(
+        bytes32 userOpHash,
+        bytes calldata signatureData
+    )
+        external
+        returns (bool isSigValidationRequired, bytes memory returnData);
+
+    /**
+     * @dev This method is responsible for validating the data object entry of a given Stx
+     * It should verify the given data object is the part of the given Stx (via merkl tree or a simple list)
+     * and it should properly parse the signatureData according to the Stx Mode it implements
+     *
+     * Returns data for erc-7780 signature validation
+     * @return isErc7739Required indicates whether the erc-7739 is required for the signature validation
+     * @return meeHash the hash of some data object required by a given stx mode: it can be erc2612 permit object,
+     * on-chain tx object, merkle tree root, SuperTx() eip712 data struct, etc.
+     * @return cleanSignature the clean signature that was used to sign the data
+     */
+    function processStxDataObject(
+        bytes32 dataHash,
+        bytes calldata signatureData
+    )
+        external
+        view
+        returns (bool isErc7739Required, bytes32 meeHash, bytes calldata cleanSignature);
 }

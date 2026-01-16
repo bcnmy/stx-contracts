@@ -64,13 +64,14 @@ struct DecodedErc20PermitSigShort {
 }
 
 error InvalidDataLength();
+error MerkleVerificationFailed();
 
 contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
     error PermitFailed();
 
     using EcdsaHelperLib for bytes32;
 
-    function validateStxUserOp(bytes32 userOpHash, bytes calldata sigData) external returns (bool, bytes memory) {
+    function processStxUserOpData(bytes32 userOpHash, bytes calldata sigData) external returns (bool, bytes memory) {
         // AA-4337 backwards compatibility flow
         if (sigData.length == 65) {
             // if sigData.length == 65, this is a simple EOA signature for the vanilla ERC-4337 flow
@@ -80,7 +81,15 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
 
         // otherwise, we consider the sigData = userOp.signature is properly encoded
         // to provide all the data required for the Permit fusion mode validation
-        DecodedErc20PermitSig memory decodedSig = _decodeFullPermitSig(sigData);
+        DecodedErc20PermitSig calldata decodedSig = _decodeFullPermitSig(sigData);
+
+        // Verify Merkle proof for the superTx hash
+        bytes32 meeUserOpHash = MEEUserOpHashLib.getMEEUserOpHash(
+            userOpHash, decodedSig.lowerBoundTimestamp, decodedSig.upperBoundTimestamp
+        );
+        if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, meeUserOpHash)) {
+            revert MerkleVerificationFailed();
+        }
 
         if (decodedSig.isPermitTx) {
             try decodedSig.token
@@ -125,6 +134,29 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
                 abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v))
             )
         );
+    }
+
+    function processStxDataObject(
+        bytes32 dataHash,
+        bytes calldata sigData
+    )
+        external
+        view
+        returns (bool, bytes32, bytes memory)
+    {
+        if (sigData.length == 65) {
+            // if sigData.length == 65, this is a simple EOA signature over the data object,
+            // not a stx flow
+            return (true, dataHash, sigData);
+        }
+
+        DecodedErc20PermitSigShort calldata decodedSig = _decodeShortPermitSig(sigData);
+
+        if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, dataHash)) {
+            revert MerkleVerificationFailed();
+        }
+
+        return (true, _getSignedDataHash(decodedSig), abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v)));
     }
 
     // ERC2612.permit() function expects a simple EOA signature for most implementations

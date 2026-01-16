@@ -6,6 +6,7 @@ import { IValidator, MODULE_TYPE_VALIDATOR } from "erc7579/interfaces/IERC7579Mo
 import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { EnumerableSet } from "EnumerableSet4337/EnumerableSet4337.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
+import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
 import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
 import {
     SIG_TYPE_SIMPLE,
@@ -25,10 +26,8 @@ import { SafeAccountValidatorLib } from "../../lib/stx-validator/validation-mode
 import { NoMeeFlowLib } from "../../lib/stx-validator/validation-modes/NoMeeFlowLib.sol";
 import { EcdsaHelperLib } from "../../lib/util/EcdsaHelperLib.sol";
 import { FlatBytesLib } from "flatbytes/BytesLib.sol";
-import {
-    ValidationConfigLib,
-    StxModeVerifierAddressCannotBeZeroAddress
-} from "../../lib/stx-validator/ValidationConfigLib.sol";
+import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
+import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 
 /**
  * @title K1MeeValidator
@@ -82,6 +81,9 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
 
     /// @notice Error to indicate that the safe senders length is invalid
     error SafeSendersLengthInvalid();
+
+    /// @notice Error to indicate that the stx mode verifier address cannot be the zero address
+    error StxModeVerifierAddressCannotBeZeroAddress();
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -146,7 +148,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     }
 
     // TODO:
-    // impolement a function to replace ownership data within a config
+    // implement a function to replace ownership data within a config
 
     /**
      * Check if the module is initialized
@@ -204,44 +206,43 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         override
         returns (uint256)
     {
-        bytes32 activeConfigId;
-        bytes calldata parsedSigData;
-        if (userOp.signature.length < 32) {
-            //  it means, there's no configId present
-            // at the same time userOp.signature is too short for single eoa sig which is 65 bytes
-            // so this is some custom signature scheme which should be defined under the default configId
-            activeConfigId = DEFAULT_CONFIG_ID;
-            parsedSigData = userOp.signature;
-        } else {
-            // take the first 32 bytes and check
-            // if there's no config for this id, try the default configId
-            // the default configId should always be set (onInstall)
-            // this is the branch for flows, where we want to use a default config and the sig itself is long enough:
-            // we do not provide an enabled configId => random 32 bytes are used as configId =>
-            // ofc this random configId is not enabled => we use the default configId
-            // the chance that random 32 bytes of the signature data match an enabled configId is very low
-            activeConfigId = bytes32(userOp.signature[0:32]);
-            parsedSigData = userOp.signature[32:];
-            if (!enabledConfigs.contains(msg.sender, activeConfigId)) {
-                activeConfigId = DEFAULT_CONFIG_ID;
-                parsedSigData = userOp.signature; // means there was no configId encoded into the signature
-            }
-        }
+        (bytes32 activeConfigId, bytes calldata parsedSigData) = _parseSignature(userOp.signature);
 
-        return ValidationConfigLib.validateStxSignature({
-            configs: configs,
-            smartAccount: msg.sender,
-            configId: activeConfigId,
-            userOpHash: userOpHash,
-            signature: parsedSigData
-        });
+        (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData) =
+            _getConfigData(configs, msg.sender, activeConfigId);
+
+        // I) processStxUserOpData is parsing the userOp.signature,
+        // makes sure the given userOp is the part of the superTx
+        // return timestamps and signed hash + clean signature for the further
+        // sig verification via erc-7780
+        // if external call reverts => this method will revert as well => will make handleOps revert with AA23
+        (bool isSigValidationRequired, bytes memory ret) =
+            IStxModeVerifier(stxModeVerifierAddress).processStxUserOpData(userOpHash, parsedSigData);
+
+        // decode ret
+        // backward compatibility flow: if IStxValidator.processStxUserOpData detects the non-mee flow, it
+        // will just repack og userOpHash and userOp.signature and (0,0) as timestamps into ret
+        // so at the next step the sig validation will happen with the original userOpHash and userOp.signature
+        // as in the vanilla erc-4337 flow
+        (uint48 lowerBoundTimestamp, uint48 upperBoundTimestamp, bytes32 signedHash, bytes memory cleanSignature) =
+            abi.decode(ret, (uint48, uint48, bytes32, bytes));
+
+        // II) Sig validation via erc-7780
+        bool isValidSig = isSigValidationRequired
+            ? IStatelessValidator(statelessValidatorAddress)
+                .validateSignatureWithData(signedHash, cleanSignature, validationData)
+            : true;
+
+        // return validation data as per erc-4337
+        // first value is sigValidationFailed which is opposite to isValidSig returned by the validateSignatureWithData
+        return _packValidationData(!isValidSig, upperBoundTimestamp, lowerBoundTimestamp);
     }
 
     /**
      * Validates an ERC-1271 signature
      *
      * @param sender The sender of the ERC-1271 call to the account
-     * @param dataHash The hash of the message
+     * @param dataHash The hash of the DataObject Stx entry
      * @param signature The signature of the message
      *
      * @return sigValidationResult the result of the signature validation, which can be:
@@ -257,8 +258,44 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         view
         virtual
         override
-        returns (bytes4 sigValidationResult)
-    { }
+        returns (bytes4)
+    {
+        // ERC-7739 detection
+        if (signature.length == 0) {
+            return _erc1271IsValidSignatureWithSender(sender, dataHash, signature);
+        }
+
+        (bytes32 activeConfigId, bytes calldata parsedSigData) = _parseSignature(_erc1271UnwrapSignature(signature));
+
+        (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData) =
+            _getConfigData(configs, msg.sender, activeConfigId);
+
+        // meeHash is the hash of some data object required by a given stx mode: it can be erc2612 permit object,
+        // on-chain tx object, merkle tree root, SuperTx() eip712 data struct, etc.
+        (bool isErc7739Required, bytes32 meeHash, bytes memory cleanSignature) =
+            IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(dataHash, parsedSigData);
+
+        if (isErc7739Required) {
+            // this is the trick to put `cleanSignature` from memory to calldata
+            (bool success, bytes memory result) = address(this)
+                .staticcall(
+                    abi.encodeCall(
+                        this._validateSignatureViaErc7739,
+                        (sender, statelessValidatorAddress, validationData, meeHash, cleanSignature)
+                    )
+                );
+            return success && result.length == 32
+                ? abi.decode(result, (bytes4))  // if the call is successful and returned proper result => decode it as
+                // bytes4 and return
+                : ERC1271_FAILED; // if something went wrong => return ERC1271_FAILED
+        } else {
+            // No erc-7739 needed (hash is already safe in terms of having SA address hashed into it) => use ERC-7780
+            // directly to validate the signature
+            return _validateSignatureViaErc7780(statelessValidatorAddress, validationData, meeHash, cleanSignature)
+                ? ERC1271_SUCCESS
+                : ERC1271_FAILED;
+        }
+    }
 
     /// @notice IStatelessValidator interface
     /// @param hash The hash of the data to validate
@@ -304,19 +341,55 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @notice Internal method that does the job of validating the signature via ECDSA (secp256k1)
-    /// @param owner The address of the owner
-    /// @param hash The hash of the data to validate
-    /// @param signature The signature data
-    function _validateSignatureForOwner(
-        address owner,
-        bytes32 hash,
-        bytes calldata signature
+    function _parseSignature(bytes calldata signature)
+        internal
+        view
+        returns (bytes32 activeConfigId, bytes calldata parsedSigData)
+    {
+        if (signature.length < 32) {
+            //  it means, there's no configId present
+            // at the same time signature is too short for single eoa sig which is 65 bytes
+            // so this is some custom signature scheme which should be defined under the default configId
+            activeConfigId = DEFAULT_CONFIG_ID;
+            parsedSigData = signature;
+        } else {
+            // take the first 32 bytes and check
+            // if there's no config for this id, try the default configId
+            // the default configId should always be set (onInstall)
+            // this is the branch for flows, where we want to use a default config and the sig itself is long enough:
+            // we do not provide an enabled configId => random 32 bytes are used as configId =>
+            // ofc this random configId is not enabled => we use the default configId
+            // the chance that random 32 bytes of the signature data match an enabled configId is very low
+            activeConfigId = bytes32(signature[0:32]);
+            parsedSigData = signature[32:];
+            if (!enabledConfigs.contains(msg.sender, activeConfigId)) {
+                activeConfigId = DEFAULT_CONFIG_ID;
+                parsedSigData = signature; // means there was no configId encoded into the signature
+            }
+        }
+    }
+
+    function _getConfigData(
+        mapping(bytes32 configId => mapping(address smartAccount => ValidationConfig config)) storage configs,
+        address smartAccount,
+        bytes32 configId
     )
         internal
         view
-        returns (bool isValidSig)
-    { }
+        returns (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData)
+    {
+        ValidationConfig storage config = configs[configId][smartAccount];
+        stxModeVerifierAddress = config.stxModeVerifierAddress;
+        statelessValidatorAddress = config.statelessValidatorAddress;
+        require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
+        // sometimes we use same submodule for both stx mode verifier and stateless validator
+        // in this case we can pass address(0) as statelessValidatorAddress
+        // and save some calldata gas this way
+        if (statelessValidatorAddress == address(0)) {
+            statelessValidatorAddress = stxModeVerifierAddress;
+        }
+        validationData = config.validationData.load();
+    }
 
     /// @notice Checks if the smart account is initialized with an owner
     /// @param smartAccount The address of the smart account
@@ -333,6 +406,27 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         }
     }
 
+    function _validateSignatureViaErc7739(
+        address sender,
+        address statelessValidatorAddress,
+        bytes memory validationData,
+        bytes32 meeHash,
+        bytes calldata cleanSignature
+    )
+        public
+        view
+        returns (bytes4)
+    {
+        assembly {
+            // store validationData to the transient storage (TSTORE)
+            tstore(0x0, statelessValidatorAddress)
+            //
+        }
+        // note: ERC7739Validator._erc1271IsValidSignatureWithSender uses _erc1271IsValidSignatureNowCalldata under the
+        // hood to validate the signature so see how _erc1271IsValidSignatureNowCalldata is overridden in this contract
+        return _erc1271IsValidSignatureWithSender(sender, meeHash, cleanSignature);
+    }
+
     /// @dev Returns whether the `hash` and `signature` are valid.
     ///      Obtains the authorized signer's credentials and calls some
     ///      module's specific internal function to validate the signature
@@ -346,9 +440,29 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         override
         returns (bool isValidSig)
     {
-        // call custom internal function to validate the signature against credentials
-
+        // tload statelessValidatorAddress and validationData from the transient storage
+        address statelessValidatorAddress;
+        assembly {
+            statelessValidatorAddress := tload(0x0)
         }
+        bytes memory validationData;
+
+        isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, hash, signature);
+    }
+
+    function _validateSignatureViaErc7780(
+        address statelessValidatorAddress,
+        bytes memory validationData,
+        bytes32 hash,
+        bytes memory signature
+    )
+        internal
+        view
+        returns (bool isValidSig)
+    {
+        bool isValidSig =
+            IStatelessValidator(statelessValidatorAddress).validateSignatureWithData(hash, signature, validationData);
+    }
 
     /// @dev Returns whether the `sender` is considered safe, such
     /// that we don't need to use the nested EIP-712 workflow.
