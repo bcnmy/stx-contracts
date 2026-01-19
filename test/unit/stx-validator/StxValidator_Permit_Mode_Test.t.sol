@@ -24,6 +24,8 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
     using MerkleTreeLib for bytes32[];
 
+    // make token storage var to reduce stack size in some methods by not passing it as a param
+    // do not forget to reinit it at every test if required
     MockERC20PermitToken token;
 
     function setUp() public virtual override {
@@ -65,7 +67,7 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
     function test_superTxFlow_permit_mode_ERC1271_ERC7739_success(uint256 numOfObjs) public {
         numOfObjs = bound(numOfObjs, 2, 25);
         //uint256 numOfObjs = 5;
-        token = new MockERC20PermitToken("test", "TEST");
+        token = new MockERC20PermitToken("test", "TEST"); // deploy fresh token
         bytes[] memory meeSigs = new bytes[](numOfObjs);
         bytes32 baseHash = keccak256(abi.encode("test"));
 
@@ -73,7 +75,7 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
             baseHash: baseHash, total: numOfObjs, signer: wallet, spender: address(mockAccount), amount: 1e18
         });
 
-        for (uint256 i = 0; i < numOfObjs; i++) {
+        for (uint256 i; i < numOfObjs; i++) {
             bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i)); // expect every hash to be different
             assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == ERC1271_SUCCESS);
         }

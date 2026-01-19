@@ -7,7 +7,8 @@ import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/ISta
 import { EnumerableSet } from "EnumerableSet4337/EnumerableSet4337.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
-import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
+//import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
+import { ERC7739Validator } from "./ERC7739Validator.sol";
 import {
     SIG_TYPE_SIMPLE,
     SIG_TYPE_ON_CHAIN,
@@ -28,6 +29,8 @@ import { EcdsaHelperLib } from "../../lib/util/EcdsaHelperLib.sol";
 import { FlatBytesLib } from "flatbytes/BytesLib.sol";
 import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
+
+import "forge-std/console2.sol";
 
 /**
  * @title K1MeeValidator
@@ -268,7 +271,8 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     {
         // ERC-7739 detection
         if (signature.length == 0) {
-            return _erc1271IsValidSignatureWithSender(sender, dataHash, signature);
+            // in this case it doesn't matter what address we pass as account
+            return _erc1271IsValidSignatureWithSender(sender, address(0), dataHash, signature);
         }
 
         (bytes32 activeConfigId, bytes calldata parsedSigData) =
@@ -318,12 +322,15 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
             // Unfortunately this is the only workaround to pass the additional context to the ERC7739Validator's
             // methods. ---
             // !!! TODO: do a thoroughful test for it to make sure it works as expected
+            console2.logBytes32(activeConfigId);
             bytes memory sigWithConfigId = abi.encodePacked(activeConfigId, cleanSignature);
 
             // the public wrapper function `_validateSignatureViaErc7739` is introduced to put `sigWithConfigId` from
             // memory to calldata
             (bool success, bytes memory result) = address(this)
-                .staticcall(abi.encodeCall(this._validateSignatureViaErc7739, (sender, meeHash, sigWithConfigId)));
+                .staticcall(
+                    abi.encodeCall(this._validateSignatureViaErc7739, (sender, msg.sender, meeHash, sigWithConfigId))
+                );
             return success && result.length == 32
                 ? abi.decode(result, (bytes4))  // if the call is successful and returned proper result => decode it as
                 // bytes4 and return
@@ -464,6 +471,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     // @dev wrapper method to convert bytes memory to bytes calldata
     function _validateSignatureViaErc7739(
         address sender,
+        address account,
         bytes32 meeHash,
         bytes calldata sigWithConfigId
     )
@@ -473,7 +481,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     {
         // note: ERC7739Validator._erc1271IsValidSignatureWithSender uses _erc1271IsValidSignatureNowCalldata under the
         // hood to validate the signature so see how _erc1271IsValidSignatureNowCalldata is overridden in this contract
-        return _erc1271IsValidSignatureWithSender(sender, meeHash, sigWithConfigId);
+        return _erc1271IsValidSignatureWithSender(sender, account, meeHash, sigWithConfigId);
     }
 
     // @dev Wrapper method to validate the signature via erc-7780
@@ -504,6 +512,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     /// @param signature The signature of the data, with all the potential
     ///                  erc7739 payload trimmed off, just with the configId prepended
     function _erc1271IsValidSignatureNowCalldata(
+        address account,
         bytes32 hash,
         bytes calldata signature
     )
@@ -514,8 +523,9 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     {
         // parse the active configId from the signature
         bytes32 activeConfigId = bytes32(signature[0:32]);
+        console2.logBytes32(activeConfigId);
         (, address statelessValidatorAddress, bytes memory validationData) =
-            _getConfigData(configs, msg.sender, activeConfigId);
+            _getConfigData(configs, account, activeConfigId);
 
         isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, hash, signature[32:]);
     }
