@@ -50,9 +50,10 @@ struct DecodedErc20PermitSig {
     // - in processStxUserOpData (1271/7739) it may be decoded as per 7739.but we do not need to decode it here in this
     // module anyways we just return it back to the StxValidator to be used with 7739 functions that know how to handle
     // it.
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
+    // uint8 v;
+    // bytes32 r;
+    // bytes32 s;
+    bytes signature;
     bytes32[] proof;
 }
 
@@ -63,9 +64,12 @@ struct DecodedErc20PermitSigShort {
     uint256 amount;
     uint256 nonce;
     bytes32 superTxHash;
+    /*
     uint8 v;
     bytes32 r;
     bytes32 s;
+    */
+    bytes signature;
     bytes32[] proof;
 }
 
@@ -97,16 +101,15 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
             revert MerkleVerificationFailed();
         }
 
+        // cut the decodeSig.signature into r,s,v
+        bytes32 r = bytes32(decodedSig.signature[0:32]);
+        bytes32 s = bytes32(decodedSig.signature[32:64]);
+        uint8 v = uint8(decodedSig.signature[64]);
+
         if (decodedSig.isPermitTx) {
             try decodedSig.token
                 .permit(
-                    decodedSig.owner,
-                    decodedSig.spender,
-                    decodedSig.amount,
-                    uint256(decodedSig.superTxHash),
-                    uint8(decodedSig.v),
-                    decodedSig.r,
-                    decodedSig.s
+                    decodedSig.owner, decodedSig.spender, decodedSig.amount, uint256(decodedSig.superTxHash), v, r, s
                 ) {
             // all good
             }
@@ -137,7 +140,7 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
                 decodedSig.lowerBoundTimestamp,
                 decodedSig.upperBoundTimestamp,
                 _getSignedDataHash(decodedSig),
-                abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v))
+                decodedSig.signature
             )
         );
     }
@@ -173,7 +176,7 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
         // (in most cases Permit.spender is the smart account address, but it can be any other address as well)
         // so we have to use ERC-7739 to keep the transparent EIP-712 data struct to be signed by the user
         // and still be protected from the `two accounts, same owner` attack vector.
-        return (true, _getSignedDataHash(decodedSig), abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v)));
+        return (true, _getSignedDataHash(decodedSig), decodedSig.signature);
     }
 
     // ERC2612.permit() function expects a simple EOA signature for most implementations
@@ -200,32 +203,6 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
     }
 
     // ========================================================
-
-    function validateSignatureForOwner(
-        address expectedSigner,
-        bytes32 dataHash,
-        bytes calldata parsedSignature
-    )
-        internal
-        view
-        returns (bool)
-    {
-        DecodedErc20PermitSigShort calldata decodedSig = _decodeShortPermitSig(parsedSignature);
-
-        if (!EcdsaHelperLib.isValidSignature(
-                expectedSigner,
-                _getSignedDataHash(decodedSig),
-                abi.encodePacked(decodedSig.r, decodedSig.s, uint8(decodedSig.v))
-            )) {
-            return false;
-        }
-
-        if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, dataHash)) {
-            return false;
-        }
-
-        return true;
-    }
 
     function _decodeFullPermitSig(bytes calldata parsedSignature)
         private

@@ -140,9 +140,7 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
                     superTxHash: root,
                     lowerBoundTimestamp: lowerBoundTimestamp,
                     upperBoundTimestamp: upperBoundTimestamp,
-                    v: v,
-                    r: r,
-                    s: s,
+                    signature: abi.encodePacked(r, s, v),
                     proof: proof
                 })
             );
@@ -195,14 +193,13 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
             bytes32[] memory proof = tree.leafProof(i);
             bytes memory signature = abi.encode(
                 DecodedErc20PermitSigShort({
+                    owner: signer.addr,
                     spender: spender,
                     domainSeparator: token.DOMAIN_SEPARATOR(),
                     amount: amount,
                     nonce: token.nonces(signer.addr),
                     superTxHash: root,
-                    v: v,
-                    r: r,
-                    s: s,
+                    signature: abi.encodePacked(r, s, v),
                     proof: proof
                 })
             );

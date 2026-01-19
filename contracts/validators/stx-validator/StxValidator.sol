@@ -416,7 +416,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     }
 
     function _getConfigData(
-        mapping(bytes32 configId => mapping(address smartAccount => ValidationConfig config)) storage configs,
+        mapping(bytes32 configId => mapping(address smartAccount => ValidationConfig config)) storage configs_,
         address smartAccount,
         bytes32 configId
     )
@@ -424,7 +424,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         view
         returns (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData)
     {
-        ValidationConfig storage config = configs[configId][smartAccount];
+        ValidationConfig storage config = configs_[configId][smartAccount];
         stxModeVerifierAddress = config.stxModeVerifierAddress;
         statelessValidatorAddress = config.statelessValidatorAddress;
         require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
@@ -478,7 +478,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         view
         returns (bool isValidSig)
     {
-        bool isValidSig =
+        isValidSig =
             IStatelessValidator(statelessValidatorAddress).validateSignatureWithData(hash, signature, validationData);
     }
 
