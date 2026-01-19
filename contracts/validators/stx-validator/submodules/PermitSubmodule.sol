@@ -162,6 +162,10 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
 
             // if sigData.length == 65, this is a simple EOA signature over the data object,
             // not a stx flow. ERC-7739 is required in this case.
+
+            // SOLUTION: USE A SEPARATE SUBMODULE FOR THE NON-MEE MODE
+            // TODO: remove the check from here and implement it in the separate submodule
+            // and suggest a dedicated config id for the non-mee 1271/7739
             return (true, dataHash, sigData);
         }
 
@@ -172,7 +176,7 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
         }
 
         // still return first value (isErc7739Required) as true,
-        // because technically smart accoiunt address is not always present in the data object
+        // because technically smart account address is not always present in the data object
         // (in most cases Permit.spender is the smart account address, but it can be any other address as well)
         // so we have to use ERC-7739 to keep the transparent EIP-712 data struct to be signed by the user
         // and still be protected from the `two accounts, same owner` attack vector.

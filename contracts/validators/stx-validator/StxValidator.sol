@@ -243,7 +243,13 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
      *
      * @param sender The sender of the ERC-1271 call to the account
      * @param dataHash The hash of the DataObject Stx entry
-     * @param signature The signature of the message
+     * @param signature The signature of the message, with all the additions:
+     *                  1. Append 7739 payload to the signature (if needed)
+     *                  2. Make the signature as per expected IStxModeVerifier
+     *                    for example, signature = abi.encode(DecodedErc20PermitSig(...))
+     *                    for the permit mode
+     *                  3. Prepend configId to the signature (left side, MSB's)
+     *                     if needed (for the default configId, no need to prepend)
      *
      * @return sigValidationResult the result of the signature validation, which can be:
      *  - ERC1271_SUCCESS if the signature is valid
@@ -300,10 +306,13 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
 
         if (isErc7739Required) {
             // Since ERC7739Validator._erc1271IsValidSignatureWithSender and _erc1271IsValidSignatureNowCalldata
-            // functions do not expect any arguments to pass an additional context (like statelessValidatorAddress or
-            // validationData)
-            // we pack the active configId into the signature to later use it and obtain the statelessValidatorAddress
-            // and validationData required to perform the signature validation via erc-7780.
+            // functions do not expect any arguments to pass an additional
+            // context (like statelessValidatorAddress or validationData)
+            //
+            // Thus we have to pack the active configId back into the signature
+            // to later use it to obtain the statelessValidatorAddress and validationData
+            // required to perform the signature validation via erc-7780.
+            //
             // This should be safe because ERC7739Validator's methods only cut data from the LSB's of the signature
             // (right side) and we pack the active configId into the beginning (left-side, MSB's).
             // Unfortunately this is the only workaround to pass the additional context to the ERC7739Validator's
@@ -354,7 +363,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         (, bytes32 meeHash, bytes memory cleanSignature) =
             IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(hash, sig);
 
-        isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, hash, cleanSignature);
+        isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, meeHash, cleanSignature);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -456,7 +465,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     function _validateSignatureViaErc7739(
         address sender,
         bytes32 meeHash,
-        bytes calldata cleanSignature
+        bytes calldata sigWithConfigId
     )
         public
         view
@@ -464,7 +473,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     {
         // note: ERC7739Validator._erc1271IsValidSignatureWithSender uses _erc1271IsValidSignatureNowCalldata under the
         // hood to validate the signature so see how _erc1271IsValidSignatureNowCalldata is overridden in this contract
-        return _erc1271IsValidSignatureWithSender(sender, meeHash, cleanSignature);
+        return _erc1271IsValidSignatureWithSender(sender, meeHash, sigWithConfigId);
     }
 
     // @dev Wrapper method to validate the signature via erc-7780
@@ -490,6 +499,10 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     ///      Obtains the authorized signer's credentials and calls some
     ///      module's specific internal function to validate the signature
     ///      against credentials.
+    /// @param hash The hash of the data to validate, processed as per erc7739
+    ///             if required
+    /// @param signature The signature of the data, with all the potential
+    ///                  erc7739 payload trimmed off, just with the configId prepended
     function _erc1271IsValidSignatureNowCalldata(
         bytes32 hash,
         bytes calldata signature
@@ -504,9 +517,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         (, address statelessValidatorAddress, bytes memory validationData) =
             _getConfigData(configs, msg.sender, activeConfigId);
 
-        signature = signature[32:];
-
-        isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, hash, signature);
+        isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, hash, signature[32:]);
     }
 
     /// @dev Returns whether the `sender` is considered safe, such
