@@ -30,8 +30,6 @@ import { FlatBytesLib } from "flatbytes/BytesLib.sol";
 import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 
-import "forge-std/console2.sol";
-
 /**
  * @title K1MeeValidator
  *
@@ -322,7 +320,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
             // Unfortunately this is the only workaround to pass the additional context to the ERC7739Validator's
             // methods. ---
             // !!! TODO: do a thoroughful test for it to make sure it works as expected
-            console2.logBytes32(activeConfigId);
             bytes memory sigWithConfigId = abi.encodePacked(activeConfigId, cleanSignature);
 
             // the public wrapper function `_validateSignatureViaErc7739` is introduced to put `sigWithConfigId` from
@@ -361,7 +358,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         view
         returns (bool isValidSig)
     {
-        ValidationConfig memory config = abi.decode(data, (ValidationConfig));
         // parse the config entries from the data parameter
         // no sanity checks for the config entries, we expect the caller to provide valid data
         (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData) =
@@ -523,7 +519,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     {
         // parse the active configId from the signature
         bytes32 activeConfigId = bytes32(signature[0:32]);
-        console2.logBytes32(activeConfigId);
         (, address statelessValidatorAddress, bytes memory validationData) =
             _getConfigData(configs, account, activeConfigId);
 

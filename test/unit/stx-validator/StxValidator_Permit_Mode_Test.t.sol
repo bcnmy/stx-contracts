@@ -20,6 +20,8 @@ import {
 import { SIG_TYPE_ERC20_PERMIT } from "contracts/types/Constants.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
     using MerkleTreeLib for bytes32[];
@@ -81,6 +83,28 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
         }
     }
 
+    function test_superTxFlow_permit_mode_ERC7780_success(uint256 numOfObjs) public {
+        numOfObjs = bound(numOfObjs, 2, 25);
+        token = new MockERC20PermitToken("test", "TEST"); // deploy fresh token
+        bytes[] memory meeSigs = new bytes[](numOfObjs);
+        bytes32 baseHash = keccak256(abi.encode("test"));
+
+        bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
+        bytes memory data = abi.encode(
+            address(permitSubmodule), // stx mode verifier address
+            address(permitSubmodule), // stateless validator address
+            validationDataForStatelessValidator // validation data for stateless validator
+        );
+
+        meeSigs = _makePermitSuperTxSignaturesForErc7780Flow({
+            baseHash: baseHash, total: numOfObjs, signer: wallet, spender: address(mockAccount), amount: 1e18
+        });
+
+        for (uint256 i; i < numOfObjs; i++) {
+            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i)); // expect every hash to be different
+            assertTrue(mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], data));
+        }
+    }
     // ==== PERMIT SUPER TX UTILS ====
 
     function _makePermitSuperTx(
@@ -203,6 +227,65 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
                     signature: abi.encodePacked(
                         t.r, t.s, t.v, token.DOMAIN_SEPARATOR(), t.contents, contentsType, uint16(contentsType.length)
                     ), // eip7739 signature
+                    proof: proof
+                })
+            );
+            meeSigs[i] = signature;
+        }
+        return meeSigs;
+    }
+
+    function _makePermitSuperTxSignaturesForErc7780Flow(
+        bytes32 baseHash,
+        uint256 total,
+        Vm.Wallet memory signer,
+        address spender,
+        uint256 amount
+    )
+        internal
+        view
+        returns (bytes[] memory)
+    {
+        bytes[] memory meeSigs = new bytes[](total);
+
+        bytes32[] memory leaves = new bytes32[](total);
+
+        for (uint256 i = 0; i < total; i++) {
+            leaves[i] = keccak256(abi.encode(baseHash, i));
+        }
+
+        bytes32[] memory tree = leaves.build();
+        bytes32 root = tree.root();
+        uint256 nonce = token.nonces(signer.addr);
+
+        bytes32 permitStructHash = keccak256(
+            abi.encode(
+                PERMIT_TYPEHASH,
+                signer.addr,
+                spender,
+                amount,
+                token.nonces(signer.addr), //nonce
+                root //we use deadline field to store the super tx root hash
+            )
+        ); // permit struct hash
+
+        // prepare the data hash to be signed
+        bytes32 dataHashToSign = keccak256(abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), permitStructHash));
+
+        TestTemps memory t;
+        (t.v, t.r, t.s) = vm.sign(signer.privateKey, dataHashToSign);
+
+        for (uint256 i = 0; i < total; i++) {
+            bytes32[] memory proof = tree.leafProof(i);
+            bytes memory signature = abi.encode(
+                DecodedErc20PermitSigShort({
+                    owner: signer.addr,
+                    spender: spender,
+                    domainSeparator: token.DOMAIN_SEPARATOR(),
+                    amount: amount,
+                    nonce: token.nonces(signer.addr),
+                    superTxHash: root,
+                    signature: abi.encodePacked(t.r, t.s, t.v),
                     proof: proof
                 })
             );
