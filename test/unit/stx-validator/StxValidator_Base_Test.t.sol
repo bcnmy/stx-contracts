@@ -13,8 +13,9 @@ import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
 import "contracts/types/Constants.sol";
 import { StxValidator } from "../../../contracts/validators/stx-validator/StxValidator.sol";
-
-import { console2 } from "forge-std/console2.sol";
+import {
+    EOAStatelessValidator
+} from "../../../contracts/validators/stx-validator/submodules/EOAStatelessValidator.sol";
 
 contract StxValidator_Base_Test is BaseTest {
     using CopyUserOpLib for PackedUserOperation;
@@ -24,11 +25,13 @@ contract StxValidator_Base_Test is BaseTest {
     MockAccount mockAccount;
     uint256 valueToSet;
     StxValidator internal stxValidator;
+    EOAStatelessValidator internal eoaStatelessValidator;
 
     function setUp() public virtual override {
         super.setUp();
 
         stxValidator = new StxValidator();
+        eoaStatelessValidator = new EOAStatelessValidator();
 
         wallet = createAndFundWallet("wallet", 5 ether);
         mockAccount = deployMockAccount({ validator: address(stxValidator), handler: address(0) });

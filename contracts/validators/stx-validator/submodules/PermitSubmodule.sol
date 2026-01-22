@@ -18,16 +18,11 @@ import { MODULE_TYPE_STATELESS_VALIDATOR } from "contracts/types/Constants.sol";
  *      - https://ethresear.ch/t/fusion-module-7702-alternative-with-no-protocol-changes/20949
  *      - https://docs.biconomy.io/explained/eoa#fusion-module
  *
- *      @dev Important: since ERC20 permit token knows nothing about the MEE, it will treat the superTx hash as a
- * deadline:
- *      -  if (very unlikely) the superTx hash being converted to uint256 is a timestamp in the past, the permit will
- * fail
+ *      @dev Important: since ERC20 permit token knows nothing about the MEE,
+ *      it will treat the superTx hash as a deadline:
+ *      -  if (very unlikely) the superTx hash being converted to uint256 is a timestamp
+ *         that is in the past, the permit will fail
  *      -  the deadline with most superTx hashes will be very far in the future
- *
- *      @dev Since at this point bytes32 superTx hash is a blind hash, users and wallets should pay attention if
- *           the permit2 deadline field does not make sense as the timestamp. In this case, it can be a sign of a
- *           phishing attempt (injecting super txn hash as the deadline) and the user should not sign the permit.
- *           This is going to be mitigated in the future by making superTx hash a EIP-712 hash.
  */
 
 //keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
@@ -44,15 +39,6 @@ struct DecodedErc20PermitSig {
     bytes32 superTxHash;
     uint48 lowerBoundTimestamp;
     uint48 upperBoundTimestamp;
-    // TODO: REPLACE THIS WITH JUST THE BYTES SIGNATURE FIELD
-    // - in processStxUserOpData mode, it will be just encodePacked(r, s, v) coz no 7739 is applicable, so to call
-    // erc20.permit() we just cust the signature into v,r,s
-    // - in processStxUserOpData (1271/7739) it may be decoded as per 7739.but we do not need to decode it here in this
-    // module anyways we just return it back to the StxValidator to be used with 7739 functions that know how to handle
-    // it.
-    // uint8 v;
-    // bytes32 r;
-    // bytes32 s;
     bytes signature;
     bytes32[] proof;
 }
@@ -64,11 +50,6 @@ struct DecodedErc20PermitSigShort {
     uint256 amount;
     uint256 nonce;
     bytes32 superTxHash;
-    /*
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
-    */
     bytes signature;
     bytes32[] proof;
 }
@@ -76,7 +57,7 @@ struct DecodedErc20PermitSigShort {
 error InvalidDataLength();
 error MerkleVerificationFailed();
 
-contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
+contract PermitSubmodule is IStxModeVerifier {
     error PermitFailed();
 
     using EcdsaHelperLib for bytes32;
@@ -153,22 +134,6 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
         view
         returns (bool, bytes32, bytes memory)
     {
-        if (sigData.length == 65) {
-            // !!!!!!!!!!!!!!!!!!!!!
-            // THIS CHECK IS NOT CORRECT BECAUSE IN  CASE OF 7739,
-            // THE SIGN WILL BE 65bytes + appended 7739 specific data
-            // !!!!!!!!!
-            // TODO: fix this check
-
-            // if sigData.length == 65, this is a simple EOA signature over the data object,
-            // not a stx flow. ERC-7739 is required in this case.
-
-            // SOLUTION: USE A SEPARATE SUBMODULE FOR THE NON-MEE MODE
-            // TODO: remove the check from here and implement it in the separate submodule
-            // and suggest a dedicated config id for the non-mee 1271/7739
-            return (true, dataHash, sigData);
-        }
-
         DecodedErc20PermitSigShort calldata decodedSig = _decodeShortPermitSig(sigData);
 
         if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, dataHash)) {
@@ -181,29 +146,6 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
         // so we have to use ERC-7739 to keep the transparent EIP-712 data struct to be signed by the user
         // and still be protected from the `two accounts, same owner` attack vector.
         return (true, _getSignedDataHash(decodedSig), decodedSig.signature);
-    }
-
-    // ERC2612.permit() function expects a simple EOA signature for most implementations
-    // So this method can be used to validate the signature over the Permit data structure
-    // In case your ERC-2612.permit() function features other potential types of signature verification,
-    // for example, ERC-1271, please use another ERC-7780 validator as a stateless validator in the StxValidator
-    // config instead of this one.
-    function validateSignatureWithData(
-        bytes32 hash,
-        bytes calldata sig,
-        bytes calldata data
-    )
-        external
-        view
-        returns (bool)
-    {
-        require(data.length >= 20, InvalidDataLength());
-        address expectedSigner = address(bytes20(data[:20]));
-        return EcdsaHelperLib.isValidSignature(expectedSigner, hash, sig);
-    }
-
-    function isModuleType(uint256 typeId) external view returns (bool) {
-        return typeId == MODULE_TYPE_STATELESS_VALIDATOR;
     }
 
     // ========================================================
@@ -271,20 +213,5 @@ contract PermitSubmodule is IStatelessValidator, IStxModeVerifier {
 
     function _hashTypedData(bytes32 structHash, bytes32 domainSeparator) private pure returns (bytes32) {
         return EcdsaHelperLib.toTypedDataHash(domainSeparator, structHash);
-    }
-
-    // =========== REQUIRED BY ERC-7780/ERC-7579 SPEC ===========
-
-    function onInstall(bytes calldata data) external override {
-        // do nothing
-    }
-
-    function onUninstall(bytes calldata data) external override {
-        // do nothing
-    }
-
-    function isInitialized(address smartAccount) external view returns (bool) {
-        // stateless validator is always initialized
-        return true;
     }
 }

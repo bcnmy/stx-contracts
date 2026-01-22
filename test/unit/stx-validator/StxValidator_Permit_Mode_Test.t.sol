@@ -36,7 +36,9 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
         vm.prank(address(mockAccount));
         // set the default config
         stxValidator.onInstall(
-            abi.encodePacked(address(permitSubmodule), address(0), uint8(0), abi.encodePacked(wallet.addr))
+            abi.encodePacked(
+                address(permitSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr)
+            )
         );
     }
 
@@ -98,7 +100,7 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
         bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
         bytes memory data = abi.encode(
             address(permitSubmodule), // stx mode verifier address
-            address(permitSubmodule), // stateless validator address
+            address(eoaStatelessValidator), // stateless validator address
             validationDataForStatelessValidator // validation data for stateless validator
         );
 
