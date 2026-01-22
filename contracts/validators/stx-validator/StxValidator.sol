@@ -63,121 +63,23 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     mapping(bytes32 configId => mapping(address smartAccount => ValidationConfig config)) public configs;
     EnumerableSet.Bytes32Set internal enabledConfigs;
 
-    // address => configId => config (sig validator can be of 1271 or 7780 type)
-
     /// @notice Set of safe senders for each smart account
     EnumerableSet.AddressSet private _safeSenders;
-
-    /// @notice Error to indicate that no owner was provided during installation
-    error NoOwnerProvided();
-
-    /// @notice Error to indicate that the new owner cannot be the zero address
-    error ZeroAddressNotAllowed();
 
     /// @notice Error to indicate the module is already initialized
     error ModuleAlreadyInitialized();
 
-    /// @notice Error to indicate that the owner cannot be the zero address
-    error OwnerCannotBeZeroAddress();
-
     /// @notice Error to indicate that the data length is invalid
     error InvalidDataLength();
-
-    /// @notice Error to indicate that the safe senders length is invalid
-    error SafeSendersLengthInvalid();
 
     /// @notice Error to indicate that the stx mode verifier address cannot be the zero address
     error StxModeVerifierAddressCannotBeZeroAddress();
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                     CONFIG
-    //////////////////////////////////////////////////////////////////////////*/
+    /// @notice Error to indicate that the config is not enabled
+    error ConfigNotEnabled();
 
-    /**
-     * Initialize the module with the given data
-     *
-     * @param data The data to initialize the module with
-     */
-    function onInstall(bytes calldata data) external override {
-        // 20 bytes - stx mode verifier address
-        // 20 bytes - custom validator address
-        // 1 byte - safe senders length (n)
-        // n*20 bytes - safe senders if any
-        // config validation data
-
-        /**
-         *   onInstall always uses the default configId
-         *   if more configs are needed, they should be added later
-         *
-         *   no backwards compatibility features are needed
-         *
-         */
-
-        require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
-
-        // sanity check for the data length
-        require(data.length >= 40, InvalidDataLength());
-
-        // 20 bytes - stx mode verifier address
-        address stxModeVerifierAddress = address(bytes20(data[:20]));
-        require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
-
-        // 20 bytes - custom validator address
-        address statelessValidatorAddress = address(bytes20(data[20:40]));
-        // if statelessValidatorAddress is zero, we will use the stxModeVerifierAddress
-        // as the stateless validator address when loading and using the config later
-
-        // check for the safe senders
-        uint8 safeSendersNumber = uint8(bytes1(data[40]));
-        uint256 configValidationDataOffset = 41 + safeSendersNumber * 20;
-        if (safeSendersNumber > 0) {
-            require(data.length >= configValidationDataOffset, InvalidDataLength());
-            _fillSafeSenders(data[21:configValidationDataOffset]);
-        }
-
-        ValidationConfig storage conf = configs[DEFAULT_CONFIG_ID][msg.sender];
-        conf.stxModeVerifierAddress = stxModeVerifierAddress;
-        conf.statelessValidatorAddress = statelessValidatorAddress;
-        conf.validationData.store(data[configValidationDataOffset:]);
-
-        enabledConfigs.add(msg.sender, DEFAULT_CONFIG_ID);
-    }
-
-    /**
-     * De-initialize the module with the given data
-     */
-    function onUninstall(bytes calldata) external override {
-        // TODO: clean configs
-        _safeSenders.removeAll(msg.sender);
-    }
-
-    // TODO:
-    // implement a function to replace ownership data within a config
-
-    /**
-     * Check if the module is initialized
-     * @param smartAccount The smart account to check
-     *
-     * @return true if the module is initialized, false otherwise
-     */
-    function isInitialized(address smartAccount) external view returns (bool) {
-        return _isInitialized(smartAccount);
-    }
-
-    /// @notice Adds a safe sender to the _safeSenders list for the smart account
-    function addSafeSender(address sender) external {
-        _safeSenders.add(msg.sender, sender);
-    }
-
-    /// @notice Removes a safe sender from the _safeSenders list for the smart account
-    function removeSafeSender(address sender) external {
-        _safeSenders.remove(msg.sender, sender);
-    }
-
-    /// @notice Checks if a sender is in the _safeSenders list for the smart account
-    function isSafeSender(address sender, address smartAccount) external view returns (bool) {
-        return _safeSenders.contains(smartAccount, sender);
-    }
+    /// @notice Error to indicate that the config is already enabled
+    error ConfigAlreadyEnabled();
 
     /*//////////////////////////////////////////////////////////////////////////
                                      MODULE LOGIC
@@ -352,6 +254,9 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     /// @param data The data to validate against (owner address in this case)
     /// @dev No erc-7739 flow needed, as if this module acts as a stateless validator,
     /// all the logic related to erc-7739 has already been handled at this point by caller contract.
+    /// @dev no explicit flow for non-stx mode here, if nin stx mode is required to be processed
+    /// via this validator by some reason, pass the appropriate stxModeVerifierAddress and
+    /// within the `data` parameter
     function validateSignatureWithData(
         bytes32 hash,
         bytes calldata sig,
@@ -370,6 +275,211 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
             IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(hash, sig);
 
         isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, meeHash, cleanSignature);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /**
+     * Initialize the module with the given data
+     *   onInstall always uses the default configId
+     *   if more configs are needed, they should be added later
+     *
+     * @param data The data to initialize the module with
+     *   data format:
+     *   - 20 bytes - stx mode verifier address
+     *   - 20 bytes - custom validator address
+     *   - 1 byte - safe senders length (n)
+     *   - n*20 bytes - safe senders if any
+     *   - config validation data
+     */
+    function onInstall(bytes calldata data) external override {
+        require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
+
+        // sanity check for the data length
+        require(data.length >= 40, InvalidDataLength());
+
+        // 20 bytes - stx mode verifier address
+        address stxModeVerifierAddress = address(bytes20(data[:20]));
+        require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
+
+        // 20 bytes - custom validator address
+        address statelessValidatorAddress = address(bytes20(data[20:40]));
+        // if statelessValidatorAddress is zero, we will use the stxModeVerifierAddress
+        // as the stateless validator address when loading and using the config later
+
+        // check for the safe senders
+        uint8 safeSendersNumber = uint8(bytes1(data[40]));
+        uint256 configValidationDataOffset = 41 + safeSendersNumber * 20;
+        if (safeSendersNumber > 0) {
+            require(data.length >= configValidationDataOffset, InvalidDataLength());
+            _fillSafeSenders(data[21:configValidationDataOffset]);
+        }
+
+        _storeConfigData(
+            DEFAULT_CONFIG_ID, stxModeVerifierAddress, statelessValidatorAddress, data[configValidationDataOffset:]
+        );
+
+        enabledConfigs.add(msg.sender, DEFAULT_CONFIG_ID);
+    }
+
+    /**
+     * De-initialize the module with the given data
+     */
+    function onUninstall(bytes calldata) external override {
+        // TODO: clean configs
+        _safeSenders.removeAll(msg.sender);
+    }
+
+    /**
+     * @dev Adds a new config to the module with the given configId
+     * @param configId The id of the config to add
+     * @param stxModeVerifierAddress The address of the stx mode verifier
+     * @param statelessValidatorAddress The address of the stateless validator
+     * @param validationData The data to validate against
+     */
+    function addConfig(
+        bytes32 configId,
+        address stxModeVerifierAddress,
+        address statelessValidatorAddress,
+        bytes memory validationData
+    )
+        external
+    {
+        require(!enabledConfigs.contains(msg.sender, configId), ConfigAlreadyEnabled());
+        _validateStxModeVerifierAddress(configId, stxModeVerifierAddress);
+
+        _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress, validationData);
+    }
+
+    /**
+     * @dev Adds a new config to the module with the generated configId
+     * @param stxModeVerifierAddress The address of the stx mode verifier
+     * @param statelessValidatorAddress The address of the stateless validator
+     * @param validationData The data to validate against
+     */
+    function addConfig(
+        address stxModeVerifierAddress,
+        address statelessValidatorAddress,
+        bytes memory validationData
+    )
+        external
+    {
+        bytes32 configId = getConfigId(stxModeVerifierAddress, statelessValidatorAddress, validationData);
+
+        require(!enabledConfigs.contains(msg.sender, configId), ConfigAlreadyEnabled());
+        _validateStxModeVerifierAddress(configId, stxModeVerifierAddress);
+
+        _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress, validationData);
+    }
+
+    /**
+     * @dev Replaces the config data for the given configId
+     * @param configId The id of the config to replace
+     * @param stxModeVerifierAddress The address of the stx mode verifier
+     * @param statelessValidatorAddress The address of the stateless validator
+     * @param validationData The data to validate against
+     */
+    function replaceConfig(
+        bytes32 configId,
+        address stxModeVerifierAddress,
+        address statelessValidatorAddress,
+        bytes memory validationData
+    )
+        external
+    {
+        require(enabledConfigs.contains(msg.sender, configId), ConfigNotEnabled());
+        _validateStxModeVerifierAddress(configId, stxModeVerifierAddress);
+        _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress, validationData);
+    }
+
+    /**
+     * @dev Deletes the config data for the given configId
+     * @param configId The id of the config to delete
+     */
+    function deleteConfig(bytes32 configId) external {
+        require(enabledConfigs.contains(msg.sender, configId), ConfigNotEnabled());
+        delete configs[configId][msg.sender];
+        enabledConfigs.remove(msg.sender, configId);
+    }
+
+    /**
+     * @dev Generates a configId for the given config
+     * @param stxModeVerifierAddress The address of the stx mode verifier
+     * @param statelessValidatorAddress The address of the stateless validator
+     * @param validationData The data to validate against
+     * @return configId The id of the config
+     */
+    function getConfigId(
+        address stxModeVerifierAddress,
+        address statelessValidatorAddress,
+        bytes memory validationData
+    )
+        public
+        view
+        returns (bytes32 configId)
+    {
+        configId = keccak256(abi.encode(stxModeVerifierAddress, statelessValidatorAddress, validationData));
+    }
+
+    /**
+     * @dev Internal function to validate the stx mode verifier address
+     * @param configId The id of the config about to use the stx mode verifier provided
+     * @param stxModeVerifierAddress The address of the stx mode verifier
+     */
+    function _validateStxModeVerifierAddress(bytes32 configId, address stxModeVerifierAddress) internal view {
+        // no stx configs do not require a valid stx mode verifier address
+        if (configId != NO_STX_CONFIG_ID_7739 && configId != NO_STX_CONFIG_ID_VANILLA_1271) {
+            require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
+        }
+    }
+
+    /**
+     * @dev Internal function to enable a new config for the smart account
+     * @param configId The id of the config to add
+     * @param stxModeVerifierAddress The address of the stx mode verifier
+     * @param statelessValidatorAddress The address of the stateless validator
+     * @param validationData The data to validate against
+     */
+    function _storeConfigData(
+        bytes32 configId,
+        address stxModeVerifierAddress,
+        address statelessValidatorAddress,
+        bytes memory validationData
+    )
+        private
+    {
+        ValidationConfig storage conf = configs[configId][msg.sender];
+        conf.stxModeVerifierAddress = stxModeVerifierAddress;
+        conf.statelessValidatorAddress = statelessValidatorAddress;
+        conf.validationData.store(validationData);
+        enabledConfigs.add(msg.sender, configId);
+    }
+
+    /**
+     * Check if the module is initialized
+     * @param smartAccount The smart account to check
+     *
+     * @return true if the module is initialized, false otherwise
+     */
+    function isInitialized(address smartAccount) external view returns (bool) {
+        return _isInitialized(smartAccount);
+    }
+
+    /// @notice Adds a safe sender to the _safeSenders list for the smart account
+    function addSafeSender(address sender) external {
+        _safeSenders.add(msg.sender, sender);
+    }
+
+    /// @notice Removes a safe sender from the _safeSenders list for the smart account
+    function removeSafeSender(address sender) external {
+        _safeSenders.remove(msg.sender, sender);
+    }
+
+    /// @notice Checks if a sender is in the _safeSenders list for the smart account
+    function isSafeSender(address sender, address smartAccount) external view returns (bool) {
+        return _safeSenders.contains(smartAccount, sender);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

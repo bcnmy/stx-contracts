@@ -12,7 +12,11 @@ import { MockAccount } from "../../mock/accounts/MockAccount.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
 import "contracts/types/Constants.sol";
-import { StxValidator } from "../../../contracts/validators/stx-validator/StxValidator.sol";
+import {
+    StxValidator,
+    NO_STX_CONFIG_ID_7739,
+    NO_STX_CONFIG_ID_VANILLA_1271
+} from "../../../contracts/validators/stx-validator/StxValidator.sol";
 import {
     EOAStatelessValidator
 } from "../../../contracts/validators/stx-validator/submodules/EOAStatelessValidator.sol";

@@ -19,7 +19,7 @@ import {
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { PermitSubmodule } from "../../../contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
 
-contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
+contract StxValidator_Permit_K1_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
     using MerkleTreeLib for bytes32[];
 
