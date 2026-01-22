@@ -148,7 +148,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     }
 
     /**
-     * Validates an ERC-1271 signature
+     * Validates an ERC-1271/ERC-7739 signature
      *
      * @param sender The sender of the ERC-1271 call to the account
      * @param dataHash The hash of the DataObject Stx entry
@@ -206,7 +206,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
             // meeHash is the hash of some data object required by a given stx mode: it can be erc2612 permit object,
             // on-chain tx object, merkle tree root, SuperTx() eip712 data struct, etc.
             (isErc7739Required, meeHash, cleanSignature) =
-                IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(dataHash, parsedSigData);
+                IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(msg.sender, dataHash, parsedSigData);
         }
 
         if (isErc7739Required) {
@@ -269,7 +269,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
             abi.decode(data, (address, address, bytes));
 
         (, bytes32 meeHash, bytes memory cleanSignature) =
-            IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(hash, sig);
+            IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(address(0), hash, sig);
 
         isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, meeHash, cleanSignature);
     }

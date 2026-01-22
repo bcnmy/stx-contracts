@@ -52,9 +52,6 @@ struct DecodedErc20PermitSigShort {
     bytes32[] proof;
 }
 
-error InvalidDataLength();
-error MerkleVerificationFailed();
-
 contract PermitSubmodule is IStxModeVerifier {
     error PermitFailed();
 
@@ -136,6 +133,7 @@ contract PermitSubmodule is IStxModeVerifier {
      * @return bytes The clean signature
      */
     function processStxDataObject(
+        address, // account is not used in the Permit fusion mode
         bytes32 dataHash,
         bytes calldata sigData
     )

@@ -8,6 +8,11 @@ pragma solidity ^0.8.27;
  */
 interface IStxModeVerifier {
     /**
+     * @dev This error is thrown when the Merkle proof verification fails
+     */
+    error MerkleVerificationFailed();
+
+    /**
      * @dev This method is responsible for validating the userOp entry of a given Stx
      * It should verify the given UserOp is the part of the given Stx (via merkl tree or a simple list)
      * and it should properly parse the signatureData according to the Stx Mode it implements
@@ -25,6 +30,9 @@ interface IStxModeVerifier {
      * @dev This method is responsible for validating the data object entry of a given Stx
      * It should verify the given data object is the part of the given Stx (via merkl tree or a simple list)
      * and it should properly parse the signatureData according to the Stx Mode it implements
+     * @param account the smart account that requested data object processing
+     * @param dataHash the hash of the data object
+     * @param signatureData the signature data for the data object
      *
      * Returns data for erc-7780 signature validation
      * @return isErc7739Required indicates whether the erc-7739 is required for the signature validation
@@ -33,6 +41,7 @@ interface IStxModeVerifier {
      * @return cleanSignature the clean signature that was used to sign the data
      */
     function processStxDataObject(
+        address account,
         bytes32 dataHash,
         bytes calldata signatureData
     )
