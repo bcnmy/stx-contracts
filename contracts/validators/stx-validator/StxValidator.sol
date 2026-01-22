@@ -44,6 +44,9 @@ struct ValidationConfig {
 
 // keccak256("default");
 bytes32 constant DEFAULT_CONFIG_ID = 0xcfee7c08a98f4b565d124c7e4e28acc52e1bc780e3887db0a02a7d2d5bc66728;
+// flags for 7739/1271 no mee modes
+bytes32 constant NO_STX_CONFIG_ID_7739 = 0x0000000000000000000000000000000000000000000000000000000000000001;
+bytes32 constant NO_STX_CONFIG_ID_VANILLA_1271 = 0x0000000000000000000000000000000000000000000000000000000000000002;
 
 contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     using EnumerableSet for EnumerableSet.AddressSet; // TODO: remove this?
@@ -192,6 +195,12 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
      *      The userOp.signature is encoded as follows:
      *      MEE flow: [65 bytes node master signature] [4 bytes sigType] [encoded data for this validator]
      *      Non-MEE flow: [65 bytes regular secp256k1 sig]
+     * @dev Since we do not expect much vanilla AA (via ERC-4337) to be used with this validator,
+     *      we do not introduce a separate logic branch here for the non-Stx flow here.
+     *      Instead, we expect IStxModeVerifier to identify the non-Stx flow (most likely by
+     *      checking the signature length), and handle the non-Stx flow by returning the appropriate
+     *      `ret` value with same format as the Stx flow, but with empty timestamps and non-altered
+     *      userOpHash and signature.
      *
      * @return vd validation data = the result of the signature validation, which can be:
      *  - 0 if the signature is valid
@@ -276,35 +285,30 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         (bytes32 activeConfigId, bytes calldata parsedSigData) =
             _parseSignatureWithConfigId(_erc1271UnwrapSignature(signature));
 
-        address stxModeVerifierAddress = configs[activeConfigId][msg.sender].stxModeVerifierAddress;
-        require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
+        bool isErc7739Required;
+        bytes32 meeHash;
+        bytes memory cleanSignature;
 
-        // FLOW IS:
-        // 1. call IStxModeVerifier.processStxDataObject(hash, sig)
-        //    this IStxModeVerifier will decode the signature according to the stx mode
-        //    as a part of this decoding, in applicable modes (for example, simple mode and permit mode)
-        //    it will get a signature that is packed as per eip-7739
-        //    and also it will prepare the pre-7739 hash using the data from the
-        //    decoded signature (like making the Permit struct hash in the permit mode)
+        if (activeConfigId == NO_STX_CONFIG_ID_7739) {
+            // No Stx case with 7739
+            isErc7739Required = true;
+            meeHash = dataHash;
+            cleanSignature = parsedSigData;
+        } else if (activeConfigId == NO_STX_CONFIG_ID_VANILLA_1271) {
+            // No Stx case and user explicitly requested 1271 validation
+            isErc7739Required = false;
+            meeHash = dataHash;
+            cleanSignature = parsedSigData;
+        } else {
+            // Stx case
+            address stxModeVerifierAddress = configs[activeConfigId][msg.sender].stxModeVerifierAddress;
+            require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
 
-        // (( for the on-chain tx mode, we do not need 7739, we just rehash the txn hash with the smart account
-        // address))
-
-        // 2. pass this data to the ERC7739Validator methods (prepend active configId to the signature as well)
-        //    those methods do their magic and call IStatelessValidator via overridden
-        // _erc1271IsValidSignatureNowCalldata method
-
-        // So when we prepare data for this flow off-chain, what we do is:
-        // 1. prepare the meeHash, for example, the Permit struct hash in the permit mode
-        //    or the SuperTx() struct hash in the simple mode
-        // 2. Rebuild 7739 hash out of it and sign it
-        // 3. Prepare the 7739 signature by appending the 7739 specific data to the signature
-        // 4. Prepare the Stx signature by encoding the signature as per stx mode
-
-        // meeHash is the hash of some data object required by a given stx mode: it can be erc2612 permit object,
-        // on-chain tx object, merkle tree root, SuperTx() eip712 data struct, etc.
-        (bool isErc7739Required, bytes32 meeHash, bytes memory cleanSignature) =
-            IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(dataHash, parsedSigData);
+            // meeHash is the hash of some data object required by a given stx mode: it can be erc2612 permit object,
+            // on-chain tx object, merkle tree root, SuperTx() eip712 data struct, etc.
+            (isErc7739Required, meeHash, cleanSignature) =
+                IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(dataHash, parsedSigData);
+        }
 
         if (isErc7739Required) {
             // Since ERC7739Validator._erc1271IsValidSignatureWithSender and _erc1271IsValidSignatureNowCalldata
@@ -318,8 +322,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
             // This should be safe because ERC7739Validator's methods only cut data from the LSB's of the signature
             // (right side) and we pack the active configId into the beginning (left-side, MSB's).
             // Unfortunately this is the only workaround to pass the additional context to the ERC7739Validator's
-            // methods. ---
-            // !!! TODO: do a thoroughful test for it to make sure it works as expected
+            // methods.
             bytes memory sigWithConfigId = abi.encodePacked(activeConfigId, cleanSignature);
 
             // the public wrapper function `_validateSignatureViaErc7739` is introduced to put `sigWithConfigId` from

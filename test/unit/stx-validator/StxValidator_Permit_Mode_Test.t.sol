@@ -6,7 +6,6 @@ pragma solidity ^0.8.27;
 import { StxValidator_Base_Test } from "./StxValidator_Base_Test.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
-import { ERC20 } from "solady/tokens/ERC20.sol";
 import { MockERC20PermitToken } from "test/mock/tokens/MockERC20PermitToken.sol";
 import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
@@ -17,10 +16,8 @@ import {
     DecodedErc20PermitSigShort,
     PERMIT_TYPEHASH
 } from "contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
-import { SIG_TYPE_ERC20_PERMIT } from "contracts/types/Constants.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
-
-import { console2 } from "forge-std/console2.sol";
+import { PermitSubmodule } from "../../../contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
 
 contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
@@ -29,9 +26,18 @@ contract Stx_Validator_Permit_K1_Test is StxValidator_Base_Test {
     // make token storage var to reduce stack size in some methods by not passing it as a param
     // do not forget to reinit it at every test if required
     MockERC20PermitToken token;
+    PermitSubmodule internal permitSubmodule;
 
     function setUp() public virtual override {
         super.setUp();
+
+        // deploy permit submodule and use it with the default config
+        permitSubmodule = new PermitSubmodule();
+        vm.prank(address(mockAccount));
+        // set the default config
+        stxValidator.onInstall(
+            abi.encodePacked(address(permitSubmodule), address(0), uint8(0), abi.encodePacked(wallet.addr))
+        );
     }
 
     function test_superTxFlow_permit_mode_ValidateUserOp_success(uint256 numOfClones) public {

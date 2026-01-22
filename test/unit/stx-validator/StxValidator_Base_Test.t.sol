@@ -13,7 +13,6 @@ import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
 import "contracts/types/Constants.sol";
 import { StxValidator } from "../../../contracts/validators/stx-validator/StxValidator.sol";
-import { PermitSubmodule } from "../../../contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
 
 import { console2 } from "forge-std/console2.sol";
 
@@ -25,21 +24,15 @@ contract StxValidator_Base_Test is BaseTest {
     MockAccount mockAccount;
     uint256 valueToSet;
     StxValidator internal stxValidator;
-    PermitSubmodule internal permitSubmodule;
 
     function setUp() public virtual override {
         super.setUp();
 
         stxValidator = new StxValidator();
-        permitSubmodule = new PermitSubmodule();
 
         wallet = createAndFundWallet("wallet", 5 ether);
         mockAccount = deployMockAccount({ validator: address(stxValidator), handler: address(0) });
-        vm.prank(address(mockAccount));
-        // set the default config
-        stxValidator.onInstall(
-            abi.encodePacked(address(permitSubmodule), address(0), uint8(0), abi.encodePacked(wallet.addr))
-        );
+
         valueToSet = MEE_NODE_HEX;
     }
 
