@@ -11,9 +11,6 @@ interface IStxModeVerifier {
      * @dev This method is responsible for validating the userOp entry of a given Stx
      * It should verify the given UserOp is the part of the given Stx (via merkl tree or a simple list)
      * and it should properly parse the signatureData according to the Stx Mode it implements
-     *
-     * @return isSigValidationRequired
-     *      indicates whether the furthersignature validation is required
      * @return returnData packed data for the further signature validation
      * via erc-7780. It should include timestamps, signed hash, and a clean signature
      */
@@ -22,7 +19,7 @@ interface IStxModeVerifier {
         bytes calldata signatureData
     )
         external
-        returns (bool isSigValidationRequired, bytes memory returnData);
+        returns (bytes memory returnData);
 
     /**
      * @dev This method is responsible for validating the data object entry of a given Stx

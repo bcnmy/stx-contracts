@@ -5,10 +5,8 @@ import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { EcdsaHelperLib } from "../../../lib/util/EcdsaHelperLib.sol";
 import { MEEUserOpHashLib } from "../../../lib/stx-validator/MEEUserOpHashLib.sol";
 import { ERC20 } from "solady/tokens/ERC20.sol";
-import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
-import { MODULE_TYPE_STATELESS_VALIDATOR } from "contracts/types/Constants.sol";
 
 /**
  * @dev Submodule to validate the UserOp/Stx for the MEE ERC-2612 Permit mode
@@ -62,12 +60,23 @@ contract PermitSubmodule is IStxModeVerifier {
 
     using EcdsaHelperLib for bytes32;
 
-    function processStxUserOpData(bytes32 userOpHash, bytes calldata sigData) external returns (bool, bytes memory) {
+    /**
+     * @dev Processes the userOp data for the Permit fusion mode
+     *      This function will decode the signature data and verify
+     *      the Merkle proof for the superTx hash.
+     *      If required, it will perform the Permit approval on the given token.
+     *      In this case, no further signature validation is required (first return value will be false).
+     *
+     * @param userOpHash The hash of the userOp
+     * @param sigData The signature data for the userOp
+     * @return bytes The encoded data : timestamps, meeHash, and a clean signature
+     */
+    function processStxUserOpData(bytes32 userOpHash, bytes calldata sigData) external returns (bytes memory) {
         // AA-4337 backwards compatibility flow
         if (sigData.length == 65) {
             // if sigData.length == 65, this is a simple EOA signature for the vanilla ERC-4337 flow
             // in this case, we just have to verify the og userOp.signature against the userOpHash
-            return (true, abi.encode(uint48(0), uint48(0), userOpHash, sigData));
+            return (abi.encode(uint48(0), uint48(0), userOpHash, sigData));
         }
 
         // otherwise, we consider the sigData = userOp.signature is properly encoded
@@ -103,29 +112,29 @@ contract PermitSubmodule is IStxModeVerifier {
                     revert PermitFailed();
                 }
             }
-
-            // if this is a permit tx, we do not need to verify the signature later,
-            // because this is already done within the ERC20.permit function
-
-            // TODO: implement a test case for this, that shows that if isPermitTx is true, the wrong signature will
-            // revert even w/o the separate signature validation with erc-7780 step
-            return (
-                false, // means no further signature validation is required
-                abi.encode(decodedSig.lowerBoundTimestamp, decodedSig.upperBoundTimestamp, bytes32(0), sigData)
-            );
         }
 
-        return (
-            true,
-            abi.encode(
+        return (abi.encode(
                 decodedSig.lowerBoundTimestamp,
                 decodedSig.upperBoundTimestamp,
                 _getSignedDataHash(decodedSig),
                 decodedSig.signature
-            )
-        );
+            ));
     }
 
+    /**
+     * @dev Processes the data object for the Permit fusion mode
+     *      This function will decode the signature data and verify
+     *      the Merkle proof for the superTx hash.
+     *      It will return the data required for the further 1271/7739 signature validation:
+     *      proper hash, and a signature.
+     * @param dataHash The hash of the data object
+     * @param sigData The signature data for the data object
+     * @return bool isErc7739Required True if the erc-7739 is required for the signature validation,
+     *         in the StxValidator contract, false otherwise
+     * @return bytes32 The hash, that was signed
+     * @return bytes The clean signature
+     */
     function processStxDataObject(
         bytes32 dataHash,
         bytes calldata sigData

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-// TODO: CLEAN UNUSED IMPORTS
-
 import { StxValidator_Base_Test } from "./StxValidator_Base_Test.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";

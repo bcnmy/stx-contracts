@@ -128,8 +128,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         // return timestamps and signed hash + clean signature for the further
         // sig verification via erc-7780
         // if external call reverts => this method will revert as well => will make handleOps revert with AA23
-        (bool isSigValidationRequired, bytes memory ret) =
-            IStxModeVerifier(stxModeVerifierAddress).processStxUserOpData(userOpHash, parsedSigData);
+        bytes memory ret = IStxModeVerifier(stxModeVerifierAddress).processStxUserOpData(userOpHash, parsedSigData);
 
         // decode ret
         // backward compatibility flow: if IStxValidator.processStxUserOpData detects the non-mee flow, it
@@ -140,10 +139,8 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
             abi.decode(ret, (uint48, uint48, bytes32, bytes));
 
         // II) Sig validation via erc-7780
-        bool isValidSig = isSigValidationRequired
-            ? IStatelessValidator(statelessValidatorAddress)
-                .validateSignatureWithData(signedHash, cleanSignature, validationData)
-            : true;
+        bool isValidSig = IStatelessValidator(statelessValidatorAddress)
+            .validateSignatureWithData(signedHash, cleanSignature, validationData);
 
         // return validation data as per erc-4337
         // first value is sigValidationFailed which is opposite to isValidSig returned by the validateSignatureWithData
