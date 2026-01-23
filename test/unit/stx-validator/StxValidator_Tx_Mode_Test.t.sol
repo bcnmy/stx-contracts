@@ -73,7 +73,7 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
         bytes32 baseHash = keccak256(abi.encode("test"));
         bytes memory callData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
 
-        meeSigs = _makeOnchainTxSuperTxSignatures({
+        meeSigs = _makeOnchainTxSuperTxSignatures1271Flow({
             baseHash: baseHash,
             total: numOfObjs,
             callData: callData,
@@ -87,6 +87,32 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
         }
     }
 
+    function test_superTxFlow_tx_mode_ERC7780_success(uint256 numOfObjs) public {
+        numOfObjs = bound(numOfObjs, 2, 25);
+        bytes[] memory meeSigs = new bytes[](numOfObjs);
+        bytes32 baseHash = keccak256(abi.encode("test"));
+        bytes memory callData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
+
+        meeSigs = _makeOnchainTxSuperTxSignaturesForErc7780Flow({
+            baseHash: baseHash,
+            total: numOfObjs,
+            callData: callData,
+            superTxSigner: wallet,
+            smartAccount: address(mockAccount)
+        });
+
+        bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
+        bytes memory data = abi.encode(
+            address(txSubmodule), // stx mode verifier address
+            address(eoaStatelessValidator), // stateless validator address
+            validationDataForStatelessValidator // validation data for stateless validator
+        );
+
+        for (uint256 i; i < numOfObjs; i++) {
+            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i)); // expect every hash to be different
+            assertTrue(mockAccount.validateSignatureWithData(includedLeafHash, meeSigs[i], data));
+        }
+    }
     // =============================================================
 
     function _makeOnChainTxnSuperTx(
@@ -122,7 +148,7 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
         return superTxUserOps;
     }
 
-    function _makeOnchainTxSuperTxSignatures(
+    function _makeOnchainTxSuperTxSignatures1271Flow(
         bytes32 baseHash,
         uint256 total,
         bytes memory callData,
@@ -143,6 +169,45 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
         }
 
         bytes32[] memory tree = leaves.build();
+        return _makeOnchainTxSuperTxSignatures(total, callData, superTxSigner, tree);
+    }
+
+    function _makeOnchainTxSuperTxSignaturesForErc7780Flow(
+        bytes32 baseHash,
+        uint256 total,
+        bytes memory callData,
+        Vm.Wallet memory superTxSigner,
+        address smartAccount
+    )
+        internal
+        view
+        returns (bytes[] memory)
+    {
+        bytes[] memory meeSigs = new bytes[](total);
+        require(total > 0, "total must be greater than 0");
+
+        bytes32[] memory leaves = new bytes32[](total);
+
+        // no need to hash smart account address in case of erc-7780
+        for (uint256 i = 0; i < total; i++) {
+            leaves[i] = keccak256(abi.encode(baseHash, i));
+        }
+
+        bytes32[] memory tree = leaves.build();
+        return _makeOnchainTxSuperTxSignatures(total, callData, superTxSigner, tree);
+    }
+
+    function _makeOnchainTxSuperTxSignatures(
+        uint256 total,
+        bytes memory callData,
+        Vm.Wallet memory superTxSigner,
+        bytes32[] memory tree
+    )
+        internal
+        view
+        returns (bytes[] memory)
+    {
+        bytes[] memory meeSigs = new bytes[](total);
         bytes32 root = tree.root();
         callData = abi.encodePacked(callData, root);
 
