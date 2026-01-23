@@ -63,33 +63,8 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
     function test_StxValidator_simple_mode_ERC7780_with_MixedTypes_success(uint256 numOfClones) public {
         numOfClones = bound(numOfClones, 1, 9);
 
-        uint256 counterBefore = mockTarget.counter();
-
-        // prepare user ops
-        bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
-        PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
-            callData: abi.encodeWithSelector(
-                mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
-            ),
-            account: address(mockAccount),
-            userOpSigner: wallet
-        });
-        PackedUserOperation[] memory userOps = _cloneUserOpToAnArray(userOp, wallet, numOfClones);
-
         (PackedUserOperation[] memory superTxUserOps, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
-            _makeSimpleSuperTxWithMixedTypes(userOps, wallet, address(mockAccount), false);
-
-        // make sure userOps are handled correctly
-        // sending them one by one to emulate the real world scenario
-        // where most handleOps calls are made with just one userOp in the array
-        vm.startPrank(MEE_NODE_EXECUTOR_EOA, MEE_NODE_EXECUTOR_EOA);
-        for (uint256 i = 0; i < superTxUserOps.length; i++) {
-            PackedUserOperation[] memory userOpToHandleAsArray = new PackedUserOperation[](1);
-            userOpToHandleAsArray[0] = superTxUserOps[i];
-            ENTRYPOINT.handleOps(userOpToHandleAsArray, payable(MEE_NODE_ADDRESS));
-        }
-        vm.stopPrank();
-        assertEq(mockTarget.counter(), counterBefore + userOps.length);
+            _prepareDataAndDoUserOpValidation(numOfClones, false);
 
         // compose data
         bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
@@ -110,6 +85,46 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
                 )
             );
         }
+    }
+
+    // ===== 1271/7739/7780 test helper =====
+
+    function _prepareDataAndDoUserOpValidation(
+        uint256 numOfClones,
+        bool applyErc7739
+    )
+        internal
+        returns (PackedUserOperation[] memory, NonUserOpEntryData[] memory)
+    {
+        uint256 counterBefore = mockTarget.counter();
+
+        // prepare user ops
+        bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
+        PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
+            callData: abi.encodeWithSelector(
+                mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
+            ),
+            account: address(mockAccount),
+            userOpSigner: wallet
+        });
+        PackedUserOperation[] memory userOps = _cloneUserOpToAnArray(userOp, wallet, numOfClones);
+
+        (PackedUserOperation[] memory superTxUserOps, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
+            _makeSimpleSuperTxWithMixedTypes(userOps, wallet, address(mockAccount), applyErc7739);
+
+        // make sure userOps are handled correctly
+        // sending them one by one to emulate the real world scenario
+        // where most handleOps calls are made with just one userOp in the array
+        vm.startPrank(MEE_NODE_EXECUTOR_EOA, MEE_NODE_EXECUTOR_EOA);
+        for (uint256 i = 0; i < superTxUserOps.length; i++) {
+            PackedUserOperation[] memory userOpToHandleAsArray = new PackedUserOperation[](1);
+            userOpToHandleAsArray[0] = superTxUserOps[i];
+            ENTRYPOINT.handleOps(userOpToHandleAsArray, payable(MEE_NODE_ADDRESS));
+        }
+        vm.stopPrank();
+        assertEq(mockTarget.counter(), counterBefore + userOps.length);
+
+        return (superTxUserOps, nonUserOpEntryDatas);
     }
 
     // ==== SIMPLE SUPER TX UTILS ====
