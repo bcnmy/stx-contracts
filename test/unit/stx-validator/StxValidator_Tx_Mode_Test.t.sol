@@ -30,7 +30,7 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
         );
     }
 
-    function test_superTxFlow_tx_mode_ValidateUserOp_success(uint256 numOfClones) public {
+    function test_StxValidator_tx_mode_ValidateUserOp_success(uint256 numOfClones) public {
         numOfClones = bound(numOfClones, 1, 25);
         token = new MockERC20PermitToken("test", "TEST");
         deal(address(token), wallet.addr, 1000 ether); // mint erc20 tokens to the wallet
@@ -67,7 +67,7 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
         assertEq(token.balanceOf(bob), amountToTransfer * (numOfClones + 1));
     }
 
-    function test_superTxFlow_tx_mode_ERC1271_withSecuredHash_success(uint256 numOfObjs) public {
+    function test_StxValidator_tx_mode_ERC1271_withSecuredHash_success(uint256 numOfObjs) public {
         numOfObjs = bound(numOfObjs, 2, 25);
         bytes[] memory meeSigs = new bytes[](numOfObjs);
         bytes32 baseHash = keccak256(abi.encode("test"));
@@ -87,7 +87,7 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
         }
     }
 
-    function test_superTxFlow_tx_mode_ERC7780_success(uint256 numOfObjs) public {
+    function test_StxValidator_tx_mode_ERC7780_success(uint256 numOfObjs) public {
         numOfObjs = bound(numOfObjs, 2, 25);
         bytes[] memory meeSigs = new bytes[](numOfObjs);
         bytes32 baseHash = keccak256(abi.encode("test"));
@@ -103,6 +103,7 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
 
         bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
         bytes memory data = abi.encode(
+            address(mockAccount), // account
             address(txSubmodule), // stx mode verifier address
             address(eoaStatelessValidator), // stateless validator address
             validationDataForStatelessValidator // validation data for stateless validator

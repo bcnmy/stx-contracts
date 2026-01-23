@@ -105,8 +105,9 @@ contract SimpleModeSubmodule is IStxModeVerifier {
         (bytes32 expectedIncludedErc7739Hash, bytes memory erc7739Signature) =
             IERC7739Multiplexer(msg.sender).getErc7739HashAndSignature(account, sender, dataHash, signature);
 
-        bytes32 superTxEip712Hash =
-            HashLib.compareAndGetFinalHash(outerTypeHash, expectedIncludedErc7739Hash, itemIndex, itemHashes);
+        bytes32 superTxEip712Hash = HashLib.compareAndGetFinalHashForAccount(
+            account, outerTypeHash, expectedIncludedErc7739Hash, itemIndex, itemHashes
+        );
         if (superTxEip712Hash == bytes32(0)) {
             revert UnexpectedSuperTxEntry(dataHash, itemHashes[itemIndex]);
         }
@@ -123,6 +124,7 @@ contract SimpleModeSubmodule is IStxModeVerifier {
      * @return bytes The signature data for the data object
      */
     function processStxDataObjectFor7780Flow(
+        address account,
         bytes32 dataHash,
         bytes calldata sigData
     )
@@ -133,7 +135,8 @@ contract SimpleModeSubmodule is IStxModeVerifier {
         (bytes32 outerTypeHash, uint256 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) =
             HashLib.parsePackedSigDataHead(sigData);
 
-        bytes32 superTxEip712Hash = HashLib.compareAndGetFinalHash(outerTypeHash, dataHash, itemIndex, itemHashes);
+        bytes32 superTxEip712Hash =
+            HashLib.compareAndGetFinalHashForAccount(account, outerTypeHash, dataHash, itemIndex, itemHashes);
         if (superTxEip712Hash == bytes32(0)) {
             revert UnexpectedSuperTxEntry(dataHash, itemHashes[itemIndex]);
         }

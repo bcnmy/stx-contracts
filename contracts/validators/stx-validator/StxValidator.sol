@@ -254,7 +254,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     /// @param data The data to validate against (owner address in this case)
     /// @dev No erc-7739 flow needed, as if this module acts as a stateless validator,
     /// all the logic related to erc-7739 has already been handled at this point by caller contract.
-    /// @dev no explicit flow for non-stx mode here, if nin stx mode is required to be processed
+    /// @dev no explicit flow for non-stx mode here, if non stx mode is required to be processed
     /// via this validator by some reason, pass the appropriate stxModeVerifierAddress and
     /// within the `data` parameter
     function validateSignatureWithData(
@@ -268,11 +268,15 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     {
         // parse the config entries from the data parameter
         // no sanity checks for the config entries, we expect the caller to provide valid data
-        (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData) =
-            abi.decode(data, (address, address, bytes));
+        (
+            address account,
+            address stxModeVerifierAddress,
+            address statelessValidatorAddress,
+            bytes memory validationData
+        ) = abi.decode(data, (address, address, address, bytes));
 
         (bytes32 meeHash, bytes memory cleanSignature) =
-            IStxModeVerifier(stxModeVerifierAddress).processStxDataObjectFor7780Flow(hash, sig);
+            IStxModeVerifier(stxModeVerifierAddress).processStxDataObjectFor7780Flow(account, hash, sig);
 
         isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, meeHash, cleanSignature);
     }

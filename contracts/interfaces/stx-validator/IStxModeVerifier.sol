@@ -52,12 +52,14 @@ interface IStxModeVerifier {
 
     /**
      * @dev This method is responsible for validating the data object for the 7780 flow
+     * @param account the smart account that requested data object processing
      * @param dataHash The hash of the data object
      * @param signatureData The signature data for the data object
      * @return meeHash The hash of the data object
      * @return cleanSignature The signature data for the data object
      */
     function processStxDataObjectFor7780Flow(
+        address account,
         bytes32 dataHash,
         bytes calldata signatureData
     )

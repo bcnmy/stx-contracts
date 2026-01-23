@@ -175,6 +175,7 @@ contract TxSubmodule is IStxModeVerifier {
      * @return bytes The signature data for the data object
      */
     function processStxDataObjectFor7780Flow(
+        address, /* account is not used in the Txn fusion mode */
         bytes32 dataHash,
         bytes calldata sigData
     )
