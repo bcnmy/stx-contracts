@@ -63,11 +63,12 @@ contract PermitSubmodule is IStxModeVerifier {
      *      This function will decode the signature data and verify
      *      the Merkle proof for the superTx hash.
      *      If required, it will perform the Permit approval on the given token.
+     * param address account The account that requested userOp processing
      * @param userOpHash The hash of the userOp
      * @param sigData The signature data for the userOp
      * @return bytes The encoded data : timestamps, meeHash, and a clean signature
      */
-    function processStxUserOpData(bytes32 userOpHash, bytes calldata sigData) external returns (bytes memory) {
+    function processStxUserOpData(address, bytes32 userOpHash, bytes calldata sigData) external returns (bytes memory) {
         // AA-4337 backwards compatibility flow
         if (sigData.length == 65) {
             // if sigData.length == 65, this is a simple EOA signature for the vanilla ERC-4337 flow
@@ -145,7 +146,7 @@ contract PermitSubmodule is IStxModeVerifier {
             revert MerkleVerificationFailed();
         }
 
-        // Process hash and sig via 7739,
+        // Process full permit structure hash and sig via 7739,
         // because technically smart account address is not always present in the data object
         // (in most cases Permit.spender is the smart account address, but it can be any other address as well)
         // so we have to use ERC-7739 to keep the transparent EIP-712 data struct to be signed by the user

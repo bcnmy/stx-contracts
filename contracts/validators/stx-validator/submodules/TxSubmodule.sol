@@ -92,11 +92,12 @@ contract TxSubmodule is IStxModeVerifier {
      *      This function will decode the signature data and verify
      *      the Merkle proof for the superTx hash.
      *      It will return the data required for the further signature validation via erc-7780.
+     * param address account The account that requested userOp processing
      * @param userOpHash The hash of the userOp
      * @param sigData The signature data for the userOp
      * @return bytes The encoded data : timestamps, meeHash, and a clean signature
      */
-    function processStxUserOpData(bytes32 userOpHash, bytes calldata sigData) external returns (bytes memory) {
+    function processStxUserOpData(address, bytes32 userOpHash, bytes calldata sigData) external returns (bytes memory) {
         // AA-4337 backwards compatibility flow
         if (sigData.length == 65) {
             // if sigData.length == 65, this is a simple EOA signature for the vanilla ERC-4337 flow
@@ -134,7 +135,8 @@ contract TxSubmodule is IStxModeVerifier {
     function processStxDataObject(
         address account,
         address,
-        /*sender*/ // sender is not used in the Txn fusion mode
+        /*sender*/
+        // sender is not used in the Txn fusion mode
         bytes32 dataHash,
         bytes calldata sigData
     )

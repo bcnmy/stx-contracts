@@ -14,7 +14,8 @@ import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739
 
 /**
  * @dev Submodule to validate the signature for Simple Stx mode
- *      In this mode, Fusion is not involved and just the superTx hash is signed
+ *      In this mode, Fusion is not involved and just the eip712 hash
+ *      of the superTx(...) data struct is signed
  */
 
 contract SimpleModeSubmodule is IStxModeVerifier {
@@ -27,7 +28,14 @@ contract SimpleModeSubmodule is IStxModeVerifier {
      * @param sigData The signature data for the userOp
      * @return bytes The encoded data : timestamps, meeHash, and a clean signature
      */
-    function processStxUserOpData(bytes32 userOpHash, bytes calldata sigData) external returns (bytes memory) {
+    function processStxUserOpData(
+        address account,
+        bytes32 userOpHash,
+        bytes calldata sigData
+    )
+        external
+        returns (bytes memory)
+    {
         /*
          * packedSignatureData layout :
          * ======== static head part : 0x80 (128) bytes========
@@ -53,7 +61,7 @@ contract SimpleModeSubmodule is IStxModeVerifier {
             MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
 
         bytes32 superTxEip712Hash =
-            HashLib.compareAndGetFinalHash(outerTypeHash, currentItemHash, itemIndex, itemHashes);
+            HashLib.compareAndGetFinalHashForAccount(account, outerTypeHash, currentItemHash, itemIndex, itemHashes);
         if (superTxEip712Hash == bytes32(0)) {
             revert UnexpectedSuperTxEntry(currentItemHash, itemHashes[itemIndex]);
         }

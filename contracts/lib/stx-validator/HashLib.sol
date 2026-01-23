@@ -64,7 +64,8 @@ library HashLib {
         }
     }
 
-    function compareAndGetFinalHash(
+    function compareAndGetFinalHashForAccount(
+        address account,
         bytes32 outerTypeHash,
         bytes32 currentItemHash,
         uint256 itemIndex,
@@ -105,8 +106,21 @@ library HashLib {
                 /// forge-lint:disable-next-line(asm-keccak256)
                 structHash = keccak256(abi.encodePacked(outerTypeHash, itemHashes));
             }
-            finalHash = hashTypedDataForAccount(msg.sender, structHash);
+            finalHash = hashTypedDataForAccount(account, structHash);
         }
+    }
+
+    function compareAndGetFinalHash(
+        bytes32 outerTypeHash,
+        bytes32 currentItemHash,
+        uint256 itemIndex,
+        bytes32[] calldata itemHashes
+    )
+        internal
+        view
+        returns (bytes32 finalHash)
+    {
+        finalHash = compareAndGetFinalHashForAccount(msg.sender, outerTypeHash, currentItemHash, itemIndex, itemHashes);
     }
 
     /// @notice Hashes typed data according to eip-712

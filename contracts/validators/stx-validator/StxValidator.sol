@@ -128,7 +128,8 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         // return timestamps and signed hash + clean signature for the further
         // sig verification via erc-7780
         // if external call reverts => this method will revert as well => will make handleOps revert with AA23
-        bytes memory ret = IStxModeVerifier(stxModeVerifierAddress).processStxUserOpData(userOpHash, parsedSigData);
+        bytes memory ret = IStxModeVerifier(stxModeVerifierAddress)
+            .processStxUserOpData({ account: msg.sender, userOpHash: userOpHash, signatureData: parsedSigData });
 
         // decode ret
         // backward compatibility flow: if IStxValidator.processStxUserOpData detects the non-mee flow, it

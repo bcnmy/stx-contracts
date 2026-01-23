@@ -20,6 +20,7 @@ interface IStxModeVerifier {
      * via erc-7780. It should include timestamps, signed hash, and a clean signature
      */
     function processStxUserOpData(
+        address account,
         bytes32 userOpHash,
         bytes calldata signatureData
     )
