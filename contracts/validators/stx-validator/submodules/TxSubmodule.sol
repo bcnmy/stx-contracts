@@ -128,19 +128,19 @@ contract TxSubmodule is IStxModeVerifier {
      * @param account The account that requested data object processing
      * @param dataHash The hash of the data object
      * @param sigData The signature data for the data object
-     * @return bool isErc7739Required True if the erc-7739 is required for the signature validation,
-     *         in the StxValidator contract, false otherwise
      * @return bytes32 The hash, that was signed
      * @return bytes The clean signature
      */
     function processStxDataObject(
         address account,
+        address,
+        /*sender*/ // sender is not used in the Txn fusion mode
         bytes32 dataHash,
         bytes calldata sigData
     )
         external
         view
-        returns (bool, bytes32, bytes memory)
+        returns (bytes32, bytes memory)
     {
         TxDataShort memory decodedTx = decodeTxShort(sigData);
 
@@ -149,25 +149,44 @@ contract TxSubmodule is IStxModeVerifier {
         // entry hash with the account address. Since user signs the txn anyways, which just has
         // the superTx root hash appended to the calldata, the entry hash can also be blind,
         // thus we just rehash it with the account address.
-
-        // if the `account` passed is zero address, means, the function is called
-        // via StxValidator.validateSignatureWithData function, which
-        // doesn't assume any additional security measures, as ERC-7780 stateless validators
-        // always act as `stupid` signature verifiers. So all the security checks
-        // should be pre-taken by the multiplexer that called StxValidator.validateSignatureWithData function.
-        // Thus in this case, no rehashing is needed.
-        bytes32 entryHash = account == address(0) ? dataHash : keccak256(abi.encodePacked(dataHash, account));
+        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account));
 
         if (!MerkleProofLib.verify(decodedTx.proof, decodedTx.superTxHash, entryHash)) {
             revert MerkleVerificationFailed();
         }
 
         // return the data required for the further signature validation
-        return (
-            false, // no erc-7739 required
-            decodedTx.utxHash, // signed hash
-            abi.encodePacked(decodedTx.r, decodedTx.s, decodedTx.v) // signature
-        );
+        return
+            (
+                decodedTx.utxHash, // signed hash
+                abi.encodePacked(decodedTx.r, decodedTx.s, decodedTx.v) // signature
+            );
+    }
+
+    /**
+     * @dev This function is used to process the data object for the 7780 flow
+     *      No additional security measures are needed here
+     *      Thus we do not hash the account address into the entry hash
+     * @param dataHash The hash of the data object
+     * @param sigData The signature data for the data object
+     * @return bytes32 The hash of the data object
+     * @return bytes The signature data for the data object
+     */
+    function processStxDataObjectFor7780Flow(
+        bytes32 dataHash,
+        bytes calldata sigData
+    )
+        external
+        view
+        returns (bytes32, bytes memory)
+    {
+        TxDataShort memory decodedTx = decodeTxShort(sigData);
+
+        if (!MerkleProofLib.verify(decodedTx.proof, decodedTx.superTxHash, dataHash)) {
+            revert MerkleVerificationFailed();
+        }
+
+        return (decodedTx.utxHash, abi.encodePacked(decodedTx.r, decodedTx.s, decodedTx.v));
     }
 
     // ========================================================

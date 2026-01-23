@@ -35,17 +35,33 @@ interface IStxModeVerifier {
      * @param signatureData the signature data for the data object
      *
      * Returns data for erc-7780 signature validation
-     * @return isErc7739Required indicates whether the erc-7739 is required for the signature validation
      * @return meeHash the hash of some data object required by a given stx mode: it can be erc2612 permit object,
      * on-chain tx object, merkle tree root, SuperTx() eip712 data struct, etc.
      * @return cleanSignature the clean signature that was used to sign the data
      */
     function processStxDataObject(
         address account,
+        address sender,
         bytes32 dataHash,
         bytes calldata signatureData
     )
         external
         view
-        returns (bool isErc7739Required, bytes32 meeHash, bytes calldata cleanSignature);
+        returns (bytes32 meeHash, bytes calldata cleanSignature);
+
+    /**
+     * @dev This method is responsible for validating the data object for the 7780 flow
+     * @param dataHash The hash of the data object
+     * @param signatureData The signature data for the data object
+     * @return meeHash The hash of the data object
+     * @return cleanSignature The signature data for the data object
+     */
+    function processStxDataObjectFor7780Flow(
+        bytes32 dataHash,
+        bytes calldata signatureData
+    )
+        external
+        view
+        returns (bytes32 meeHash, bytes calldata cleanSignature);
 }
+

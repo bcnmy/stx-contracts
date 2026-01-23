@@ -7,6 +7,7 @@ import { MEEUserOpHashLib } from "../../../lib/stx-validator/MEEUserOpHashLib.so
 import { ERC20 } from "solady/tokens/ERC20.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
+import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739Multiplexer.sol";
 
 /**
  * @dev Submodule to validate the UserOp/Stx for the MEE ERC-2612 Permit mode
@@ -125,19 +126,18 @@ contract PermitSubmodule is IStxModeVerifier {
      *      proper hash, and a signature.
      * @param dataHash The hash of the data object
      * @param sigData The signature data for the data object
-     * @return bool isErc7739Required True if the erc-7739 is required for the signature validation,
-     *         in the StxValidator contract, false otherwise
      * @return bytes32 The hash, that was signed
      * @return bytes The clean signature
      */
     function processStxDataObject(
-        address, // account is not used in the Permit fusion mode
+        address account,
+        address sender,
         bytes32 dataHash,
         bytes calldata sigData
     )
         external
         view
-        returns (bool, bytes32, bytes memory)
+        returns (bytes32, bytes memory)
     {
         DecodedErc20PermitSigShort calldata decodedSig = _decodeShortPermitSig(sigData);
 
@@ -145,12 +145,39 @@ contract PermitSubmodule is IStxModeVerifier {
             revert MerkleVerificationFailed();
         }
 
-        // still return first value (isErc7739Required) as true,
+        // Process hash and sig via 7739,
         // because technically smart account address is not always present in the data object
         // (in most cases Permit.spender is the smart account address, but it can be any other address as well)
         // so we have to use ERC-7739 to keep the transparent EIP-712 data struct to be signed by the user
         // and still be protected from the `two accounts, same owner` attack vector.
-        return (true, _getSignedDataHash(decodedSig), decodedSig.signature);
+        (bytes32 processedHash, bytes memory processedSignature) = IERC7739Multiplexer(msg.sender)
+            .getErc7739HashAndSignature(account, sender, _getSignedDataHash(decodedSig), decodedSig.signature);
+
+        return (processedHash, processedSignature);
+    }
+
+    /**
+     * @dev This function is used to process the data object for the 7780 flow
+     * @param dataHash The hash of the data object
+     * @param sigData The signature data for the data object
+     * @return bytes32 The hash of the data object
+     * @return bytes The signature data for the data object
+     */
+    function processStxDataObjectFor7780Flow(
+        bytes32 dataHash,
+        bytes calldata sigData
+    )
+        external
+        view
+        returns (bytes32, bytes memory)
+    {
+        DecodedErc20PermitSigShort calldata decodedSig = _decodeShortPermitSig(sigData);
+
+        if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, dataHash)) {
+            revert MerkleVerificationFailed();
+        }
+
+        return (_getSignedDataHash(decodedSig), decodedSig.signature);
     }
 
     // ========================================================

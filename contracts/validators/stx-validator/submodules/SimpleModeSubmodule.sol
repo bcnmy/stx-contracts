@@ -10,6 +10,7 @@ import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/
 import { UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
 // solhint-disable-next-line no-unused-import
 import { HashLib, STATIC_HEAD_LENGTH } from "../../../lib/stx-validator/HashLib.sol";
+import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739Multiplexer.sol";
 
 /**
  * @dev Submodule to validate the signature for Simple Stx mode
@@ -64,19 +65,62 @@ contract SimpleModeSubmodule is IStxModeVerifier {
      * @dev
      * @param dataHash The hash of the data object
      * @param sigData The signature data for the data object
-     * @return bool isErc7739Required True if the erc-7739 is required for the signature validation,
-     *         in the StxValidator contract, false otherwise
      * @return bytes32 The hash, that was signed
      * @return bytes The clean signature
      */
     function processStxDataObject(
-        address, // account is not used in the Permit fusion mode
+        address account,
+        address sender,
         bytes32 dataHash,
         bytes calldata sigData
     )
         external
         view
-        returns (bool, bytes32, bytes memory)
+        returns (bytes32, bytes memory)
+    {
+        (bytes32 outerTypeHash, uint256 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) =
+            HashLib.parsePackedSigDataHead(sigData);
+
+        // expect stx entries which are not userOps are not safe and apply 7739 to them
+        // because domain separator doesn't include verifying
+        // contract address in our case (see HashLib.hashTypedDataForAccount)
+        // to allow potenitallyt different address on different chains
+        // so to protect agains `two accounts, same owner` attack vector
+        // we apply 7739 to the each potentially unsafe entry hash
+        // so off-chain, every data struct hash should be hashes as per erc-7739
+        // and only then included into the SuperTx
+        // so the signature, provided to isValidSignature should include erc-7739 required payload
+        // if the SuperTx struct included mixed data structs and userOps,
+        // signature for userOps should not include erc-7739 required payload
+        // because userOps are already safe and don't need erc-7739 thus they are not
+        // processed via erc-7739 (see `processStxUserOpData` method above)
+        (bytes32 expectedIncludedErc7739Hash, bytes memory erc7739Signature) =
+            IERC7739Multiplexer(msg.sender).getErc7739HashAndSignature(account, sender, dataHash, signature);
+
+        bytes32 superTxEip712Hash =
+            HashLib.compareAndGetFinalHash(outerTypeHash, expectedIncludedErc7739Hash, itemIndex, itemHashes);
+        if (superTxEip712Hash == bytes32(0)) {
+            revert UnexpectedSuperTxEntry(dataHash, itemHashes[itemIndex]);
+        }
+
+        return (superTxEip712Hash, erc7739Signature);
+    }
+
+    /**
+     * @dev This function is used to process the data object for the 7780 flow
+     *      In this erc-7739 is not required
+     * @param dataHash The hash of the data object
+     * @param sigData The signature data for the data object
+     * @return bytes32 The hash of the data object
+     * @return bytes The signature data for the data object
+     */
+    function processStxDataObjectFor7780Flow(
+        bytes32 dataHash,
+        bytes calldata sigData
+    )
+        external
+        view
+        returns (bytes32, bytes memory)
     {
         (bytes32 outerTypeHash, uint256 itemIndex, bytes32[] calldata itemHashes, bytes calldata signature) =
             HashLib.parsePackedSigDataHead(sigData);
@@ -86,9 +130,6 @@ contract SimpleModeSubmodule is IStxModeVerifier {
             revert UnexpectedSuperTxEntry(dataHash, itemHashes[itemIndex]);
         }
 
-        // still return first value (isErc7739Required) as true,
-        // because the domain separator doesn't include verifying
-        // contract address in our case (see HashLib.hashTypedDataForAccount)
-        return (true, superTxEip712Hash, signature);
+        return (superTxEip712Hash, signature);
     }
 }

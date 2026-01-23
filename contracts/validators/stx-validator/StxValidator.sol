@@ -7,7 +7,6 @@ import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/ISta
 import { EnumerableSet } from "EnumerableSet4337/EnumerableSet4337.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
-//import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
 import { ERC7739Validator } from "./ERC7739Validator.sol";
 import {
     SIG_TYPE_SIMPLE,
@@ -29,9 +28,10 @@ import { EcdsaHelperLib } from "../../lib/util/EcdsaHelperLib.sol";
 import { FlatBytesLib } from "flatbytes/BytesLib.sol";
 import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
+import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739Multiplexer.sol";
 
 /**
- * @title K1MeeValidator
+ * @title StxValidator
  *
  *
  */
@@ -48,7 +48,7 @@ bytes32 constant DEFAULT_CONFIG_ID = 0xcfee7c08a98f4b565d124c7e4e28acc52e1bc780e
 bytes32 constant NO_STX_CONFIG_ID_7739 = 0x0000000000000000000000000000000000000000000000000000000000000001;
 bytes32 constant NO_STX_CONFIG_ID_VANILLA_1271 = 0x0000000000000000000000000000000000000000000000000000000000000002;
 
-contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
+contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC7739Multiplexer {
     using EnumerableSet for EnumerableSet.AddressSet; // TODO: remove this?
 
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -189,32 +189,15 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         (bytes32 activeConfigId, bytes calldata parsedSigData) =
             _parseSignatureWithConfigId(_erc1271UnwrapSignature(signature));
 
-        bool isErc7739Required;
         bytes32 meeHash;
         bytes memory cleanSignature;
 
         if (activeConfigId == NO_STX_CONFIG_ID_7739) {
             // No Stx case with 7739
-            isErc7739Required = true;
-            meeHash = dataHash;
-            cleanSignature = parsedSigData;
-        } else if (activeConfigId == NO_STX_CONFIG_ID_VANILLA_1271) {
-            // No Stx case and user explicitly requested 1271 validation
-            isErc7739Required = false;
-            meeHash = dataHash;
-            cleanSignature = parsedSigData;
-        } else {
-            // Stx case
-            address stxModeVerifierAddress = configs[activeConfigId][msg.sender].stxModeVerifierAddress;
-            require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
-
-            // meeHash is the hash of some data object required by a given stx mode: it can be erc2612 permit object,
-            // on-chain tx object, merkle tree root, SuperTx() eip712 data struct, etc.
-            (isErc7739Required, meeHash, cleanSignature) =
-                IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(msg.sender, dataHash, parsedSigData);
-        }
-
-        if (isErc7739Required) {
+            // Use the full 7739 flow, including ..viaRPC here
+            // because in no stx case, we want to also support signatures for the off-chain parties
+            // such as SIWE messages, etc.
+            //
             // Since ERC7739Validator._erc1271IsValidSignatureWithSender and _erc1271IsValidSignatureNowCalldata
             // functions do not expect any arguments to pass an additional
             // context (like statelessValidatorAddress or validationData)
@@ -227,27 +210,41 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
             // (right side) and we pack the active configId into the beginning (left-side, MSB's).
             // Unfortunately this is the only workaround to pass the additional context to the ERC7739Validator's
             // methods.
-            bytes memory sigWithConfigId = abi.encodePacked(activeConfigId, cleanSignature);
+            bytes memory sigWithConfigId = abi.encodePacked(activeConfigId, parsedSigData);
 
             // the public wrapper function `_validateSignatureViaErc7739` is introduced to put `sigWithConfigId` from
             // memory to calldata
             (bool success, bytes memory result) = address(this)
                 .staticcall(
-                    abi.encodeCall(this._validateSignatureViaErc7739, (sender, msg.sender, meeHash, sigWithConfigId))
+                    abi.encodeCall(this._validateSignatureViaErc7739, (sender, msg.sender, dataHash, sigWithConfigId))
                 );
+            // early return
             return success && result.length == 32
                 ? abi.decode(result, (bytes4))  // if the call is successful and returned proper result => decode it as
                 // bytes4 and return
                 : ERC1271_FAILED; // if something went wrong => return ERC1271_FAILED
+        } else if (activeConfigId == NO_STX_CONFIG_ID_VANILLA_1271) {
+            // No Stx case and user explicitly requested vanilla 1271 validation
+            // so we just uyse the dataHash and signature as is
+            meeHash = dataHash;
+            cleanSignature = parsedSigData;
         } else {
-            // StxMode verifier reported, that erc-7739 is not needed (hash is already safe in terms of having SA
-            // address hashed into it) => we can use ERC-7780 directly to validate the signature
-            (, address statelessValidatorAddress, bytes memory validationData) =
-                _getConfigData(configs, msg.sender, activeConfigId);
-            return _validateSignatureViaErc7780(statelessValidatorAddress, validationData, meeHash, cleanSignature)
-                ? ERC1271_SUCCESS
-                : ERC1271_FAILED;
+            // Stx case
+            address stxModeVerifierAddress = configs[activeConfigId][msg.sender].stxModeVerifierAddress;
+            require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
+
+            // meeHash is the hash of some data object required by a given stx mode: it can be erc2612 permit object,
+            // on-chain tx object, merkle tree root, SuperTx() eip712 data struct, etc.
+            // meeHash can even be 7739 hash if IStxModeVerifier assumes it
+            (meeHash, cleanSignature) = IStxModeVerifier(stxModeVerifierAddress)
+                .processStxDataObject(msg.sender, sender, dataHash, parsedSigData);
         }
+
+        (, address statelessValidatorAddress, bytes memory validationData) =
+            _getConfigData(configs, msg.sender, activeConfigId);
+        return _validateSignatureViaErc7780(statelessValidatorAddress, validationData, meeHash, cleanSignature)
+            ? ERC1271_SUCCESS
+            : ERC1271_FAILED;
     }
 
     /// @notice IStatelessValidator interface
@@ -273,10 +270,34 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
         (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData) =
             abi.decode(data, (address, address, bytes));
 
-        (, bytes32 meeHash, bytes memory cleanSignature) =
-            IStxModeVerifier(stxModeVerifierAddress).processStxDataObject(address(0), hash, sig);
+        (bytes32 meeHash, bytes memory cleanSignature) =
+            IStxModeVerifier(stxModeVerifierAddress).processStxDataObjectFor7780Flow(hash, sig);
 
         isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, meeHash, cleanSignature);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     ERC-7739 MULTIPLEXER INTERFACE
+    //////////////////////////////////////////////////////////////////////////*/
+    /**
+     * @dev Returns the hash and signature for the ERC-7739 validation
+     * @param account The account that requested the validation
+     * @param sender The sender that requested the validation
+     * @param hash The hash of the data to validate
+     * @param signature The signature of the data to validate
+     * @return The hash and signature for the ERC-7739 validation
+     */
+    function getErc7739HashAndSignature(
+        address account,
+        address sender,
+        bytes32 hash,
+        bytes calldata signature
+    )
+        external
+        view
+        returns (bytes32, bytes calldata)
+    {
+        return _getErc7739HashAndSignature(account, sender, hash, signature);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
