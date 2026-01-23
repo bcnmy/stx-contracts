@@ -12,7 +12,28 @@ import { BytesLib } from "byteslib/BytesLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 
 /**
- * @dev
+ * @dev Submodule to validate the signature for MEE on-chain Txn mode
+ *      This is the mode where superTx hash is appended to a regular txn (legacy or 1559) calldata
+ *      Type 1 (EIP-2930) transactions are not supported.
+ *      The whole txn is signed along with the superTx hash
+ *      Txn is executed prior to a superTx, so it can pass some funds from the EOA to the smart account
+ *      For more details see Fusion docs:
+ *      - https://ethresear.ch/t/fusion-module-7702-alternative-with-no-protocol-changes/20949
+ *      - https://docs.biconomy.io/explained/eoa#fusion-module
+ *      @dev Some smart contracts may not be able to consume the txn with bytes32 appended to the calldata.
+ *           However this is very small subset. One of the cases when it can happen is when the smart contract
+ *           is has separate receive() and fallback() functions. Then if a txn is a value transfer, it will
+ *           be expected to be consumed by the receive() function. However, if there's bytes32 appended to the calldata,
+ *           it will be consumed by the fallback() function which may not be expected. In this case, the provided
+ *           contracts/forwarder/Forwarder.sol can be used to 'clear' the bytes32 from the calldata.
+ *      @dev In theory, the last 32 bytes of calldata from any transaction by the EOA can be interpreted as
+ *           a superTx hash. Even if it was not assumed. This introduces the potential risk of phishing attacks
+ *           where the user may unknowingly sign a transaction where the last 32 bytes of the calldata end up
+ *           being a superTx hash. However, it is not easy to craft a txn that makes sense for a user and allows
+ *           arbitrary bytes32 as last 32 bytes. Thus, wallets and users should be aware of this potential risk
+ *           and should not sign txns where the last 32 bytes of the calldata do not belong to the function arguments
+ *           and are just appended at the end.
+ *
  */
 
 struct TxData {
@@ -66,6 +87,15 @@ contract TxSubmodule is IStxModeVerifier {
 
     using EcdsaHelperLib for bytes32;
 
+    /**
+     * @dev Processes the userOp data for the Stx on-chain Txn fusion mode
+     *      This function will decode the signature data and verify
+     *      the Merkle proof for the superTx hash.
+     *      It will return the data required for the further signature validation via erc-7780.
+     * @param userOpHash The hash of the userOp
+     * @param sigData The signature data for the userOp
+     * @return bytes The encoded data : timestamps, meeHash, and a clean signature
+     */
     function processStxUserOpData(bytes32 userOpHash, bytes calldata sigData) external returns (bytes memory) {
         // AA-4337 backwards compatibility flow
         if (sigData.length == 65) {
@@ -89,6 +119,20 @@ contract TxSubmodule is IStxModeVerifier {
             (abi.encode(decodedTx.lowerBoundTimestamp, decodedTx.upperBoundTimestamp, decodedTx.utxHash, txnSignature));
     }
 
+    /**
+     * @dev Processes the data object for the Stx on-chain Txn fusion mode
+     *      This function will decode the signature data and verify
+     *      the Merkle proof for the superTx hash.
+     *      It will return the data required for the further erc-7780 signature validation.
+     *      Since Eth native txns are not erc-712 objects, using erc-7739 makes no sense here
+     * @param account The account that requested data object processing
+     * @param dataHash The hash of the data object
+     * @param sigData The signature data for the data object
+     * @return bool isErc7739Required True if the erc-7739 is required for the signature validation,
+     *         in the StxValidator contract, false otherwise
+     * @return bytes32 The hash, that was signed
+     * @return bytes The clean signature
+     */
     function processStxDataObject(
         address account,
         bytes32 dataHash,

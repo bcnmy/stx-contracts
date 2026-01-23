@@ -62,8 +62,6 @@ contract PermitSubmodule is IStxModeVerifier {
      *      This function will decode the signature data and verify
      *      the Merkle proof for the superTx hash.
      *      If required, it will perform the Permit approval on the given token.
-     *      In this case, no further signature validation is required (first return value will be false).
-     *
      * @param userOpHash The hash of the userOp
      * @param sigData The signature data for the userOp
      * @return bytes The encoded data : timestamps, meeHash, and a clean signature

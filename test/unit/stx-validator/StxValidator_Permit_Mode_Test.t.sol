@@ -12,12 +12,12 @@ import { EcdsaHelperLib } from "contracts/lib/util/EcdsaHelperLib.sol";
 import {
     DecodedErc20PermitSig,
     DecodedErc20PermitSigShort,
-    PERMIT_TYPEHASH
+    PERMIT_TYPEHASH,
+    PermitSubmodule
 } from "contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
-import { PermitSubmodule } from "../../../contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
 
-contract StxValidator_Permit_K1_Test is StxValidator_Base_Test {
+contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
     using MerkleTreeLib for bytes32[];
 

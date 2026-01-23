@@ -86,11 +86,41 @@ abstract contract ERC7739Validator {
         return sigValidationResult;
     }
 
+    /**
+     * @dev Returns the hash and signature for the ERC-7739 validation
+     *      If the caller is safe, the hash and signature are returned as is.
+     *      Otherwise, the hash and signature are processed for the nested EIP-712 workflow.
+     *  Attention!: this function does not account for the ..viaRPC workflow.
+     *      because the check for on-chain/off-chain reverts in on-chain case
+     *      which doesn't work for this case.
+     * @param account The account that requested the validation
+     * @param sender The sender that requested the validation
+     * @param hash The hash of the data to validate
+     * @param signature The signature of the data to validate
+     * @return The hash and signature for the ERC-7739 validation
+     */
+    function _getErc7739HashAndSignature(
+        address account,
+        address sender,
+        bytes32 hash,
+        bytes calldata signature
+    )
+        internal
+        view
+        virtual
+        returns (bytes32, bytes calldata)
+    {
+        if (_erc1271CallerIsSafe(account, sender)) {
+            return (hash, signature);
+        }
+        return _processHashAndSignatureForNestedEIP712(account, hash, signature);
+    }
+
     /// @dev Returns whether the `msg.sender` is considered safe, such
     /// that we don't need to use the nested EIP-712 workflow.
     /// Override to return true for more callers.
     /// See: https://mirror.xyz/curiousapple.eth/pFqAdW2LiJ-6S4sg_u1z08k4vK6BCJ33LcyXpnNb8yU
-    function _erc1271CallerIsSafe(address sender) internal view virtual returns (bool) {
+    function _erc1271CallerIsSafe(address account, address sender) internal view virtual returns (bool) {
         // The canonical `MulticallerWithSigner` at 0x000000000000D9ECebf3C23529de49815Dac1c4c
         // is known to include the account in the hash to be signed.
         return sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c;
@@ -142,7 +172,9 @@ abstract contract ERC7739Validator {
         virtual
         returns (bool result)
     {
-        if (_erc1271CallerIsSafe(sender)) result = _erc1271IsValidSignatureNowCalldata(account, hash, signature);
+        if (_erc1271CallerIsSafe(account, sender)) {
+            result = _erc1271IsValidSignatureNowCalldata(account, hash, signature);
+        }
     }
 
     /// @dev ERC1271 signature validation (Nested EIP-712 workflow).
@@ -231,6 +263,20 @@ abstract contract ERC7739Validator {
         virtual
         returns (bool result)
     {
+        (hash, signature) = _processHashAndSignatureForNestedEIP712(account, hash, signature);
+        result = _erc1271IsValidSignatureNowCalldata(account, hash, signature);
+    }
+
+    function _processHashAndSignatureForNestedEIP712(
+        address account,
+        bytes32 hash,
+        bytes calldata signature
+    )
+        internal
+        view
+        virtual
+        returns (bytes32, bytes calldata)
+    {
         //bytes32 t = _typedDataSignFieldsForAccount(msg.sender);
         uint256 t = uint256(uint160(address(this)));
         // Forces the compiler to pop the variables after the scope, avoiding stack-too-deep.
@@ -313,7 +359,7 @@ abstract contract ERC7739Validator {
             mstore(0x40, m) // Restore the free memory pointer.
         }
         if (t == uint256(0)) hash = _hashTypedDataForAccount(account, hash); // `PersonalSign` workflow.
-        result = _erc1271IsValidSignatureNowCalldata(account, hash, signature);
+        return (hash, signature);
     }
 
     /// @dev Performs the signature validation without nested EIP-712 to allow for easy sign ins.

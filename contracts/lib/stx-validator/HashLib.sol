@@ -77,6 +77,7 @@ library HashLib {
         // Compare
         if (currentItemHash != itemHashes[itemIndex]) {
             // should be treated as invalid in the caller code
+            // TODO: when we are to sunset MEEK1 Module, this can be changed to a revert
             finalHash = bytes32(0);
         } else {
             // SuperTx is a dynamic struct { EntryType1 entryA, EntryType2 entryB, ... EntryTypeN entryX }

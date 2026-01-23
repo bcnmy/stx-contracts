@@ -149,6 +149,11 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
 
     /**
      * Validates an ERC-1271/ERC-7739 signature
+     *      Alert!: SIWE messages should not be included in the superTx.
+     *      (Neither other objects which are intended to be used by off-chain code)
+     *      Please sign SIWE objects separately, not as a part of the superTx.
+     *      Stx is expected to include only data structs that are to be
+     *      verified and used by on-chain protocols, not off-chain code.
      *
      * @param sender The sender of the ERC-1271 call to the account
      * @param dataHash The hash of the DataObject Stx entry
@@ -642,11 +647,20 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator {
     // is known to include the account in the hash to be signed.
     // msg.sender = Smart Account
     // sender = 1271 og request sender
-    function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool isCallerSafe) {
+    function _erc1271CallerIsSafe(
+        address account,
+        address sender
+    )
+        internal
+        view
+        virtual
+        override
+        returns (bool isCallerSafe)
+    {
         isCallerSafe =
         (sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
-                || sender == msg.sender // Smart Account. Assume smart account never sends non safe eip-712 struct
-                || _safeSenders.contains(msg.sender, sender)); // check if sender is in _safeSenders for the Smart
+                || sender == account // Smart Account. Assume smart account never sends non safe eip-712 struct
+                || _safeSenders.contains(account, sender)); // check if sender is in _safeSenders for the Smart
         // Account
     }
 }
