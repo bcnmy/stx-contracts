@@ -74,7 +74,6 @@ contract StxValidator_Permit_K1_Test is StxValidator_Base_Test {
 
     function test_superTxFlow_permit_mode_ERC1271_ERC7739_success(uint256 numOfObjs) public {
         numOfObjs = bound(numOfObjs, 2, 25);
-        //uint256 numOfObjs = 5;
         token = new MockERC20PermitToken("test", "TEST"); // deploy fresh token
         bytes[] memory meeSigs = new bytes[](numOfObjs);
         bytes32 baseHash = keccak256(abi.encode("test"));

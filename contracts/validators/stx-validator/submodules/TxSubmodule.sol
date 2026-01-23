@@ -100,31 +100,28 @@ contract TxSubmodule is IStxModeVerifier {
     {
         TxDataShort memory decodedTx = decodeTxShort(sigData);
 
-        if (!MerkleProofLib.verify(decodedTx.proof, decodedTx.superTxHash, dataHash)) {
-            revert MerkleVerificationFailed();
-        }
-
         // since Eth native txns are not erc-712 objects, using erc-7739 makes no sense here
         // To protect from the `two accounts, same owner` attack vector, we just rehash the
-        // txn hash with the account address
-        // Off-chain, the user should also sign such a rehashed hash.
-        // Unfortunately this means the native interface of signing eth txn will be replaced
-        // by just signing some blind hash, but the decision here is to compromise on the UX and
-        // transparency for the sake of security.
-        //
+        // entry hash with the account address. Since user signs the txn anyways, which just has
+        // the superTx root hash appended to the calldata, the entry hash can also be blind,
+        // thus we just rehash it with the account address.
+
         // if the `account` passed is zero address, means, the function is called
         // via StxValidator.validateSignatureWithData function, which
         // doesn't assume any additional security measures, as ERC-7780 stateless validators
         // always act as `stupid` signature verifiers. So all the security checks
         // should be pre-taken by the multiplexer that called StxValidator.validateSignatureWithData function.
         // Thus in this case, no rehashing is needed.
-        bytes32 meeHash =
-            account == address(0) ? decodedTx.utxHash : keccak256(abi.encodePacked(decodedTx.utxHash, account));
+        bytes32 entryHash = account == address(0) ? dataHash : keccak256(abi.encodePacked(dataHash, account));
+
+        if (!MerkleProofLib.verify(decodedTx.proof, decodedTx.superTxHash, entryHash)) {
+            revert MerkleVerificationFailed();
+        }
 
         // return the data required for the further signature validation
         return (
             false, // no erc-7739 required
-            meeHash, // signed hash
+            decodedTx.utxHash, // signed hash
             abi.encodePacked(decodedTx.r, decodedTx.s, decodedTx.v) // signature
         );
     }

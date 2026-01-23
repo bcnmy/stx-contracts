@@ -67,6 +67,26 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
         assertEq(token.balanceOf(bob), amountToTransfer * (numOfClones + 1));
     }
 
+    function test_superTxFlow_tx_mode_ERC1271_withSecuredHash_success(uint256 numOfObjs) public {
+        numOfObjs = bound(numOfObjs, 2, 25);
+        bytes[] memory meeSigs = new bytes[](numOfObjs);
+        bytes32 baseHash = keccak256(abi.encode("test"));
+        bytes memory callData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
+
+        meeSigs = _makeOnchainTxSuperTxSignatures({
+            baseHash: baseHash,
+            total: numOfObjs,
+            callData: callData,
+            superTxSigner: wallet,
+            smartAccount: address(mockAccount)
+        });
+
+        for (uint256 i; i < numOfObjs; i++) {
+            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i)); // expect every hash to be different
+            assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == ERC1271_SUCCESS);
+        }
+    }
+
     // =============================================================
 
     function _makeOnChainTxnSuperTx(
@@ -100,6 +120,40 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
             superTxUserOps[i].signature = signature;
         }
         return superTxUserOps;
+    }
+
+    function _makeOnchainTxSuperTxSignatures(
+        bytes32 baseHash,
+        uint256 total,
+        bytes memory callData,
+        Vm.Wallet memory superTxSigner,
+        address smartAccount
+    )
+        internal
+        view
+        returns (bytes[] memory)
+    {
+        bytes[] memory meeSigs = new bytes[](total);
+        require(total > 0, "total must be greater than 0");
+
+        bytes32[] memory leaves = new bytes32[](total);
+
+        for (uint256 i = 0; i < total; i++) {
+            leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), smartAccount));
+        }
+
+        bytes32[] memory tree = leaves.build();
+        bytes32 root = tree.root();
+        callData = abi.encodePacked(callData, root);
+
+        bytes memory serializedTx = _getSerializedTxn(callData, address(0xa11cebeefb0bdecaf0), superTxSigner);
+
+        for (uint256 i = 0; i < total; i++) {
+            bytes32[] memory proof = tree.leafProof(i);
+            bytes memory signature = abi.encodePacked(serializedTx, abi.encodePacked(proof), uint8(proof.length));
+            meeSigs[i] = signature;
+        }
+        return meeSigs;
     }
 
     function _getSerializedTxn(
