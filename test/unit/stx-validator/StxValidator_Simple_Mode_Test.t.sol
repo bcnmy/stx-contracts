@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { Vm } from "forge-std/Test.sol";
+import { Vm, console2 } from "forge-std/Test.sol";
 import { StxValidator_Base_Test } from "./StxValidator_Base_Test.t.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
@@ -10,11 +10,14 @@ import { MockTarget } from "test/mock/MockTarget.sol";
 import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
 import "contracts/types/Constants.sol";
+import { EcdsaHelperLib } from "contracts/lib/util/EcdsaHelperLib.sol";
 
 contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
 
     SimpleModeSubmodule internal simpleModeSubmodule;
+    // some random domain separator
+    bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
     function setUp() public virtual override {
         super.setUp();
@@ -59,11 +62,9 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
 
     // validate userOps via validateUserOp and data objects via isValidSignature (1271/7739 flow)
     function test_StxValidator_simple_mode_ERC1271_ERC7739_with_MixedTypes_success(uint256 numOfClones) public {
-        /*
-        numOfClones = bound(numOfClones, 1, 9);
+        uint256 numOfClones = bound(numOfClones, 1, 9);
 
-        (PackedUserOperation[] memory superTxUserOps, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
-            _prepareDataAndDoUserOpValidation(numOfClones, true);
+        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation(numOfClones, true);
 
         // Now validate the rest of the entries via - isValidSignature  (expect it to go via erc-7739)
         for (uint256 i; i < nonUserOpEntryDatas.length; i++) {
@@ -73,15 +74,13 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
                 ) == ERC1271_SUCCESS
             );
         }
-        */
     }
 
     // validate userOps via validateUserOp and data objects via validateSignatureWithData (7780 flow)
     function test_StxValidator_simple_mode_ERC7780_with_MixedTypes_success(uint256 numOfClones) public {
         numOfClones = bound(numOfClones, 1, 9);
 
-        (PackedUserOperation[] memory superTxUserOps, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
-            _prepareDataAndDoUserOpValidation(numOfClones, false);
+        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation(numOfClones, false);
 
         // compose data
         bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
@@ -239,7 +238,7 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         string memory dynamicStxStructDefinition;
 
         //create other entries
-        string memory entryTypeADefinition = "EntryTypeA(uint256 foo,bytes32 bar, address baz)";
+        string memory entryTypeADefinition = "EntryTypeA(uint256 foo,bytes32 bar,address baz)";
         string memory entryTypeBDefinition = "EntryTypeB(string qux,address corge)";
         string memory entryTypeCDefinition = "EntryTypeC(uint128[] waldo,bytes16 grault)";
         bytes32 entryTypeATypeHash = keccak256(bytes(entryTypeADefinition));
@@ -307,11 +306,7 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         // ==== STEP 2: Create all item hashes (both UserOps and other entry types) ====
         // Allocate array for all entry hashes in the order they appear in stxLayout
         bytes32[] memory stxItemHashes = new bytes32[](totalEntries);
-
-        // Storage for non-UserOp entry items (needed for EIP-712 hashing)
-        bytes[] memory entryAItems = new bytes[](everyNonUserOpEntryTypeEntriesCount);
-        bytes[] memory entryBItems = new bytes[](everyNonUserOpEntryTypeEntriesCount);
-        bytes[] memory entryCItems = new bytes[](everyNonUserOpEntryTypeEntriesCount);
+        bytes32[] memory preErc7739ItemHashes = new bytes32[](totalEntries);
 
         uint256 entryACounter = 0;
         uint256 entryBCounter = 0;
@@ -335,25 +330,53 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
                 bytes32 bar = keccak256(abi.encode("bar", entryACounter));
                 address baz = address(uint160(uint256(keccak256(abi.encode("baz", entryACounter)))));
 
-                // Store the encoded item for later reference
-                entryAItems[entryACounter] = abi.encode(foo, bar, baz);
-
                 // Hash as per EIP-712: hashStruct(s) = keccak256(typeHash ‖ encodeData(s))
                 // encodeData for EntryTypeA = encode(foo, bar, baz)
-                stxItemHashes[i] = keccak256(abi.encodePacked(entryTypeATypeHash, abi.encode(foo, bar, baz)));
+                bytes32 entryHash = keccak256(abi.encodePacked(entryTypeATypeHash, abi.encode(foo, bar, baz)));
+                preErc7739ItemHashes[i] = entryHash;
+                if (applyErc7739) {
+                    // hash as per erc-7739
+                    bytes32 erc7739StructHash = keccak256(
+                        abi.encodePacked(
+                            abi.encode(
+                                keccak256(
+                                    "TypedDataSign(EntryTypeA contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)EntryTypeA(uint256 foo,bytes32 bar,address baz)"
+                                ),
+                                entryHash
+                            ),
+                            accountDomainStructFields(smartAccount)
+                        )
+                    );
+                    entryHash = keccak256(abi.encodePacked("\x19\x01", APP_DOMAIN_SEPARATOR, erc7739StructHash));
+                }
+                stxItemHashes[i] = entryHash;
                 entryACounter++;
             } else if (stxLayout[i].entryType == EntryType.ENTRY_TYPE_B) {
                 // Create unique EntryTypeB: EntryTypeB(string qux, address corge)
                 string memory qux = string(abi.encodePacked("qux_", _uintToString(entryBCounter)));
                 address corge = address(uint160(uint256(keccak256(abi.encode("corge", entryBCounter)))));
 
-                // Store the encoded item
-                entryBItems[entryBCounter] = abi.encode(keccak256(bytes(qux)), corge);
-
                 // Hash as per EIP-712: for string types, we hash them first
                 // encodeData for EntryTypeB = encode(keccak256(qux), corge)
-                stxItemHashes[i] =
+                bytes32 entryHash =
                     keccak256(abi.encodePacked(entryTypeBTypeHash, abi.encode(keccak256(bytes(qux)), corge)));
+                preErc7739ItemHashes[i] = entryHash;
+                if (applyErc7739) {
+                    // hash as per erc-7739
+                    bytes32 erc7739StructHash = keccak256(
+                        abi.encodePacked(
+                            abi.encode(
+                                keccak256(
+                                    "TypedDataSign(EntryTypeB contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)EntryTypeB(string qux,address corge)"
+                                ),
+                                entryHash
+                            ),
+                            accountDomainStructFields(smartAccount)
+                        )
+                    );
+                    entryHash = keccak256(abi.encodePacked("\x19\x01", APP_DOMAIN_SEPARATOR, erc7739StructHash));
+                }
+                stxItemHashes[i] = entryHash;
                 entryBCounter++;
             } else if (stxLayout[i].entryType == EntryType.ENTRY_TYPE_C) {
                 // Create unique EntryTypeC: EntryTypeC(uint128[] waldo, bytes16 grault)
@@ -363,14 +386,28 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
                 waldo[2] = uint128(entryCCounter + 3);
                 bytes16 grault = bytes16(keccak256(abi.encode("grault", entryCCounter)));
 
-                // Store the encoded item
-                entryCItems[entryCCounter] = abi.encode(keccak256(abi.encodePacked(waldo)), grault);
-
                 // Hash as per EIP-712: for array types, we hash the array first
                 // encodeData for EntryTypeC = encode(keccak256(encodeData(waldo)), grault)
-                stxItemHashes[i] = keccak256(
+                bytes32 entryHash = keccak256(
                     abi.encodePacked(entryTypeCTypeHash, abi.encode(keccak256(abi.encodePacked(waldo)), grault))
                 );
+                preErc7739ItemHashes[i] = entryHash;
+                if (applyErc7739) {
+                    // hash as per erc-7739
+                    bytes32 erc7739StructHash = keccak256(
+                        abi.encodePacked(
+                            abi.encode(
+                                keccak256(
+                                    "TypedDataSign(EntryTypeC contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)EntryTypeC(uint128[] waldo,bytes16 grault)"
+                                ),
+                                entryHash
+                            ),
+                            accountDomainStructFields(smartAccount)
+                        )
+                    );
+                    entryHash = keccak256(abi.encodePacked("\x19\x01", APP_DOMAIN_SEPARATOR, erc7739StructHash));
+                }
+                stxItemHashes[i] = entryHash;
                 entryCCounter++;
             }
         }
@@ -384,21 +421,42 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
             if (stxLayout[i].entryType == EntryType.MEE_USER_OP) {
                 entryTypeNames[i] = "MeeUserOp";
             } else if (stxLayout[i].entryType == EntryType.ENTRY_TYPE_A) {
-                entryTypeNames[i] = "EntryTypeA";
+                if (applyErc7739) {
+                    entryTypeNames[i] = "TypedDataSign";
+                } else {
+                    entryTypeNames[i] = "EntryTypeA";
+                }
             } else if (stxLayout[i].entryType == EntryType.ENTRY_TYPE_B) {
-                entryTypeNames[i] = "EntryTypeB";
+                if (applyErc7739) {
+                    entryTypeNames[i] = "TypedDataSign";
+                } else {
+                    entryTypeNames[i] = "EntryTypeB";
+                }
             } else if (stxLayout[i].entryType == EntryType.ENTRY_TYPE_C) {
-                entryTypeNames[i] = "EntryTypeC";
+                if (applyErc7739) {
+                    entryTypeNames[i] = "TypedDataSign";
+                } else {
+                    entryTypeNames[i] = "EntryTypeC";
+                }
             }
         }
 
         // Prepare type definitions
+        uint256 otherTypeDefinitionsCount = applyErc7739 ? 6 : 3;
+        string[] memory otherTypeDefinitions = new string[](otherTypeDefinitionsCount);
         string memory meeUserOpDefinition =
             "MeeUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)";
-        string[] memory otherTypeDefinitions = new string[](3);
         otherTypeDefinitions[0] = entryTypeADefinition;
         otherTypeDefinitions[1] = entryTypeBDefinition;
         otherTypeDefinitions[2] = entryTypeCDefinition;
+        if (applyErc7739) {
+            otherTypeDefinitions[3] =
+                "TypedDataSign(EntryTypeA contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)";
+            otherTypeDefinitions[4] =
+                "TypedDataSign(EntryTypeB contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)";
+            otherTypeDefinitions[5] =
+                "TypedDataSign(EntryTypeC contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)";
+        }
 
         // Build the complete dynamic struct definition using the helper function
         dynamicStxStructDefinition =
@@ -451,16 +509,50 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
                 userOpCounter++;
             } else {
                 // For non-UserOp entries: signature does NOT include timestamps
+                bytes memory erc7739Signature;
+                if (applyErc7739) {
+                    bytes memory contentsType;
+                    if (stxLayout[i].entryType == EntryType.ENTRY_TYPE_A) {
+                        contentsType = bytes(entryTypeADefinition);
+                    } else if (stxLayout[i].entryType == EntryType.ENTRY_TYPE_B) {
+                        contentsType = bytes(entryTypeBDefinition);
+                    } else if (stxLayout[i].entryType == EntryType.ENTRY_TYPE_C) {
+                        contentsType = bytes(entryTypeCDefinition);
+                    }
+                    // add erc-7739 payload to the signature
+                    erc7739Signature = abi.encodePacked(
+                        superTxHashSignature,
+                        APP_DOMAIN_SEPARATOR,
+                        preErc7739ItemHashes[i], // contents
+                        contentsType,
+                        uint16(contentsType.length) // contentsTypeLength
+                    );
+                }
+                // wrap as per Simple Mode
                 signature = abi.encode(
                     stxStructTypeHash,
                     i, // index in the SuperTx
                     stxItemHashes,
-                    superTxHashSignature
+                    applyErc7739 ? erc7739Signature : superTxHashSignature
                 );
+
+                bytes32 hashForIsValidSignature;
+                if (applyErc7739) {
+                    // this will be passed to isValidSignature as dataHash
+                    // and this will go to erc7739 methods to make 7739 hash out of it
+                    // using the data appended to the signature
+                    hashForIsValidSignature =
+                        EcdsaHelperLib.toTypedDataHash(APP_DOMAIN_SEPARATOR, preErc7739ItemHashes[i]);
+                } else {
+                    hashForIsValidSignature = stxItemHashes[i];
+                }
 
                 // Store in NonUserOpEntryData array
                 nonUserOpEntryDatas[nonUserOpDataCounter] = NonUserOpEntryData({
-                    entryHash: stxItemHashes[i], entryIndex: i, packedSignatureForEntry: signature
+                    //entryHash: stxItemHashes[i], entryIndex: i, packedSignatureForEntry: signature
+                    entryHash: hashForIsValidSignature,
+                    entryIndex: i,
+                    packedSignatureForEntry: signature
                 });
                 nonUserOpDataCounter++;
             }

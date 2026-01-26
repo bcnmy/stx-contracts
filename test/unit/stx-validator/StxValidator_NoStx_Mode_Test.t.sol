@@ -128,21 +128,4 @@ contract StxValidator_NoStx_Mode_Test is StxValidator_Base_Test {
     function toContentsHash(bytes32 contents) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(hex"1901", APP_DOMAIN_SEPARATOR, contents));
     }
-
-    /// @notice Retrieves the EIP-712 domain struct fields.
-    /// @param account The account address.
-    /// @return The encoded EIP-712 domain struct fields.
-    function accountDomainStructFields(address account) internal view returns (bytes memory) {
-        AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
-            EIP712(account).eip712Domain();
-
-        return abi.encode(
-            keccak256(bytes(t.name)),
-            keccak256(bytes(t.version)),
-            t.chainId,
-            t.verifyingContract, // Use the account address as the verifying contract.
-            t.salt
-        );
-    }
 }

@@ -7,7 +7,6 @@ import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.s
 import { MockERC20PermitToken } from "test/mock/tokens/MockERC20PermitToken.sol";
 import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
-import { EIP712 } from "solady/utils/EIP712.sol";
 import { EcdsaHelperLib } from "contracts/lib/util/EcdsaHelperLib.sol";
 import {
     DecodedErc20PermitSig,
@@ -322,22 +321,5 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
             )
         );
         return keccak256(abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), parentStructHash));
-    }
-
-    /// @notice Retrieves the EIP-712 domain struct fields.
-    /// @param account The account address.
-    /// @return The encoded EIP-712 domain struct fields.
-    function accountDomainStructFields(address account) internal view returns (bytes memory) {
-        AccountDomainStruct memory t;
-        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
-            EIP712(account).eip712Domain();
-
-        return abi.encode(
-            keccak256(bytes(t.name)),
-            keccak256(bytes(t.version)),
-            t.chainId,
-            t.verifyingContract, // Use the account address as the verifying contract.
-            t.salt
-        );
     }
 }

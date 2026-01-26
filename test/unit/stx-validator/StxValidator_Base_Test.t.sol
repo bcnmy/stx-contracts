@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 // TODO: CLEAN UNUSED IMPORTS
 
-import { Vm } from "forge-std/Test.sol";
+import { Vm, console2 } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { BaseTest } from "../../Base.t.sol";
@@ -20,6 +20,7 @@ import {
 import {
     EOAStatelessValidator
 } from "../../../contracts/validators/stx-validator/submodules/EOAStatelessValidator.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
 
 contract StxValidator_Base_Test is BaseTest {
     using CopyUserOpLib for PackedUserOperation;
@@ -253,6 +254,25 @@ contract StxValidator_Base_Test is BaseTest {
         return leaves;
     }
 
+    // ===== EIP-712 domain struct fields helper =====
+
+    /// @notice Retrieves the EIP-712 domain struct fields.
+    /// @param account The account address.
+    /// @return The encoded EIP-712 domain struct fields.
+    function accountDomainStructFields(address account) internal view returns (bytes memory) {
+        AccountDomainStruct memory t;
+        (t.fields, t.name, t.version, t.chainId, t.verifyingContract, t.salt, t.extensions) =
+            EIP712(account).eip712Domain();
+
+        return abi.encode(
+            keccak256(bytes(t.name)),
+            keccak256(bytes(t.version)),
+            t.chainId,
+            t.verifyingContract, // Use the account address as the verifying contract.
+            t.salt
+        );
+    }
+
     // ==== DYNAMIC STRUCT DEFINITION HELPERS ====
 
     /**
@@ -306,11 +326,11 @@ contract StxValidator_Base_Test is BaseTest {
         uint256 totalTypeDefs = otherTypeDefinitions.length + (hasMeeUserOp ? 1 : 0);
         string[] memory allTypeDefinitions = new string[](totalTypeDefs);
 
-        uint256 idx = 0;
+        uint256 idx;
         if (hasMeeUserOp) {
             allTypeDefinitions[idx++] = meeUserOpDefinition;
         }
-        for (uint256 i = 0; i < otherTypeDefinitions.length; i++) {
+        for (uint256 i; i < otherTypeDefinitions.length; i++) {
             allTypeDefinitions[idx++] = otherTypeDefinitions[i];
         }
 
