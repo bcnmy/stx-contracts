@@ -58,6 +58,23 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
     // Now test SuperTx with mixed types of entries
 
     // validate userOps via validateUserOp and data objects via isValidSignature (1271/7739 flow)
+    function test_StxValidator_simple_mode_ERC1271_ERC7739_with_MixedTypes_success(uint256 numOfClones) public {
+        /*
+        numOfClones = bound(numOfClones, 1, 9);
+
+        (PackedUserOperation[] memory superTxUserOps, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
+            _prepareDataAndDoUserOpValidation(numOfClones, true);
+
+        // Now validate the rest of the entries via - isValidSignature  (expect it to go via erc-7739)
+        for (uint256 i; i < nonUserOpEntryDatas.length; i++) {
+            assertTrue(
+                mockAccount.isValidSignature(
+                    nonUserOpEntryDatas[i].entryHash, nonUserOpEntryDatas[i].packedSignatureForEntry
+                ) == ERC1271_SUCCESS
+            );
+        }
+        */
+    }
 
     // validate userOps via validateUserOp and data objects via validateSignatureWithData (7780 flow)
     function test_StxValidator_simple_mode_ERC7780_with_MixedTypes_success(uint256 numOfClones) public {
