@@ -720,6 +720,7 @@ verify = true
 
 [4326.uint]
 chain_id = 4326
+gas_estimate_multiply = 5000
 
 [4326.string]
 name = "Megaeth Mainnet"
