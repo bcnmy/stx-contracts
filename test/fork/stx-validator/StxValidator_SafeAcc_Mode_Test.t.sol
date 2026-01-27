@@ -180,21 +180,9 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
     }
 
     function test_StxValidator_superTxFlow_safeAcc_mode_7780_success(uint256 numOfObjs) public {
-        // test validateSignatureWithData flows for Safe Account mode
-        vm.selectFork(baseSepolia);
-
         numOfObjs = bound(numOfObjs, 2, 25);
 
-        bytes[] memory meeSigs = new bytes[](numOfObjs);
-        bytes32 baseHash = keccak256(abi.encode("test"));
-
-        meeSigs = _makeSafeAccSuperTxSignatures({
-            baseHash: baseHash,
-            total: numOfObjs,
-            signers: _getSigners(),
-            safeAccount: safe,
-            safeTxnCalldata: abi.encodeWithSelector(erc20.transfer.selector, address(orchestrator), 1 ether)
-        });
+        (bytes[] memory meeSigs, bytes32 baseHash) = _prepareDataFor7780Or1271(false, numOfObjs);
 
         bytes memory validationData = abi.encode(
             address(orchestrator), // account
@@ -204,6 +192,7 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
             abi.encodePacked(address(safe), address(orchestrator)) // validationData: safeAccount + smartAccount
         );
 
+        vm.selectFork(baseSepolia);
         for (uint256 i; i < numOfObjs; i++) {
             bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
             // Test validateSignatureWithData (stateless validator interface)
@@ -216,6 +205,24 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
             // Test validateSignatureWithData (stateless validator interface)
             assertTrue(orchestrator.validateSignatureWithData(includedLeafHash, meeSigs[i], validationData));
         }
+    }
+
+    function _prepareDataFor7780Or1271(bool addRehashing, uint256 numOfObjs) public returns (bytes[] memory, bytes32) {
+        vm.selectFork(baseSepolia);
+        bytes[] memory meeSigs = new bytes[](numOfObjs);
+        bytes32 baseHash = keccak256(abi.encode("test"));
+
+        meeSigs = _makeSafeAccSuperTxSignatures({
+            baseHash: baseHash,
+            total: numOfObjs,
+            signers: _getSigners(),
+            safeAccount: safe,
+            safeTxnCalldata: abi.encodeWithSelector(erc20.transfer.selector, address(orchestrator), 1 ether),
+            smartAccount: address(orchestrator),
+            addRehashing: addRehashing
+        });
+
+        return (meeSigs, baseHash);
     }
 
     // ================================ UTILS ================================
@@ -352,7 +359,9 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
         uint256 total,
         Vm.Wallet[] memory signers,
         ISafe safeAccount,
-        bytes memory safeTxnCalldata
+        bytes memory safeTxnCalldata,
+        address smartAccount,
+        bool addRehashing
     )
         internal
         view
@@ -364,7 +373,11 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
         bytes32[] memory leaves = new bytes32[](total);
 
         for (uint256 i; i < total; i++) {
-            leaves[i] = keccak256(abi.encode(baseHash, i));
+            if (addRehashing) {
+                leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), smartAccount));
+            } else {
+                leaves[i] = keccak256(abi.encode(baseHash, i));
+            }
         }
 
         // Build merkle tree
