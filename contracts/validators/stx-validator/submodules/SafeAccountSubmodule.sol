@@ -247,7 +247,7 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
         try ISafe(safeAccountOwningSmartAccount).checkSignatures(hash, hex"", signatures) {
             return true;
         } catch {
-            // if it reverts, maybe should try the legacy interface
+            // if it reverts, try the legacy interface
             try ISafe(safeAccountOwningSmartAccount).checkSignatures(smartAccount, hash, signatures) {
                 return true;
             } catch {
