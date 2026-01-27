@@ -82,8 +82,8 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
         });
 
         for (uint256 i; i < numOfObjs; i++) {
-            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i)); // expect every hash to be different
-            assertTrue(mockAccount.isValidSignature(includedLeafHash, meeSigs[i]) == ERC1271_SUCCESS);
+            bytes32 dataHash = keccak256(abi.encode(baseHash, i)); // expect every hash to be different
+            assertTrue(mockAccount.isValidSignature(dataHash, meeSigs[i]) == ERC1271_SUCCESS);
         }
     }
 

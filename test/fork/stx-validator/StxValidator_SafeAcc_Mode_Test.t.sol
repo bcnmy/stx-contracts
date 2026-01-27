@@ -182,7 +182,8 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
     function test_StxValidator_superTxFlow_safeAcc_mode_7780_success(uint256 numOfObjs) public {
         numOfObjs = bound(numOfObjs, 2, 25);
 
-        (bytes[] memory meeSigs, bytes32 baseHash) = _prepareDataFor7780Or1271(false, numOfObjs);
+        (bytes[] memory meeSigs, bytes32 baseHash) =
+            _prepareDataFor7780Or1271({ addRehashing: false, numOfObjs: numOfObjs });
 
         bytes memory validationData = abi.encode(
             address(orchestrator), // account
@@ -204,6 +205,26 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
             bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
             // Test validateSignatureWithData (stateless validator interface)
             assertTrue(orchestrator.validateSignatureWithData(includedLeafHash, meeSigs[i], validationData));
+        }
+    }
+
+    function test_StxValidator_superTxFlow_safeAcc_mode_1271_success(uint256 numOfObjs) public {
+        numOfObjs = bound(numOfObjs, 2, 25);
+        (bytes[] memory meeSigs, bytes32 baseHash) =
+            _prepareDataFor7780Or1271({ addRehashing: true, numOfObjs: numOfObjs });
+
+        vm.selectFork(baseSepolia);
+        for (uint256 i; i < numOfObjs; i++) {
+            bytes32 dataHash = keccak256(abi.encode(baseHash, i));
+            // Test isValidSignature (ERC-1271 interface)
+            assertTrue(orchestrator.isValidSignature(dataHash, meeSigs[i]) == ERC1271_SUCCESS);
+        }
+
+        vm.selectFork(sepolia);
+        for (uint256 i; i < numOfObjs; i++) {
+            bytes32 dataHash = keccak256(abi.encode(baseHash, i));
+            // Test isValidSignature (ERC-1271 interface)
+            assertTrue(orchestrator.isValidSignature(dataHash, meeSigs[i]) == ERC1271_SUCCESS);
         }
     }
 
