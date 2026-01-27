@@ -50,6 +50,7 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
         baseSepolia = vm.createFork(baseSepoliaRpcUrl);
         sepolia = vm.createFork(sepoliaRpcUrl);
 
+        // pre-deployed on both chains
         safe = ISafe(0x6D0Cc55Ac8F3d86e6e50de2d8eF06127d39B8Ab0);
 
         uint256 bicoPrivateKey = vm.envUint("TESTNET_PRIVATE_KEY");
@@ -180,7 +181,6 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
 
     function test_StxValidator_superTxFlow_safeAcc_mode_7780_success(uint256 numOfObjs) public {
         // test validateSignatureWithData flows for Safe Account mode
-        // Similar to the permit mode test but using Safe Account signatures
         vm.selectFork(baseSepolia);
 
         numOfObjs = bound(numOfObjs, 2, 25);
@@ -204,7 +204,13 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
             abi.encodePacked(address(safe), address(orchestrator)) // validationData: safeAccount + smartAccount
         );
 
-        // Test both isValidSignature (ERC-1271) and validateSignatureWithData flows
+        for (uint256 i; i < numOfObjs; i++) {
+            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
+            // Test validateSignatureWithData (stateless validator interface)
+            assertTrue(orchestrator.validateSignatureWithData(includedLeafHash, meeSigs[i], validationData));
+        }
+
+        vm.selectFork(sepolia);
         for (uint256 i; i < numOfObjs; i++) {
             bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
             // Test validateSignatureWithData (stateless validator interface)
