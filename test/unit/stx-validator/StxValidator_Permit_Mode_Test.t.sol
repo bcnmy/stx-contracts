@@ -185,59 +185,7 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
         view
         returns (bytes[] memory)
     {
-        bytes[] memory meeSigs = new bytes[](total);
-
-        bytes32[] memory leaves = new bytes32[](total);
-
-        for (uint256 i = 0; i < total; i++) {
-            leaves[i] = keccak256(abi.encode(baseHash, i));
-        }
-
-        bytes32[] memory tree = leaves.build();
-        bytes32 root = tree.root();
-        uint256 nonce = token.nonces(signer.addr);
-
-        TestTemps memory t;
-        t.contents = keccak256(
-            abi.encode(
-                PERMIT_TYPEHASH,
-                signer.addr,
-                spender,
-                amount,
-                token.nonces(signer.addr), //nonce
-                root //we use deadline field to store the super tx root hash
-            )
-        ); // permit struct hash
-
-        // 1. prepare the correct hash as per eip-7739 and
-        // note: spender is the smart account address in this case, because
-        // we permit orchestrator to be the spender of the tokens
-        bytes32 erc7739PermitStructHash = _toERC7739TypedDataHashOfPermit(t.contents, spender);
-
-        // 2. sign it, and encode the required data into the signature
-        // with erc-7739
-        (t.v, t.r, t.s) = vm.sign(signer.privateKey, erc7739PermitStructHash);
-        bytes memory contentsType = "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)";
-
-        for (uint256 i = 0; i < total; i++) {
-            bytes32[] memory proof = tree.leafProof(i);
-            bytes memory signature = abi.encode(
-                DecodedErc20PermitSigShort({
-                    owner: signer.addr,
-                    spender: spender,
-                    domainSeparator: token.DOMAIN_SEPARATOR(),
-                    amount: amount,
-                    nonce: token.nonces(signer.addr),
-                    superTxHash: root,
-                    signature: abi.encodePacked(
-                        t.r, t.s, t.v, token.DOMAIN_SEPARATOR(), t.contents, contentsType, uint16(contentsType.length)
-                    ), // eip7739 signature
-                    proof: proof
-                })
-            );
-            meeSigs[i] = signature;
-        }
-        return meeSigs;
+        return _makePermitSuperTxSignaturesInternal(baseHash, total, signer, spender, amount, true);
     }
 
     function _makePermitSuperTxSignaturesForErc7780Flow(
@@ -251,17 +199,36 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
         view
         returns (bytes[] memory)
     {
+        return _makePermitSuperTxSignaturesInternal(baseHash, total, signer, spender, amount, false);
+    }
+
+    function _makePermitSuperTxSignaturesInternal(
+        bytes32 baseHash,
+        uint256 total,
+        Vm.Wallet memory signer,
+        address spender,
+        uint256 amount,
+        bool addRehashing
+    )
+        internal
+        view
+        returns (bytes[] memory)
+    {
         bytes[] memory meeSigs = new bytes[](total);
 
         bytes32[] memory leaves = new bytes32[](total);
 
         for (uint256 i = 0; i < total; i++) {
-            leaves[i] = keccak256(abi.encode(baseHash, i));
+            if (addRehashing) {
+                // spender is the smart account address in this case
+                leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), spender));
+            } else {
+                leaves[i] = keccak256(abi.encode(baseHash, i));
+            }
         }
 
         bytes32[] memory tree = leaves.build();
         bytes32 root = tree.root();
-        uint256 nonce = token.nonces(signer.addr);
 
         bytes32 permitStructHash = keccak256(
             abi.encode(
@@ -274,11 +241,9 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
             )
         ); // permit struct hash
 
-        // prepare the data hash to be signed
-        bytes32 dataHashToSign = keccak256(abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), permitStructHash));
+        bytes32 dataHashToSign = EcdsaHelperLib.toTypedDataHash(token.DOMAIN_SEPARATOR(), permitStructHash);
 
-        TestTemps memory t;
-        (t.v, t.r, t.s) = vm.sign(signer.privateKey, dataHashToSign);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, dataHashToSign);
 
         for (uint256 i = 0; i < total; i++) {
             bytes32[] memory proof = tree.leafProof(i);
@@ -290,36 +255,12 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
                     amount: amount,
                     nonce: token.nonces(signer.addr),
                     superTxHash: root,
-                    signature: abi.encodePacked(t.r, t.s, t.v),
+                    signature: abi.encodePacked(r, s, v),
                     proof: proof
                 })
             );
             meeSigs[i] = signature;
         }
         return meeSigs;
-    }
-
-    /// @notice Generates an EIP-7739 hash for the typed data hash workflow
-    /// @dev This function is used for ERC-7739 flow
-    /// @param permitStructHash The permit struct hash.
-    /// @param account The account address.
-    /// @return The EIP-7739 hash.
-    function _toERC7739TypedDataHashOfPermit(bytes32 permitStructHash, address account)
-        internal
-        view
-        returns (bytes32)
-    {
-        bytes32 parentStructHash = keccak256(
-            abi.encodePacked(
-                abi.encode(
-                    keccak256(
-                        "TypedDataSign(Permit contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
-                    ),
-                    permitStructHash
-                ),
-                accountDomainStructFields(account)
-            )
-        );
-        return keccak256(abi.encodePacked("\x19\x01", token.DOMAIN_SEPARATOR(), parentStructHash));
     }
 }

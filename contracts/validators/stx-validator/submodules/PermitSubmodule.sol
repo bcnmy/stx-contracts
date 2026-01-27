@@ -142,19 +142,18 @@ contract PermitSubmodule is IStxModeVerifier {
     {
         DecodedErc20PermitSigShort calldata decodedSig = _decodeShortPermitSig(sigData);
 
-        if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, dataHash)) {
+        // To protect from the `two accounts, same owner` attack vector, we just rehash the
+        // entry hash with the account address. Since user signs the permit anyways, which just has
+        // the superTx root hash in the deadline field of the permit, the entry hash can also be blind,
+        // thus we just rehash it with the account address.
+        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account));
+
+        if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, entryHash)) {
             revert MerkleVerificationFailed();
         }
 
-        // Process full permit structure hash and sig via 7739,
-        // because technically smart account address is not always present in the data object
-        // (in most cases Permit.spender is the smart account address, but it can be any other address as well)
-        // so we have to use ERC-7739 to keep the transparent EIP-712 data struct to be signed by the user
-        // and still be protected from the `two accounts, same owner` attack vector.
-        (bytes32 processedHash, bytes memory processedSignature) = IERC7739Multiplexer(msg.sender)
-            .getErc7739HashAndSignature(account, sender, _getSignedDataHash(decodedSig), decodedSig.signature);
-
-        return (processedHash, processedSignature);
+        // because of the above rehashing, erc7739 is not needed here
+        return (_getSignedDataHash(decodedSig), decodedSig.signature);
     }
 
     /**

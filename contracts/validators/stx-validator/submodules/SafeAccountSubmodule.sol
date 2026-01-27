@@ -153,13 +153,8 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
         SafeTxnData calldata safeTxnData = decodedSignature.safeTxnData;
         bytes32 superTxHash = _getSuperTxHash(safeTxnData);
 
-        if (!MerkleProofLib.verify(decodedSignature.proof, superTxHash, dataHash)) {
-            revert MerkleVerificationFailed();
-        }
-
-        // Process SafeTxn hash and signatures via 7739
+        // Add measures against the `two accounts, same owner` attack vector
         // because technically safe txn object doesn't contain the smart account address
-        // so the hash is not safe in terms of the `two accounts, same owner` attack vector
         //
         // in theory the smart account address may be present in the calldata
         // since safeTxn is a trigger here, so replaying will lead to funds being transferred to the
@@ -167,10 +162,21 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
         // 1) smart account address is not guaranteed to be present in the calldata
         // 2) replayed stx may not fail even if trigger fails because replaying SA may
         //    posess enough balance to execute Stx even w/o trigger being executed
-        (bytes32 processedHash, bytes memory processedSignature) = IERC7739Multiplexer(msg.sender)
-            .getErc7739HashAndSignature(account, sender, _getSignedSafeTxnHash(safeTxnData), safeTxnData.signatures);
+        //
+        // we protect against this by rehashing the data hash with the account address
+        // we can do that instead of erc-7739 because:
+        // 1) Stx hash is injected into the SafeTxn as a blind hash, not as an erc-712 object
+        //    so the entries can also be represented as just hashes
+        // 2) We could've applied erc-7739 to the full SafeTxn object,
+        //    but since erc-7739 involves the full domain separator with the chainId,
+        //    it would make end signature to fail on all the destination chains.
+        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account));
 
-        return (processedHash, processedSignature);
+        if (!MerkleProofLib.verify(decodedSignature.proof, superTxHash, entryHash)) {
+            revert MerkleVerificationFailed();
+        }
+
+        return (_getSignedSafeTxnHash(safeTxnData), safeTxnData.signatures);
     }
 
     /**
