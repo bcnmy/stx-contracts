@@ -119,10 +119,9 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
             safeTxHash = _getSignedSafeTxnHash(safeTxnData);
         }
 
-        return
-            (abi.encode(
-                    decodedSignature.lowerBoundTimestamp, decodedSignature.upperBoundTimestamp, safeTxHash, sigData
-                ));
+        return (abi.encode(
+                decodedSignature.lowerBoundTimestamp, decodedSignature.upperBoundTimestamp, safeTxHash, cleanedSigData
+            ));
     }
 
     /**
