@@ -268,6 +268,8 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     {
         // parse the config entries from the data parameter
         // no sanity checks for the config entries, we expect the caller to provide valid data
+        // stateless validator address should be provided explicitly even if it's the same as the stx mode verifier
+        // address
         (
             address account,
             address stxModeVerifierAddress,

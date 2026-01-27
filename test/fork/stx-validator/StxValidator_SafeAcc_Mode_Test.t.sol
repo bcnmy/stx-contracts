@@ -178,6 +178,40 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
         assertEq(erc20.balanceOf(receiver), amountToTransfer * (numOfClones + 1));
     }
 
+    function test_StxValidator_superTxFlow_safeAcc_mode_7780_success(uint256 numOfObjs) public {
+        // test validateSignatureWithData flows for Safe Account mode
+        // Similar to the permit mode test but using Safe Account signatures
+        vm.selectFork(baseSepolia);
+
+        numOfObjs = bound(numOfObjs, 2, 25);
+
+        bytes[] memory meeSigs = new bytes[](numOfObjs);
+        bytes32 baseHash = keccak256(abi.encode("test"));
+
+        meeSigs = _makeSafeAccSuperTxSignatures({
+            baseHash: baseHash,
+            total: numOfObjs,
+            signers: _getSigners(),
+            safeAccount: safe,
+            safeTxnCalldata: abi.encodeWithSelector(erc20.transfer.selector, address(orchestrator), 1 ether)
+        });
+
+        bytes memory validationData = abi.encode(
+            address(orchestrator), // account
+            address(safeAccountSubmodule), // stx mode verifier address
+            address(safeAccountSubmodule), // stateless validator (use stx mode verifier since SafeAccountSubmodule
+            // implements both)
+            abi.encodePacked(address(safe), address(orchestrator)) // validationData: safeAccount + smartAccount
+        );
+
+        // Test both isValidSignature (ERC-1271) and validateSignatureWithData flows
+        for (uint256 i; i < numOfObjs; i++) {
+            bytes32 includedLeafHash = keccak256(abi.encode(baseHash, i));
+            // Test validateSignatureWithData (stateless validator interface)
+            assertTrue(orchestrator.validateSignatureWithData(includedLeafHash, meeSigs[i], validationData));
+        }
+    }
+
     // ================================ UTILS ================================
 
     function _getSigners() internal view returns (Vm.Wallet[] memory) {
@@ -305,5 +339,87 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
             superTxUserOps[i].signature = signature;
         }
         return superTxUserOps;
+    }
+
+    function _makeSafeAccSuperTxSignatures(
+        bytes32 baseHash,
+        uint256 total,
+        Vm.Wallet[] memory signers,
+        ISafe safeAccount,
+        bytes memory safeTxnCalldata
+    )
+        internal
+        view
+        returns (bytes[] memory)
+    {
+        bytes[] memory meeSigs = new bytes[](total);
+        require(total > 0, "total must be greater than 0");
+
+        bytes32[] memory leaves = new bytes32[](total);
+
+        for (uint256 i; i < total; i++) {
+            leaves[i] = keccak256(abi.encode(baseHash, i));
+        }
+
+        // Build merkle tree
+        bytes32[] memory tree = leaves.build();
+        bytes32 root = tree.root();
+
+        // Get Safe transaction parameters
+        uint256 curNonce = safeAccount.nonce();
+        bytes32 domainSeparator = safeAccount.domainSeparator();
+
+        // Add the super tx root hash to the data
+        safeTxnCalldata = abi.encodePacked(safeTxnCalldata, root);
+
+        bytes memory signatures = "";
+        {
+            // Get safe transaction hash
+            bytes32 safeTxHash = ISafe(safeAccount)
+                .getTransactionHash({
+                    to: address(erc20),
+                    value: 0,
+                    data: safeTxnCalldata,
+                    operation: SafeEnumLib.Operation.Call,
+                    safeTxGas: 0,
+                    baseGas: 0,
+                    gasPrice: 0,
+                    gasToken: address(0),
+                    refundReceiver: payable(address(0)),
+                    _nonce: curNonce
+                });
+
+            // Sign with all safe signers
+            for (uint256 i = 0; i < signers.length; i++) {
+                (uint8 v, bytes32 r, bytes32 s) = vm.sign(signers[i].privateKey, safeTxHash);
+                signatures = abi.encodePacked(signatures, r, s, v);
+            }
+        }
+
+        // Encode signatures for each leaf
+        for (uint256 i; i < total; i++) {
+            bytes32[] memory proof = tree.leafProof(i);
+            bytes memory signature = abi.encode(
+                DecodedSafeAccountSignatureShort({
+                    safeTxnData: SafeTxnData({
+                        ogDomainSeparator: domainSeparator,
+                        to: address(erc20),
+                        value: 0,
+                        data: safeTxnCalldata,
+                        operation: SafeEnumLib.Operation.Call,
+                        safeTxGas: 0,
+                        baseGas: 0,
+                        gasPrice: 0,
+                        gasToken: address(0),
+                        refundReceiver: payable(address(0)),
+                        nonce: curNonce,
+                        signatures: signatures
+                    }),
+                    proof: proof
+                })
+            );
+            meeSigs[i] = signature;
+        }
+        return meeSigs;
     }
 }
