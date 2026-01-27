@@ -42,6 +42,14 @@ struct DecodedSafeAccountSignatureShort {
     bytes32[] proof;
 }
 
+/**
+ * @title SafeAccountSubmodule
+ * @notice This module is responsible for validating the signature of a given Safe transaction
+ *         data object using the Safe account mode.
+ * @dev This module implements both the IStxModeVerifier and IStatelessValidator interfaces
+ *      so it does both parts of the modular stx verification flow
+ */
+
 contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
     error SafeTransactionExecutionFailed();
     error SafeTransactionInvalidSignature();
