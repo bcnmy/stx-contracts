@@ -62,7 +62,7 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
 
     // validate userOps via validateUserOp and data objects via isValidSignature (1271/7739 flow)
     function test_StxValidator_simple_mode_ERC1271_ERC7739_with_MixedTypes_success(uint256 numOfClones) public {
-        uint256 numOfClones = bound(numOfClones, 1, 9);
+        numOfClones = bound(numOfClones, 1, 9);
 
         (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation(numOfClones, true);
 

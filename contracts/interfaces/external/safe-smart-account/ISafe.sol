@@ -3,6 +3,8 @@ pragma solidity ^0.8.27;
 
 import { SafeEnumLib } from "./SafeEnumLib.sol";
 
+// keccak256("SafeTx(address to,uint256 value,bytes data,uint8 operation,uint256 safeTxGas,uint256 baseGas,uint256
+// gasPrice,address gasToken,address refundReceiver,uint256 nonce)")
 bytes32 constant SAFE_TX_TYPEHASH = 0xbb8310d486368db6bd6f849402fdd73ad53d316b5a4b2644ad6efe0f941286d8;
 
 /**
