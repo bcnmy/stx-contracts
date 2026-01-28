@@ -115,7 +115,7 @@ contract SimpleModeSubmodule is IStxModeVerifier {
             account, outerTypeHash, expectedIncludedErc7739Hash, itemIndex, itemHashes
         );
         if (superTxEip712Hash == bytes32(0)) {
-            revert UnexpectedSuperTxEntry(dataHash, itemHashes[itemIndex]);
+            revert UnexpectedSuperTxEntry(expectedIncludedErc7739Hash, itemHashes[itemIndex]);
         }
 
         return (superTxEip712Hash, erc7739Signature);

@@ -18,7 +18,7 @@ import {
     SafeTxnData,
     SafeAccountSubmodule
 } from "contracts/validators/stx-validator/submodules/SafeAccountSubmodule.sol";
-import { ERC1271_SUCCESS, ERC1271_FAILED } from "contracts/types/Constants.sol";
+import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 import { console2 } from "forge-std/console2.sol";
 
 contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
@@ -248,6 +248,8 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
         vm.expectRevert(MerkleVerificationFailed.selector);
         orchestrator.isValidSignature(dataHash, meeSigs[0]);
     }
+
+    // ================================ TEST HELPER FUNCTIONS ================================
 
     function _prepareDataFor7780Or1271(bool addRehashing, uint256 numOfObjs) public returns (bytes[] memory, bytes32) {
         vm.selectFork(baseSepolia);

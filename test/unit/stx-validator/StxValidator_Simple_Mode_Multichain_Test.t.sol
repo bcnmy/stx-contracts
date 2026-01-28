@@ -13,6 +13,8 @@ import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.s
 import "contracts/types/Constants.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { SimpleModeSubmodule } from "contracts/validators/stx-validator/submodules/SimpleModeSubmodule.sol";
+import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
+import { EcdsaHelperLib } from "contracts/lib/util/EcdsaHelperLib.sol";
 
 /**
  * @title StxValidator_Simple_Mode_Multichain_Test
@@ -41,9 +43,14 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
     using EfficientHashLib for *;
 
+    error UnexpectedSuperTxEntry(bytes32 occurredItemHash, bytes32 expectedItemHash);
+
     // Chain IDs for testing
     uint256 constant CHAIN_1 = 8888;
     uint256 constant CHAIN_2 = 2517;
+
+    bytes32 constant APP_DOMAIN_SEPARATOR_CHAIN_1 = keccak256(abi.encodePacked("APP_DOMAIN_SEPARATOR_CHAIN_1"));
+    bytes32 constant APP_DOMAIN_SEPARATOR_CHAIN_2 = keccak256(abi.encodePacked("APP_DOMAIN_SEPARATOR_CHAIN_2"));
 
     // Mock accounts per chain
     MockAccount mockAccountChain1;
@@ -55,22 +62,17 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
 
     SimpleModeSubmodule internal simpleModeSubmodule;
 
+    uint256 originalChainId;
+
     function setUp() public virtual override {
         super.setUp();
 
         // Deploy simple mode submodule once - in Foundry's single-state simulation,
         // this is accessible from all "chains"
         simpleModeSubmodule = new SimpleModeSubmodule();
-    }
 
-    /**
-     * @notice Test with a more realistic scenario: single signature for all chains
-     * @dev This test demonstrates that in simple mode, one signature can validate across chains
-     *      because the domain separator doesn't include chainId
-     */
-    function test_StxValidator_simple_mode_single_signature_multiple_chains() public {
         // Save original chain ID
-        uint256 originalChainId = block.chainid;
+        originalChainId = block.chainid;
 
         // ============ DEPLOY ACCOUNTS ON MULTIPLE CHAINS ============
         // Note: In Foundry, contracts deployed here are accessible from all "chains"
@@ -103,7 +105,14 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
         assertTrue(
             address(mockAccountChain1) != address(mockAccountChain2), "Chain 1 and Chain 2 accounts should be different"
         );
+    }
 
+    /**
+     * @notice Test with a more realistic scenario: single signature for all chains
+     * @dev This test demonstrates that in simple mode, one signature can validate across chains
+     *      because the domain separator doesn't include chainId
+     */
+    function test_StxValidator_simple_mode_UserOps_single_signature_multiple_chains() public {
         // ============ CREATE USER OPS ============
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
@@ -205,6 +214,121 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
         assertEq(mockTargetChain2.counter(), counterBeforeChain2 + 1, "Chain 2 execution failed");
 
         // Restore original chain ID
+        vm.chainId(originalChainId);
+    }
+
+    function test_StxValidator_simple_mode_ERC7739_single_signature_multiple_chains() public {
+        string memory entryTypeADefinition = "EntryTypeA(uint256 foo,bytes32 bar,address baz)";
+        string memory entryTypeBDefinition = "EntryTypeB(string qux,address corge)";
+        bytes32 entryTypeATypeHash = keccak256(bytes(entryTypeADefinition));
+        bytes32 entryTypeBTypeHash = keccak256(bytes(entryTypeBDefinition));
+
+        uint256 foo = uint256(keccak256(abi.encode("entryA", 0)));
+        bytes32 bar = keccak256(abi.encode("bar", 0));
+        address baz = address(uint160(uint256(keccak256(abi.encode("baz", 0)))));
+
+        uint256 qux = uint256(keccak256(abi.encode("qux", 0)));
+        address corge = address(uint160(uint256(keccak256(abi.encode("corge", 0)))));
+
+        bytes32 entryHash1 = keccak256(abi.encodePacked(entryTypeATypeHash, abi.encode(foo, bar, baz)));
+        bytes32 entryHash2 = keccak256(abi.encodePacked(entryTypeBTypeHash, abi.encode(qux, corge)));
+
+        bytes32[] memory stxItemHashes = new bytes32[](2);
+        // prepare it for chain 1
+        vm.chainId(CHAIN_1);
+        bytes32 erc7739StructHash1 = keccak256(
+            abi.encodePacked(
+                abi.encode(
+                    keccak256(
+                        "TypedDataSign(EntryTypeA contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)EntryTypeA(uint256 foo,bytes32 bar,address baz)"
+                    ),
+                    entryHash1
+                ),
+                accountDomainStructFields(address(mockAccountChain1))
+            )
+        );
+        stxItemHashes[0] = keccak256(abi.encodePacked("\x19\x01", APP_DOMAIN_SEPARATOR_CHAIN_1, erc7739StructHash1));
+
+        // prepare it for chain 2
+        vm.chainId(CHAIN_2);
+        bytes32 erc7739StructHash2 = keccak256(
+            abi.encodePacked(
+                abi.encode(
+                    keccak256(
+                        "TypedDataSign(EntryTypeB contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)EntryTypeB(string qux,address corge)"
+                    ),
+                    entryHash2
+                ),
+                accountDomainStructFields(address(mockAccountChain2))
+            )
+        );
+        stxItemHashes[1] = keccak256(abi.encodePacked("\x19\x01", APP_DOMAIN_SEPARATOR_CHAIN_2, erc7739StructHash2));
+
+        // prepare the dynamic struct type hash
+        bytes32 stxStructTypeHash = keccak256(
+            abi.encodePacked("SuperTx(EntryTypeA entry1,EntryTypeB entry2)", entryTypeADefinition, entryTypeBDefinition)
+        );
+
+        // prepare the struct hash
+        bytes32 structHash = keccak256(abi.encodePacked(stxStructTypeHash, stxItemHashes));
+        // since our hashTypedDataForAccount implementation is multichain, we can hash for the first account
+        // and sig will be still valid for the second account
+        structHash = HashLib.hashTypedDataForAccount(address(mockAccountChain1), structHash);
+
+        // sign the struct hash
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(wallet.privateKey, structHash);
+
+        // add the erc7739 payload to the signature
+        bytes memory signature1 = abi.encodePacked(
+            abi.encodePacked(r, s, v),
+            APP_DOMAIN_SEPARATOR_CHAIN_1,
+            entryHash1,
+            bytes(entryTypeADefinition),
+            uint16(bytes(entryTypeADefinition).length)
+        );
+
+        bytes memory signature2 = abi.encodePacked(
+            abi.encodePacked(r, s, v),
+            APP_DOMAIN_SEPARATOR_CHAIN_2,
+            entryHash2,
+            bytes(entryTypeBDefinition),
+            uint16(bytes(entryTypeBDefinition).length)
+        );
+
+        signature1 = abi.encode(stxStructTypeHash, 0, stxItemHashes, signature1);
+        signature2 = abi.encode(stxStructTypeHash, 1, stxItemHashes, signature2);
+
+        // hashes
+        bytes32 hashForIsValidSignature1 = EcdsaHelperLib.toTypedDataHash(APP_DOMAIN_SEPARATOR_CHAIN_1, entryHash1);
+        bytes32 hashForIsValidSignature2 = EcdsaHelperLib.toTypedDataHash(APP_DOMAIN_SEPARATOR_CHAIN_2, entryHash2);
+
+        // check signatures on chain 1
+        vm.chainId(CHAIN_1);
+        assertTrue(mockAccountChain1.isValidSignature(hashForIsValidSignature1, signature1) == ERC1271_SUCCESS);
+
+        // check signatures on chain 2
+        vm.chainId(CHAIN_2);
+        assertTrue(mockAccountChain2.isValidSignature(hashForIsValidSignature2, signature2) == ERC1271_SUCCESS);
+
+        // check that signature is not replayable
+        vm.chainId(CHAIN_1);
+        bytes32 invalidErc7739Hash = keccak256(
+            abi.encodePacked(
+                abi.encode(
+                    keccak256(
+                        "TypedDataSign(EntryTypeB contents,string name,string version,uint256 chainId,address verifyingContract,bytes32 salt)EntryTypeB(string qux,address corge)"
+                    ),
+                    entryHash2
+                ),
+                accountDomainStructFields(address(mockAccountChain1))
+            )
+        );
+        invalidErc7739Hash = keccak256(abi.encodePacked("\x19\x01", APP_DOMAIN_SEPARATOR_CHAIN_2, invalidErc7739Hash));
+        bytes memory expectedRevertReason =
+            abi.encodeWithSelector(UnexpectedSuperTxEntry.selector, invalidErc7739Hash, stxItemHashes[1]);
+        vm.expectRevert(expectedRevertReason);
+        mockAccountChain1.isValidSignature(hashForIsValidSignature2, signature2);
+
         vm.chainId(originalChainId);
     }
 }
