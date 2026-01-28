@@ -18,12 +18,14 @@ import {
     SafeTxnData,
     SafeAccountSubmodule
 } from "contracts/validators/stx-validator/submodules/SafeAccountSubmodule.sol";
-import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
+import { ERC1271_SUCCESS, ERC1271_FAILED } from "contracts/types/Constants.sol";
 import { console2 } from "forge-std/console2.sol";
 
 contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
     using MerkleTreeLib for bytes32[];
+
+    error MerkleVerificationFailed();
 
     uint256 baseSepolia;
     uint256 sepolia;
@@ -234,6 +236,17 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
                 assertTrue(orchestrator.isValidSignature(dataHash, meeSigs[i]) == ERC1271_SUCCESS);
             }
         }
+    }
+
+    function test_StxValidator_superTxFlow_safeAcc_mode_1271_failure_on_the_wrong_chain() public {
+        (bytes[] memory meeSigs, bytes32 baseHash) = _prepareDataFor7780Or1271({ addRehashing: true, numOfObjs: 1 });
+
+        // verifying struct with index 0 (even) on sepolia should fail
+        vm.selectFork(sepolia);
+
+        bytes32 dataHash = keccak256(abi.encode(baseHash, 0));
+        vm.expectRevert(MerkleVerificationFailed.selector);
+        orchestrator.isValidSignature(dataHash, meeSigs[0]);
     }
 
     function _prepareDataFor7780Or1271(bool addRehashing, uint256 numOfObjs) public returns (bytes[] memory, bytes32) {
