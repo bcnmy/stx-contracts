@@ -166,7 +166,7 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
         bytes32[] memory leaves = new bytes32[](total);
 
         for (uint256 i = 0; i < total; i++) {
-            leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), smartAccount));
+            leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), smartAccount, block.chainid));
         }
 
         bytes32[] memory tree = leaves.build();

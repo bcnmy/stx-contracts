@@ -146,7 +146,12 @@ contract PermitSubmodule is IStxModeVerifier {
         // entry hash with the account address. Since user signs the permit anyways, which just has
         // the superTx root hash in the deadline field of the permit, the entry hash can also be blind,
         // thus we just rehash it with the account address.
-        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account));
+        // We also include the chainid to make sure the data struct is not replayable across chains.
+        //
+        // Attention: importnat integration note: when building Stx entries to build an Stx hash
+        // you need to include the chainid of the chain, this data struct is going to be used on!
+        // Same applies to the account address in case it varies depending on the chain
+        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account, block.chainid));
 
         if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, entryHash)) {
             revert MerkleVerificationFailed();

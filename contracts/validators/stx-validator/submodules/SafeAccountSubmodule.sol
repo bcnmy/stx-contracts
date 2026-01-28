@@ -178,7 +178,9 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
         // 2) We could've applied erc-7739 to the full SafeTxn object,
         //    but since erc-7739 involves the full domain separator with the chainId,
         //    it would make end signature to fail on all the destination chains.
-        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account));
+        //
+        // we also include the chainid to make sure the data struct is not replayable across chains.
+        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account, block.chainid));
 
         if (!MerkleProofLib.verify(decodedSignature.proof, superTxHash, entryHash)) {
             revert MerkleVerificationFailed();

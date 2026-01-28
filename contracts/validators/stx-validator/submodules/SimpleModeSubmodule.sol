@@ -92,7 +92,7 @@ contract SimpleModeSubmodule is IStxModeVerifier {
         // expect stx entries which are not userOps are not safe and apply 7739 to them
         // because domain separator doesn't include verifying
         // contract address in our case (see HashLib.hashTypedDataForAccount)
-        // to allow potenitallyt different address on different chains
+        // to allow potenitally different address on different chains
         // so to protect agains `two accounts, same owner` attack vector
         // we apply 7739 to the each potentially unsafe entry hash
         // so off-chain, every data struct hash should be hashes as per erc-7739
@@ -102,6 +102,12 @@ contract SimpleModeSubmodule is IStxModeVerifier {
         // signature for userOps should not include erc-7739 required payload
         // because userOps are already safe and don't need erc-7739 thus they are not
         // processed via erc-7739 (see `processStxUserOpData` method above)
+        //
+        // integration note: since erc-7739 TypedDataSign includes the chainid,
+        // make sure to use the correct 712 domain details when building the hash
+        // user is going to sign on the off-chain side.
+        // so if a given data struct is intended for the chain A, use 712 domain details
+        // of the account on chain A for erc-7739 hash building.
         (bytes32 expectedIncludedErc7739Hash, bytes memory erc7739Signature) =
             IERC7739Multiplexer(msg.sender).getErc7739HashAndSignature(account, sender, dataHash, signature);
 

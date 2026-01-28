@@ -151,7 +151,8 @@ contract TxSubmodule is IStxModeVerifier {
         // entry hash with the account address. Since user signs the txn anyways, which just has
         // the superTx root hash appended to the calldata, the entry hash can also be blind,
         // thus we just rehash it with the account address.
-        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account));
+        // we also include the chainid to make sure the data struct is not replayable across chains.
+        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account, block.chainid));
 
         if (!MerkleProofLib.verify(decodedTx.proof, decodedTx.superTxHash, entryHash)) {
             revert MerkleVerificationFailed();

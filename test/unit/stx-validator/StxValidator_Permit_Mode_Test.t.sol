@@ -221,7 +221,7 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
         for (uint256 i = 0; i < total; i++) {
             if (addRehashing) {
                 // spender is the smart account address in this case
-                leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), spender));
+                leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), spender, block.chainid));
             } else {
                 leaves[i] = keccak256(abi.encode(baseHash, i));
             }

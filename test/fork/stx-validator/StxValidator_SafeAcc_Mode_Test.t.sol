@@ -168,6 +168,8 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
         vm.selectFork(sepolia);
         // emulate some cross-chain stuff that sends funds to the orchestrator on the sepolia chain
         deal(address(erc20), address(orchestrator), 100 ether);
+        // validate the second part of the userOps on the sepolia chain
+        // because they were built for the sepolia chain
         for (uint256 i = 0; i < userOps_sepolia.length; i++) {
             //handleOps
             PackedUserOperation[] memory userOpToHandleAsArray = new PackedUserOperation[](1);
@@ -213,18 +215,24 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
         (bytes[] memory meeSigs, bytes32 baseHash) =
             _prepareDataFor7780Or1271({ addRehashing: true, numOfObjs: numOfObjs });
 
+        // verify even ones on base sepolia
         vm.selectFork(baseSepolia);
         for (uint256 i; i < numOfObjs; i++) {
-            bytes32 dataHash = keccak256(abi.encode(baseHash, i));
-            // Test isValidSignature (ERC-1271 interface)
-            assertTrue(orchestrator.isValidSignature(dataHash, meeSigs[i]) == ERC1271_SUCCESS);
+            if (i % 2 == 0) {
+                bytes32 dataHash = keccak256(abi.encode(baseHash, i));
+                // Test isValidSignature (ERC-1271 interface)
+                assertTrue(orchestrator.isValidSignature(dataHash, meeSigs[i]) == ERC1271_SUCCESS);
+            }
         }
 
+        // verify odd ones on sepolia
         vm.selectFork(sepolia);
         for (uint256 i; i < numOfObjs; i++) {
-            bytes32 dataHash = keccak256(abi.encode(baseHash, i));
-            // Test isValidSignature (ERC-1271 interface)
-            assertTrue(orchestrator.isValidSignature(dataHash, meeSigs[i]) == ERC1271_SUCCESS);
+            if (i % 2 != 0) {
+                bytes32 dataHash = keccak256(abi.encode(baseHash, i));
+                // Test isValidSignature (ERC-1271 interface)
+                assertTrue(orchestrator.isValidSignature(dataHash, meeSigs[i]) == ERC1271_SUCCESS);
+            }
         }
     }
 
@@ -395,7 +403,15 @@ contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
 
         for (uint256 i; i < total; i++) {
             if (addRehashing) {
-                leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), smartAccount));
+                uint256 chainId;
+                // prepare even numbered data structs to be validated on the base sepolia chain
+                // and odd numbered data structs to be validated on the sepolia chain
+                if (i % 2 == 0) {
+                    chainId = 84_532;
+                } else {
+                    chainId = 11_155_111;
+                }
+                leaves[i] = keccak256(abi.encodePacked(keccak256(abi.encode(baseHash, i)), smartAccount, chainId));
             } else {
                 leaves[i] = keccak256(abi.encode(baseHash, i));
             }
