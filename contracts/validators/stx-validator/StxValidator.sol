@@ -44,7 +44,8 @@ struct ValidationConfig {
 
 // keccak256("default");
 bytes32 constant DEFAULT_CONFIG_ID = 0xcfee7c08a98f4b565d124c7e4e28acc52e1bc780e3887db0a02a7d2d5bc66728;
-// flags for 7739/1271 no mee modes
+// flags for 4337/7739/1271 no stx modes
+bytes32 constant NO_STX_CONFIG_ID_4337 = 0x0000000000000000000000000000000000000000000000000000000000000000;
 bytes32 constant NO_STX_CONFIG_ID_7739 = 0x0000000000000000000000000000000000000000000000000000000000000001;
 bytes32 constant NO_STX_CONFIG_ID_VANILLA_1271 = 0x0000000000000000000000000000000000000000000000000000000000000002;
 
@@ -74,6 +75,10 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
 
     /// @notice Error to indicate that the stx mode verifier address cannot be the zero address
     error StxModeVerifierAddressCannotBeZeroAddress();
+
+    /// @notice Error to indicate that the stateless validator address cannot be the zero address if the stx mode
+    /// verifier address is the zero address
+    error StatelessValidatorAddressCannotBeZeroIfStxModeVerifierIsZero();
 
     /// @notice Error to indicate that the config is not enabled
     error ConfigNotEnabled();
@@ -123,21 +128,37 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData) =
             _getConfigData(configs, msg.sender, activeConfigId);
 
-        // I) processStxUserOpData is parsing the userOp.signature,
-        // makes sure the given userOp is the part of the superTx
-        // return timestamps and signed hash + clean signature for the further
-        // sig verification via erc-7780
-        // if external call reverts => this method will revert as well => will make handleOps revert with AA23
-        bytes memory ret = IStxModeVerifier(stxModeVerifierAddress)
-            .processStxUserOpData({ account: msg.sender, userOpHash: userOpHash, signatureData: parsedSigData });
+        uint48 lowerBoundTimestamp;
+        uint48 upperBoundTimestamp;
+        bytes32 signedHash;
+        bytes memory cleanSignature;
 
-        // decode ret
-        // backward compatibility flow: if IStxValidator.processStxUserOpData detects the non-mee flow, it
-        // will just repack og userOpHash and userOp.signature and (0,0) as timestamps into ret
-        // so at the next step the sig validation will happen with the original userOpHash and userOp.signature
-        // as in the vanilla erc-4337 flow
-        (uint48 lowerBoundTimestamp, uint48 upperBoundTimestamp, bytes32 signedHash, bytes memory cleanSignature) =
-            abi.decode(ret, (uint48, uint48, bytes32, bytes));
+        if (activeConfigId == NO_STX_CONFIG_ID_4337) {
+            // in case default config's stx mode verifier address doesn't support
+            // the no stx flow detection, we should be able to force it via configId
+            lowerBoundTimestamp = 0;
+            upperBoundTimestamp = 0;
+            signedHash = userOpHash;
+            cleanSignature = parsedSigData;
+        } else {
+            // I) processStxUserOpData is parsing the userOp.signature,
+            // makes sure the given userOp is the part of the superTx
+            // return timestamps and signed hash + clean signature for the further
+            // sig verification via erc-7780
+            // if external call reverts => this method will revert as well => will make handleOps revert with AA23
+            bytes memory ret = IStxModeVerifier(stxModeVerifierAddress)
+                .processStxUserOpData({ account: msg.sender, userOpHash: userOpHash, signatureData: parsedSigData });
+
+            // decode ret
+            // backward compatibility flow: if IStxValidator.processStxUserOpData detects the non-mee flow, it
+            // will just repack og userOpHash and userOp.signature and (0,0) as timestamps into ret
+            // so at the next step the sig validation will happen with the original userOpHash and userOp.signature
+            // as in the vanilla erc-4337 flow
+            // this approach allows not sending the NO_STX_CONFIG_ID explicitly
+            // and this save 32 bytes of calldata
+            (lowerBoundTimestamp, upperBoundTimestamp, signedHash, cleanSignature) =
+                abi.decode(ret, (uint48, uint48, bytes32, bytes));
+        }
 
         // II) Sig validation via erc-7780
         bool isValidSig = IStatelessValidator(statelessValidatorAddress)
@@ -378,7 +399,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         external
     {
         require(!enabledConfigs.contains(msg.sender, configId), ConfigAlreadyEnabled());
-        _validateStxModeVerifierAddress(configId, stxModeVerifierAddress);
+        _validateConfigAddresses(configId, stxModeVerifierAddress, statelessValidatorAddress);
 
         _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress, validationData);
     }
@@ -399,7 +420,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         bytes32 configId = getConfigId(stxModeVerifierAddress, statelessValidatorAddress, validationData);
 
         require(!enabledConfigs.contains(msg.sender, configId), ConfigAlreadyEnabled());
-        _validateStxModeVerifierAddress(configId, stxModeVerifierAddress);
+        _validateConfigAddresses(configId, stxModeVerifierAddress, statelessValidatorAddress);
 
         _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress, validationData);
     }
@@ -420,7 +441,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         external
     {
         require(enabledConfigs.contains(msg.sender, configId), ConfigNotEnabled());
-        _validateStxModeVerifierAddress(configId, stxModeVerifierAddress);
+        _validateConfigAddresses(configId, stxModeVerifierAddress, statelessValidatorAddress);
         _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress, validationData);
     }
 
@@ -458,10 +479,26 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
      * @param configId The id of the config about to use the stx mode verifier provided
      * @param stxModeVerifierAddress The address of the stx mode verifier
      */
-    function _validateStxModeVerifierAddress(bytes32 configId, address stxModeVerifierAddress) internal view {
+    function _validateConfigAddresses(
+        bytes32 configId,
+        address stxModeVerifierAddress,
+        address statelessValidatorAddress
+    )
+        internal
+        view
+    {
         // no stx configs do not require a valid stx mode verifier address
-        if (configId != NO_STX_CONFIG_ID_7739 && configId != NO_STX_CONFIG_ID_VANILLA_1271) {
+        if (
+            configId != NO_STX_CONFIG_ID_7739 && configId != NO_STX_CONFIG_ID_VANILLA_1271
+                && configId != NO_STX_CONFIG_ID_4337
+        ) {
             require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
+        } else if (stxModeVerifierAddress == address(0)) {
+            // in case of one of the above config ids, the stx mode verifier may be zero
+            // if so, stateless validator address should be provided explicitly
+            require(
+                statelessValidatorAddress != address(0), StatelessValidatorAddressCannotBeZeroIfStxModeVerifierIsZero()
+            );
         }
     }
 
@@ -485,6 +522,40 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         conf.statelessValidatorAddress = statelessValidatorAddress;
         conf.validationData.store(validationData);
         enabledConfigs.add(msg.sender, configId);
+    }
+
+    function getConfigData(
+        address smartAccount,
+        bytes32 configId
+    )
+        external
+        view
+        returns (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData)
+    {
+        (stxModeVerifierAddress, statelessValidatorAddress, validationData) =
+            _getConfigData(configs, smartAccount, configId);
+    }
+
+    function _getConfigData(
+        mapping(bytes32 configId => mapping(address smartAccount => ValidationConfig config)) storage configs_,
+        address smartAccount,
+        bytes32 configId
+    )
+        internal
+        view
+        returns (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData)
+    {
+        ValidationConfig storage config = configs_[configId][smartAccount];
+        stxModeVerifierAddress = config.stxModeVerifierAddress;
+        statelessValidatorAddress = config.statelessValidatorAddress;
+        _validateConfigAddresses(configId, stxModeVerifierAddress, statelessValidatorAddress);
+        // sometimes we use same submodule for both stx mode verifier and stateless validator
+        // in this case we can pass address(0) as statelessValidatorAddress
+        // and save some calldata gas this way
+        if (statelessValidatorAddress == address(0)) {
+            statelessValidatorAddress = stxModeVerifierAddress;
+        }
+        validationData = config.validationData.load();
     }
 
     /**
@@ -568,28 +639,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
                 parsedSigData = signature; // means there was no configId encoded into the signature
             }
         }
-    }
-
-    function _getConfigData(
-        mapping(bytes32 configId => mapping(address smartAccount => ValidationConfig config)) storage configs_,
-        address smartAccount,
-        bytes32 configId
-    )
-        internal
-        view
-        returns (address stxModeVerifierAddress, address statelessValidatorAddress, bytes memory validationData)
-    {
-        ValidationConfig storage config = configs_[configId][smartAccount];
-        stxModeVerifierAddress = config.stxModeVerifierAddress;
-        statelessValidatorAddress = config.statelessValidatorAddress;
-        require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
-        // sometimes we use same submodule for both stx mode verifier and stateless validator
-        // in this case we can pass address(0) as statelessValidatorAddress
-        // and save some calldata gas this way
-        if (statelessValidatorAddress == address(0)) {
-            statelessValidatorAddress = stxModeVerifierAddress;
-        }
-        validationData = config.validationData.load();
     }
 
     /// @notice Checks if the smart account is initialized with an owner

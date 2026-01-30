@@ -1,5 +1,6 @@
 import {
     StxValidator_Base_Test,
+    NO_STX_CONFIG_ID_4337,
     NO_STX_CONFIG_ID_7739,
     NO_STX_CONFIG_ID_VANILLA_1271
 } from "./StxValidator_Base_Test.t.sol";
@@ -19,7 +20,7 @@ contract StxValidator_NoStx_Mode_Test is StxValidator_Base_Test {
         super.setUp();
 
         // deploy permit submodule and use it with the default config
-        // it supports no stx mode detection for userOps
+        // it supports no stx mode detection for userOps flow
         permitSubmodule = new PermitSubmodule();
         vm.startPrank(address(mockAccount));
         // set the default config
@@ -30,21 +31,18 @@ contract StxValidator_NoStx_Mode_Test is StxValidator_Base_Test {
         );
 
         stxValidator.addConfig(
-            NO_STX_CONFIG_ID_7739,
-            address(permitSubmodule),
-            address(eoaStatelessValidator),
-            abi.encodePacked(wallet.addr)
+            NO_STX_CONFIG_ID_4337, address(0), address(eoaStatelessValidator), abi.encodePacked(wallet.addr)
         );
         stxValidator.addConfig(
-            NO_STX_CONFIG_ID_VANILLA_1271,
-            address(permitSubmodule),
-            address(eoaStatelessValidator),
-            abi.encodePacked(wallet.addr)
+            NO_STX_CONFIG_ID_7739, address(0), address(eoaStatelessValidator), abi.encodePacked(wallet.addr)
+        );
+        stxValidator.addConfig(
+            NO_STX_CONFIG_ID_VANILLA_1271, address(0), address(eoaStatelessValidator), abi.encodePacked(wallet.addr)
         );
         vm.stopPrank();
     }
 
-    function test_noStxMode_ValidateUserOp_success() public {
+    function test_noStxMode_ValidateUserOp_success_via_default_config() public {
         uint256 counterBefore = mockTarget.counter();
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
 
@@ -66,6 +64,35 @@ contract StxValidator_NoStx_Mode_Test is StxValidator_Base_Test {
         // default config has permit submodule as stx mode verifier
         // it should detect the no stx mode and pass the correct data
         // to the eoa stateless validator, so just the sig over userOpHash should be enough
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = userOp;
+
+        vm.startPrank(MEE_NODE_EXECUTOR_EOA);
+        ENTRYPOINT.handleOps(userOps, payable(MEE_NODE_ADDRESS));
+        vm.stopPrank();
+
+        assertEq(mockTarget.counter(), counterBefore + 1);
+    }
+
+    function test_noStxMode_ValidateUserOp_success_via_no_stx_config_4337() public {
+        uint256 counterBefore = mockTarget.counter();
+        bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
+
+        vm.deal(address(mockAccount), 100 ether);
+
+        PackedUserOperation memory userOp = buildUserOpWithCalldataAndGasParams({
+            account: address(mockAccount),
+            callData: abi.encodeWithSelector(
+                mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
+            ),
+            wallet: wallet,
+            preVerificationGasLimit: 3e5,
+            verificationGasLimit: 500e3,
+            callGasLimit: 3e6
+        });
+
+        userOp.signature = abi.encodePacked(NO_STX_CONFIG_ID_4337, userOp.signature);
+
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = userOp;
 
