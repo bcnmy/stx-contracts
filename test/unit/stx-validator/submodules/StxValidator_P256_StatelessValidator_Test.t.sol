@@ -101,8 +101,6 @@ contract StxValidator_P256_StatelessValidator_Integration_Test is StxValidator_B
         assertEq(ret, bytes4(ERC1271_SUCCESS));
     }
 
-    // test validateSignatureWithData_P256_StatelessValidator_success() public {
-
     //// ====== HELPER FUNCTIONS ====== ////
 
     /// @notice Generates an ERC-1271 hash for the given contents and account.

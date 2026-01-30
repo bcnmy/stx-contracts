@@ -275,8 +275,12 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     /// @param data The data to validate against (owner address in this case)
     /// @dev No erc-7739 flow needed, as if this module acts as a stateless validator,
     /// all the logic related to erc-7739 has already been handled at this point by caller contract.
-    /// @dev no explicit flow for non-stx mode here, if non stx mode is required to be processed
-    /// via this validator by some reason, pass the appropriate stxModeVerifierAddress and
+    /// @dev no explicit flow for non-stx mode here, as it makes no sense to use this
+    ///      module as a stateless validator for non-stx modes.
+    ///      It is recommended to use submodules from this repository as stateless validators directly in your
+    /// multiplexer if you need to process non-stx modes.
+    //  if by some reason non stx mode is still required to be processed
+    /// via this validator by some reason, pass the appropriate stxModeVerifierAddress
     /// within the `data` parameter
     function validateSignatureWithData(
         bytes32 hash,
