@@ -50,8 +50,7 @@ bytes32 constant NO_STX_CONFIG_ID_7739 = 0x0000000000000000000000000000000000000
 bytes32 constant NO_STX_CONFIG_ID_VANILLA_1271 = 0x0000000000000000000000000000000000000000000000000000000000000002;
 
 contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC7739Multiplexer {
-    using EnumerableSet for EnumerableSet.AddressSet; // TODO: remove this?
-
+    using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using FlatBytesLib for FlatBytesLib.Bytes;
 
@@ -383,7 +382,23 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
      * De-initialize the module with the given data
      */
     function onUninstall(bytes calldata) external override {
-        // TODO: clean configs
+        // Get all enabled configIds for this account
+        bytes32[] memory configIds = enabledConfigs.values(msg.sender);
+        uint256 len = configIds.length;
+
+        // Delete each config's data
+        for (uint256 i; i < len; ++i) {
+            bytes32 configId = configIds[i];
+            // Clear the validationData stored via FlatBytesLib
+            configs[configId][msg.sender].validationData.clear();
+            // Delete the config struct
+            delete configs[configId][msg.sender];
+        }
+
+        // Remove all configIds from the enabledConfigs set
+        enabledConfigs.removeAll(msg.sender);
+
+        // Remove all safe senders
         _safeSenders.removeAll(msg.sender);
     }
 
@@ -599,9 +614,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
 
     /// @notice Returns the version of the module
     /// @return The version of the module
-    /// @dev
-    /// - supports appended 65-bytes signature for on-chain fusion mode
-    /// - supports erc7702-delegated EOAs as owners
     function version() external pure returns (string memory) {
         return "0.0.1";
     }
@@ -649,7 +661,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     /// @param smartAccount The address of the smart account
     /// @return isInitializedRet True if the smart account has an owner, false otherwise
     function _isInitialized(address smartAccount) private view returns (bool isInitializedRet) {
-        // TODO: properly implement this check using enabled configs
+        return enabledConfigs.contains(smartAccount, DEFAULT_CONFIG_ID);
     }
 
     // @notice Fills the _safeSenders list from the given data

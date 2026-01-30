@@ -250,6 +250,8 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
             //  is the same as the one that executed the trigger SafeTxn before
             // This is gas saving flow to avoid double signature checking which may be
             // gas heavy for Safe accounts with many signers
+
+            /// forge-lint:disable-next-line(unsafe-typecast)
             return address(bytes20(signatures)) == safeAccountOwningSmartAccount;
         }
 

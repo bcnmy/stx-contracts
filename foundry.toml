@@ -54,6 +54,9 @@
     # Specific file patterns that are often problematic
     "**/*Mock*.sol",
     "**/*Test*.sol",
+
+    # borrowed p256 verifier from Daimo's lib
+    "contracts/validators/stx-validator/submodules/p256/P256Verifier.sol",    
   ]
   severity = ["high", "med", "gas"]
 
