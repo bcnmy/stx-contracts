@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { Vm, console2 } from "forge-std/Test.sol";
-import { StxValidator_Base_Test } from "./StxValidator_Base_Test.t.sol";
+import { StxValidator_Base_Test, DEFAULT_CONFIG_ID } from "./StxValidator_Base_Test.t.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { SimpleModeSubmodule } from "contracts/validators/stx-validator/submodules/SimpleModeSubmodule.sol";
@@ -11,32 +11,77 @@ import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
 import "contracts/types/Constants.sol";
 import { EcdsaHelperLib } from "contracts/lib/util/EcdsaHelperLib.sol";
+import { P256StatelessValidator } from "contracts/validators/stx-validator/submodules/p256/P256StatelessValidator.sol";
 
 contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
 
     SimpleModeSubmodule internal simpleModeSubmodule;
+    P256StatelessValidator internal p256StatelessValidator;
+    bytes internal p256ValidationData;
+    uint256 internal p256PublicKeyX;
+    uint256 internal p256PublicKeyY;
+
     // some random domain separator
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
+
+    bytes internal defaultConfigData;
 
     function setUp() public virtual override {
         super.setUp();
 
+        p256StatelessValidator = new P256StatelessValidator();
+        (p256PublicKeyX, p256PublicKeyY) = vm.publicKeyP256(wallet.privateKey);
+        p256ValidationData = abi.encodePacked(p256PublicKeyX, p256PublicKeyY);
+
         // deploy permit submodule and use it with the default config
         simpleModeSubmodule = new SimpleModeSubmodule();
         vm.prank(address(mockAccount));
-        // set the default config
-        stxValidator.onInstall(
-            abi.encodePacked(
-                address(simpleModeSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr)
-            )
+
+        defaultConfigData = abi.encodePacked(
+            address(simpleModeSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr)
         );
+
+        // set the default config
+        stxValidator.onInstall(defaultConfigData);
     }
 
-    function test_StxValidator_simple_mode_ValidateUserOp_with_MeeUserOps_only_as_entries_success(uint256 numOfClones)
+    function test_stxValidator_simple_mode_ValidateUserOp_with_MeeUserOps_only_as_entries_EOAsig_success(uint256 numOfClones)
         public
     {
         numOfClones = bound(numOfClones, 1, 25);
+        _validateUserOp_with_MeeUserOps_only_as_entries(numOfClones, 500_000, _signWithSecp256k1);
+    }
+
+    function test_stxValidator_simple_mode_ValidateUserOp_with_MeeUserOps_only_as_entries_P256Sig_success(uint256 numOfClones)
+        public
+    {
+        numOfClones = bound(numOfClones, 1, 25);
+
+        vm.prank(address(mockAccount));
+        stxValidator.replaceConfig(
+            DEFAULT_CONFIG_ID, address(simpleModeSubmodule), address(p256StatelessValidator), p256ValidationData
+        );
+
+        _validateUserOp_with_MeeUserOps_only_as_entries(numOfClones, 900_000, _signWithP256);
+
+        // revert to the default config
+        vm.prank(address(mockAccount));
+        stxValidator.replaceConfig(
+            DEFAULT_CONFIG_ID,
+            address(simpleModeSubmodule),
+            address(eoaStatelessValidator),
+            abi.encodePacked(wallet.addr)
+        );
+    }
+
+    function _validateUserOp_with_MeeUserOps_only_as_entries(
+        uint256 numOfClones,
+        uint256 verificationGasLimit,
+        function(Vm.Wallet memory, bytes32) internal view returns (bytes memory) signatureFunction
+    )
+        internal
+    {
         uint256 counterBefore = mockTarget.counter();
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
         PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
@@ -47,24 +92,32 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
             userOpSigner: wallet
         });
 
+        // repack new verificationGasLimit into accountGasLimits
+        uint128 callGasLimit = uint128(unpackCallGasLimitMemory(userOp));
+        userOp.accountGasLimits = bytes32(abi.encodePacked(uint128(verificationGasLimit), callGasLimit)); // verification
+        // and call
+
         PackedUserOperation[] memory userOps = _cloneUserOpToAnArray(userOp, wallet, numOfClones);
 
-        userOps = _makeSimpleSuperTxWithMeeUserOpsOnlyAsEntries(userOps, wallet, address(mockAccount));
+        userOps = _makeSimpleSuperTxWithMeeUserOpsOnlyAsEntries({
+            userOps: userOps,
+            superTxSigner: wallet,
+            smartAccount: address(mockAccount),
+            signatureFunction: signatureFunction
+        });
 
         vm.startPrank(MEE_NODE_EXECUTOR_EOA, MEE_NODE_EXECUTOR_EOA);
         ENTRYPOINT.handleOps(userOps, payable(MEE_NODE_ADDRESS));
         vm.stopPrank();
-
         assertEq(mockTarget.counter(), counterBefore + userOps.length);
     }
 
     // Now test SuperTx with mixed types of entries
-
-    // validate userOps via validateUserOp and data objects via isValidSignature (1271/7739 flow)
     function test_StxValidator_simple_mode_ERC1271_ERC7739_with_MixedTypes_success(uint256 numOfClones) public {
         numOfClones = bound(numOfClones, 1, 9);
 
-        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation(numOfClones, true);
+        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
+            _prepareDataAndDoUserOpValidation({ numOfClones: numOfClones, applyErc7739: true });
 
         // Now validate the rest of the entries via - isValidSignature  (expect it to go via erc-7739)
         for (uint256 i; i < nonUserOpEntryDatas.length; i++) {
@@ -80,7 +133,8 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
     function test_StxValidator_simple_mode_ERC7780_with_MixedTypes_success(uint256 numOfClones) public {
         numOfClones = bound(numOfClones, 1, 9);
 
-        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation(numOfClones, false);
+        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
+            _prepareDataAndDoUserOpValidation({ numOfClones: numOfClones, applyErc7739: false });
 
         // compose data
         bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
@@ -143,6 +197,18 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         return (superTxUserOps, nonUserOpEntryDatas);
     }
 
+    // ==== SIGNATURE FUNCTIONS ====
+
+    function _signWithSecp256k1(Vm.Wallet memory signer, bytes32 dataToSign) internal view returns (bytes memory) {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signer.privateKey, dataToSign);
+        return abi.encodePacked(r, s, v);
+    }
+
+    function _signWithP256(Vm.Wallet memory signer, bytes32 dataToSign) internal view returns (bytes memory) {
+        (bytes32 r, bytes32 s) = vm.signP256(signer.privateKey, dataToSign);
+        return abi.encodePacked(r, s);
+    }
+
     // ==== SIMPLE SUPER TX UTILS ====
 
     /**
@@ -155,7 +221,8 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
     function _makeSimpleSuperTxWithMeeUserOpsOnlyAsEntries(
         PackedUserOperation[] memory userOps,
         Vm.Wallet memory superTxSigner,
-        address smartAccount
+        address smartAccount,
+        function(Vm.Wallet memory, bytes32) internal view returns (bytes memory) signatureFunction
     )
         internal
         view
@@ -168,9 +235,8 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         (bytes32 stxStructTypeHash, bytes32 stxEip712HashToSign) =
             _hashPureMeeUserOpsStx(userOps, smartAccount, lowerBoundTimestamp, upperBoundTimestamp);
 
-        // eip-712 sign the stx struct
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(superTxSigner.privateKey, stxEip712HashToSign);
-        bytes memory superTxHashSignature = abi.encodePacked(r, s, v);
+        // sign the stx struct
+        bytes memory superTxHashSignature = signatureFunction(superTxSigner, stxEip712HashToSign);
 
         PackedUserOperation[] memory superTxUserOps = new PackedUserOperation[](userOps.length);
         for (uint256 i; i < userOps.length; ++i) {

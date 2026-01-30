@@ -44,7 +44,7 @@ contract MeeK1Validator_SafeAcc_Mode_Test_Fork is MeeK1Validator_Base_Test {
     function setUp() public virtual override {
         // create a fork of baseSepolia
         string memory baseSepoliaRpcUrl = vm.envString("RPC_84532");
-        string memory sepoliaRpcUrl = vm.envString("RPC_11155111_TEST");
+        string memory sepoliaRpcUrl = vm.envString("RPC_11155111");
         baseSepolia = vm.createFork(baseSepoliaRpcUrl);
         sepolia = vm.createFork(sepoliaRpcUrl);
 

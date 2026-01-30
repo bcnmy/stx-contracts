@@ -16,7 +16,8 @@ import {
     StxValidator,
     NO_STX_CONFIG_ID_4337,
     NO_STX_CONFIG_ID_7739,
-    NO_STX_CONFIG_ID_VANILLA_1271
+    NO_STX_CONFIG_ID_VANILLA_1271,
+    DEFAULT_CONFIG_ID
 } from "../../../contracts/validators/stx-validator/StxValidator.sol";
 import {
     EOAStatelessValidator
