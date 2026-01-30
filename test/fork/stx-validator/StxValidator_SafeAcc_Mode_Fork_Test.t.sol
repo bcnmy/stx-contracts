@@ -21,7 +21,7 @@ import {
 import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 import { console2 } from "forge-std/console2.sol";
 
-contract StxValidator_SafeAcc_Mode_Test_Fork is StxValidator_Base_Test {
+contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
     using MerkleTreeLib for bytes32[];
 
