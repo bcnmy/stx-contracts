@@ -113,11 +113,15 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
     }
 
     // Now test SuperTx with mixed types of entries
-    function test_StxValidator_simple_mode_ERC1271_ERC7739_with_MixedTypes_success(uint256 numOfClones) public {
+    function test_StxValidator_simple_mode_ERC1271_ERC7739_with_MixedTypes_EOASig_success(uint256 numOfClones) public {
         numOfClones = bound(numOfClones, 1, 9);
 
-        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
-            _prepareDataAndDoUserOpValidation({ numOfClones: numOfClones, applyErc7739: true });
+        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation({
+            numOfClones: numOfClones,
+            applyErc7739: true,
+            verificationGasLimit: 500_000,
+            signatureFunction: _signWithSecp256k1
+        });
 
         // Now validate the rest of the entries via - isValidSignature  (expect it to go via erc-7739)
         for (uint256 i; i < nonUserOpEntryDatas.length; i++) {
@@ -129,12 +133,50 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         }
     }
 
-    // validate userOps via validateUserOp and data objects via validateSignatureWithData (7780 flow)
-    function test_StxValidator_simple_mode_ERC7780_with_MixedTypes_success(uint256 numOfClones) public {
+    function test_StxValidator_simple_mode_ERC1271_ERC7739_with_MixedTypes_P256Sig_success(uint256 numOfClones) public {
         numOfClones = bound(numOfClones, 1, 9);
 
-        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
-            _prepareDataAndDoUserOpValidation({ numOfClones: numOfClones, applyErc7739: false });
+        vm.prank(address(mockAccount));
+        stxValidator.replaceConfig(
+            DEFAULT_CONFIG_ID, address(simpleModeSubmodule), address(p256StatelessValidator), p256ValidationData
+        );
+
+        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation({
+            numOfClones: numOfClones,
+            applyErc7739: true,
+            verificationGasLimit: 900_000,
+            signatureFunction: _signWithP256
+        });
+
+        // Now validate the rest of the entries via - isValidSignature  (expect it to go via erc-7739)
+        for (uint256 i; i < nonUserOpEntryDatas.length; i++) {
+            assertTrue(
+                mockAccount.isValidSignature(
+                    nonUserOpEntryDatas[i].entryHash, nonUserOpEntryDatas[i].packedSignatureForEntry
+                ) == ERC1271_SUCCESS
+            );
+        }
+
+        // revert to the default config
+        vm.prank(address(mockAccount));
+        stxValidator.replaceConfig(
+            DEFAULT_CONFIG_ID,
+            address(simpleModeSubmodule),
+            address(eoaStatelessValidator),
+            abi.encodePacked(wallet.addr)
+        );
+    }
+
+    // validate userOps via validateUserOp and data objects via validateSignatureWithData (7780 flow)
+    function test_StxValidator_simple_mode_ERC7780_with_MixedTypes_EOASig_success(uint256 numOfClones) public {
+        numOfClones = bound(numOfClones, 1, 9);
+
+        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation({
+            numOfClones: numOfClones,
+            applyErc7739: false,
+            verificationGasLimit: 500_000,
+            signatureFunction: _signWithSecp256k1
+        });
 
         // compose data
         bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
@@ -157,11 +199,57 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         }
     }
 
+    function test_StxValidator_simple_mode_ERC7780_with_MixedTypes_P256Sig_success(uint256 numOfClones) public {
+        numOfClones = bound(numOfClones, 1, 9);
+
+        vm.prank(address(mockAccount));
+        stxValidator.replaceConfig(
+            DEFAULT_CONFIG_ID, address(simpleModeSubmodule), address(p256StatelessValidator), p256ValidationData
+        );
+
+        (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation({
+            numOfClones: numOfClones,
+            applyErc7739: false,
+            verificationGasLimit: 900_000,
+            signatureFunction: _signWithP256
+        });
+
+        // compose data
+        bytes memory data = abi.encode(
+            address(mockAccount), // account
+            address(simpleModeSubmodule), // stx mode verifier address
+            address(p256StatelessValidator), // stateless validator address
+            p256ValidationData
+        );
+
+        // Now validate the rest of the entries via
+        // - validateSignatureWithData
+        // - isValidSignature (no 7739 flow needed for simple mode)
+        for (uint256 i; i < nonUserOpEntryDatas.length; i++) {
+            assertTrue(
+                mockAccount.validateSignatureWithData(
+                    nonUserOpEntryDatas[i].entryHash, nonUserOpEntryDatas[i].packedSignatureForEntry, data
+                )
+            );
+        }
+
+        // revert to the default config
+        vm.prank(address(mockAccount));
+        stxValidator.replaceConfig(
+            DEFAULT_CONFIG_ID,
+            address(simpleModeSubmodule),
+            address(eoaStatelessValidator),
+            abi.encodePacked(wallet.addr)
+        );
+    }
+
     // ===== 1271/7739/7780 test helper =====
 
     function _prepareDataAndDoUserOpValidation(
         uint256 numOfClones,
-        bool applyErc7739
+        bool applyErc7739,
+        uint256 verificationGasLimit,
+        function(Vm.Wallet memory, bytes32) internal view returns (bytes memory) signatureFunction
     )
         internal
         returns (PackedUserOperation[] memory, NonUserOpEntryData[] memory)
@@ -177,10 +265,15 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
             account: address(mockAccount),
             userOpSigner: wallet
         });
+
+        // repack new verificationGasLimit into accountGasLimits
+        uint128 callGasLimit = uint128(unpackCallGasLimitMemory(userOp));
+        userOp.accountGasLimits = bytes32(abi.encodePacked(uint128(verificationGasLimit), callGasLimit));
+
         PackedUserOperation[] memory userOps = _cloneUserOpToAnArray(userOp, wallet, numOfClones);
 
         (PackedUserOperation[] memory superTxUserOps, NonUserOpEntryData[] memory nonUserOpEntryDatas) =
-            _makeSimpleSuperTxWithMixedTypes(userOps, wallet, address(mockAccount), applyErc7739);
+            _makeSimpleSuperTxWithMixedTypes(userOps, wallet, address(mockAccount), applyErc7739, signatureFunction);
 
         // make sure userOps are handled correctly
         // sending them one by one to emulate the real world scenario
@@ -287,7 +380,8 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         PackedUserOperation[] memory userOps,
         Vm.Wallet memory superTxSigner,
         address smartAccount,
-        bool applyErc7739
+        bool applyErc7739,
+        function(Vm.Wallet memory, bytes32) internal view returns (bytes memory) signatureFunction
     )
         internal
         view
@@ -543,8 +637,11 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
 
         // ==== STEP 6: Sign the superTxEip712Hash ====
         // Use the superTxSigner's private key to sign the EIP-712 hash
+        /*
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(superTxSigner.privateKey, superTxEip712Hash);
         bytes memory superTxHashSignature = abi.encodePacked(r, s, v);
+        */
+        bytes memory superTxHashSignature = signatureFunction(superTxSigner, superTxEip712Hash);
 
         // ==== STEP 7: Build individual signatures for each entry ====
         // Each entry's signature contains: encode(stxStructTypeHash, index, stxItemHashes,
