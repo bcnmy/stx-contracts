@@ -10,6 +10,7 @@ import { RLPReader as RLPDecoder } from "rlp-reader/RLPReader.sol";
 import { RLPEncoder } from "../../../lib/stx-validator/rlp/RLPEncoder.sol";
 import { BytesLib } from "byteslib/BytesLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
+import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 
 /**
  * @dev Submodule to validate the signature for MEE on-chain Txn mode
@@ -152,7 +153,7 @@ contract TxSubmodule is IStxModeVerifier {
         // the superTx root hash appended to the calldata, the entry hash can also be blind,
         // thus we just rehash it with the account address.
         // we also include the chainid to make sure the data struct is not replayable across chains.
-        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account, block.chainid));
+        bytes32 entryHash = HashLib.rehashWithAccountAndChainId(dataHash, account, block.chainid);
 
         if (!MerkleProofLib.verify(decodedTx.proof, decodedTx.superTxHash, entryHash)) {
             revert MerkleVerificationFailed();

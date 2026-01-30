@@ -8,6 +8,7 @@ import { ERC20 } from "solady/tokens/ERC20.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739Multiplexer.sol";
+import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 
 /**
  * @dev Submodule to validate the UserOp/Stx for the MEE ERC-2612 Permit mode
@@ -151,7 +152,7 @@ contract PermitSubmodule is IStxModeVerifier {
         // Attention: importnat integration note: when building Stx entries to build an Stx hash
         // you need to include the chainid of the chain, this data struct is going to be used on!
         // Same applies to the account address in case it varies depending on the chain
-        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account, block.chainid));
+        bytes32 entryHash = HashLib.rehashWithAccountAndChainId(dataHash, account, block.chainid);
 
         if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, entryHash)) {
             revert MerkleVerificationFailed();

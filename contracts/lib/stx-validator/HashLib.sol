@@ -123,6 +123,25 @@ library HashLib {
         finalHash = compareAndGetFinalHashForAccount(msg.sender, outerTypeHash, currentItemHash, itemIndex, itemHashes);
     }
 
+    function rehashWithAccountAndChainId(
+        bytes32 dataHash,
+        address account,
+        uint256 chainId
+    )
+        internal
+        pure
+        returns (bytes32 res)
+    {
+        //res = keccak256(abi.encodePacked(dataHash, account, chainId));
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, dataHash)
+            mstore(add(ptr, 0x20), shl(96, account))
+            mstore(add(ptr, 0x34), chainId)
+            res := keccak256(ptr, 0x54)
+        }
+    }
+
     /// @notice Hashes typed data according to eip-712
     ///         Uses account's domain separator
     /// @param account the smart account, who's domain separator will be used

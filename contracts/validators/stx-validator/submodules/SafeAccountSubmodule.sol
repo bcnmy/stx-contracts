@@ -12,6 +12,7 @@ import {
     IStatelessValidator,
     InvalidErc7780DataLength
 } from "../../../interfaces/standard/erc-7780/IStatelessValidator.sol";
+import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 
 struct SafeTxnData {
     bytes32 ogDomainSeparator;
@@ -180,7 +181,7 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
         //    it would make end signature to fail on all the destination chains.
         //
         // we also include the chainid to make sure the data struct is not replayable across chains.
-        bytes32 entryHash = keccak256(abi.encodePacked(dataHash, account, block.chainid));
+        bytes32 entryHash = HashLib.rehashWithAccountAndChainId(dataHash, account, block.chainid);
 
         if (!MerkleProofLib.verify(decodedSignature.proof, superTxHash, entryHash)) {
             revert MerkleVerificationFailed();
