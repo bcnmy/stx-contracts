@@ -109,7 +109,7 @@ contract TxSubmodule is IStxModeVerifier {
         TxData memory decodedTx = decodeTx(sigData);
 
         bytes32 meeUserOpHash =
-            MEEUserOpHashLib.getMEEUserOpHash(userOpHash, decodedTx.lowerBoundTimestamp, decodedTx.upperBoundTimestamp);
+            MEEUserOpHashLib.getMeeUserOpHash(userOpHash, decodedTx.lowerBoundTimestamp, decodedTx.upperBoundTimestamp);
 
         if (!MerkleProofLib.verify(decodedTx.proof, decodedTx.superTxHash, meeUserOpHash)) {
             revert MerkleVerificationFailed();

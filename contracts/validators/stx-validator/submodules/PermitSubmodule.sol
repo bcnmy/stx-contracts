@@ -82,7 +82,7 @@ contract PermitSubmodule is IStxModeVerifier {
         DecodedErc20PermitSig calldata decodedSig = _decodeFullPermitSig(sigData);
 
         // Verify Merkle proof for the superTx hash
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMEEUserOpHash(
+        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(
             userOpHash, decodedSig.lowerBoundTimestamp, decodedSig.upperBoundTimestamp
         );
         if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, meeUserOpHash)) {

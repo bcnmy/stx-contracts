@@ -79,7 +79,7 @@ library SafeAccountValidatorLib {
         SafeTxnData calldata safeTxnData = decodedSignature.safeTxnData;
         bytes32 superTxHash = _getSuperTxHash(safeTxnData);
 
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMEEUserOpHash(
+        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(
             userOpHash, decodedSignature.lowerBoundTimestamp, decodedSignature.upperBoundTimestamp
         );
 

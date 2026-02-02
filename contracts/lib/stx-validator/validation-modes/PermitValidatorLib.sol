@@ -96,7 +96,7 @@ library PermitValidatorLib {
     {
         DecodedErc20PermitSig memory decodedSig = _decodeFullPermitSig(parsedSignature);
 
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMEEUserOpHash(
+        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(
             userOpHash, decodedSig.lowerBoundTimestamp, decodedSig.upperBoundTimestamp
         );
 
@@ -112,10 +112,6 @@ library PermitValidatorLib {
             return SIG_VALIDATION_FAILED;
         }
 
-        // TODO: if this is a permit tx, we probably do not need to verify the signature above,
-        // because this is already done within the ERC20.permit function
-        // Need to implement a test case for this, that shows that if isPermitTx is true, the wrong signature will
-        // revert even w/o the signature verification above
         if (decodedSig.isPermitTx) {
             try decodedSig.token
                 .permit(

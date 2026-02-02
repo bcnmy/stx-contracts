@@ -26,16 +26,46 @@ import { SafeAccountValidatorLib } from "../../lib/stx-validator/validation-mode
 import { NoMeeFlowLib } from "../../lib/stx-validator/validation-modes/NoMeeFlowLib.sol";
 import { EcdsaHelperLib } from "../../lib/util/EcdsaHelperLib.sol";
 import { FlatBytesLib } from "flatbytes/BytesLib.sol";
-import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739Multiplexer.sol";
 
 /**
  * @title StxValidator
+ * @author Biconomy
+ * @notice ERC-7579 compatible validator module for validating ERC-4337 UserOps
+ *         and ERC-1271 signatures that are part of MEE SuperTransactions (Stx).
+ * @dev This validator implements a modular two-layer architecture:
  *
+ *      1. **Stx Mode Verification (IStxModeVerifier)**: Validates that a UserOp or data object
+ *         is part of a SuperTransaction. Different modes are supported via pluggable submodules:
+ *         - Simple Mode: Direct EIP-712 signing of SuperTx struct
+ *         - Permit Mode: ERC-2612 permit with Stx hash in deadline field
+ *         - Tx Mode: On-chain transaction with Stx hash appended to calldata
+ *         - Safe Account Mode: Safe multisig transaction as trigger
  *
+ *      2. **Signature Verification (IStatelessValidator / ERC-7780)**: Cryptographic verification
+ *         of signatures, agnostic to the signing scheme. Supported schemes include:
+ *         - EOA (secp256k1)
+ *         - Passkeys (secp256r1 / P256)
+ *         - Safe multisig
+ *         - Any custom scheme implementing IStatelessValidator
+ *
+ *      The validator stores per-account configurations (configId => account => config) that
+ *      specify which submodules to use for verification. Multiple configs can be enabled
+ *      per account to support different signing methods or Stx modes.
+ *
+ *      Special configIds are reserved for non-Stx flows:
+ *      - NO_STX_CONFIG_ID_4337 (0x00): Vanilla ERC-4337 UserOp validation
+ *      - NO_STX_CONFIG_ID_7739 (0x01): Full ERC-7739 flow for off-chain signatures
+ *      - NO_STX_CONFIG_ID_VANILLA_1271 (0x02): Direct ERC-1271 validation
  */
 
+/**
+ * @notice Configuration for a validation setup
+ * @param stxModeVerifierAddress Address of the IStxModeVerifier submodule for Stx validation
+ * @param statelessValidatorAddress Address of the IStatelessValidator for signature verification
+ * @param validationData Additional data for validation (e.g., owner public key)
+ */
 struct ValidationConfig {
     address stxModeVerifierAddress;
     address statelessValidatorAddress;
@@ -84,6 +114,18 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
 
     /// @notice Error to indicate that the config is already enabled
     error ConfigAlreadyEnabled();
+
+    /// @notice Error to indicate that the safe senders length is invalid
+    error SafeSendersLengthInvalid();
+
+    /// @notice Emitted when a new config is added
+    event ConfigAdded(bytes32 indexed configId, address indexed smartAccount);
+
+    /// @notice Emitted when a config is replaced
+    event ConfigReplaced(bytes32 indexed configId, address indexed smartAccount);
+
+    /// @notice Emitted when a config is deleted
+    event ConfigDeleted(bytes32 indexed configId, address indexed smartAccount);
 
     /*//////////////////////////////////////////////////////////////////////////
                                      MODULE LOGIC
@@ -368,7 +410,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         uint256 configValidationDataOffset = 41 + safeSendersNumber * 20;
         if (safeSendersNumber > 0) {
             require(data.length >= configValidationDataOffset, InvalidDataLength());
-            _fillSafeSenders(data[21:configValidationDataOffset]);
+            _fillSafeSenders(data[41:configValidationDataOffset]);
         }
 
         _storeConfigData(
@@ -413,7 +455,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         bytes32 configId,
         address stxModeVerifierAddress,
         address statelessValidatorAddress,
-        bytes memory validationData
+        bytes calldata validationData
     )
         external
     {
@@ -421,6 +463,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         _validateConfigAddresses(configId, stxModeVerifierAddress, statelessValidatorAddress);
 
         _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress, validationData);
+        emit ConfigAdded(configId, msg.sender);
     }
 
     /**
@@ -432,7 +475,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     function addConfig(
         address stxModeVerifierAddress,
         address statelessValidatorAddress,
-        bytes memory validationData
+        bytes calldata validationData
     )
         external
     {
@@ -442,6 +485,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         _validateConfigAddresses(configId, stxModeVerifierAddress, statelessValidatorAddress);
 
         _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress, validationData);
+        emit ConfigAdded(configId, msg.sender);
     }
 
     /**
@@ -455,13 +499,14 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         bytes32 configId,
         address stxModeVerifierAddress,
         address statelessValidatorAddress,
-        bytes memory validationData
+        bytes calldata validationData
     )
         external
     {
         require(enabledConfigs.contains(msg.sender, configId), ConfigNotEnabled());
         _validateConfigAddresses(configId, stxModeVerifierAddress, statelessValidatorAddress);
         _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress, validationData);
+        emit ConfigReplaced(configId, msg.sender);
     }
 
     /**
@@ -472,6 +517,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         require(enabledConfigs.contains(msg.sender, configId), ConfigNotEnabled());
         delete configs[configId][msg.sender];
         enabledConfigs.remove(msg.sender, configId);
+        emit ConfigDeleted(configId, msg.sender);
     }
 
     /**
@@ -484,7 +530,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     function getConfigId(
         address stxModeVerifierAddress,
         address statelessValidatorAddress,
-        bytes memory validationData
+        bytes calldata validationData
     )
         public
         view
@@ -532,7 +578,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         bytes32 configId,
         address stxModeVerifierAddress,
         address statelessValidatorAddress,
-        bytes memory validationData
+        bytes calldata validationData
     )
         private
     {
@@ -629,6 +675,16 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * @notice Parses the signature to extract the configId and the remaining signature data
+     * @dev The configId is expected to be prepended to the signature (first 32 bytes).
+     *      If the first 32 bytes don't match an enabled configId, the default configId is used.
+     *      This allows backwards compatibility where signatures without explicit configId
+     *      are processed using the default configuration.
+     * @param signature The full signature data, potentially prefixed with a configId
+     * @return activeConfigId The configId to use for validation
+     * @return parsedSigData The signature data with configId stripped (if present)
+     */
     function _parseSignatureWithConfigId(bytes calldata signature)
         internal
         view
@@ -664,15 +720,29 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         return enabledConfigs.contains(smartAccount, DEFAULT_CONFIG_ID);
     }
 
-    // @notice Fills the _safeSenders list from the given data
-    // data provided should always be 20*n
+    /**
+     * @notice Fills the _safeSenders list from the given data
+     * @dev Data must be a multiple of 20 bytes (packed addresses)
+     * @param data Packed array of addresses (20 bytes each)
+     */
     function _fillSafeSenders(bytes calldata data) private {
-        for (uint256 i; i < data.length / 20; ++i) {
+        require(data.length % 20 == 0, SafeSendersLengthInvalid());
+        uint256 len = data.length / 20;
+        for (uint256 i; i < len; ++i) {
             _safeSenders.add(msg.sender, address(bytes20(data[20 * i:20 * (i + 1)])));
         }
     }
 
-    // @dev wrapper method to convert bytes memory to bytes calldata
+    /**
+     * @notice Wrapper method to validate signature via ERC-7739 nested typed data flow
+     * @dev This public wrapper is needed to convert bytes memory to bytes calldata
+     *      for the internal ERC7739Validator methods. Uses staticcall internally.
+     * @param sender The original sender of the ERC-1271 request
+     * @param account The smart account being validated
+     * @param meeHash The hash to validate
+     * @param sigWithConfigId The signature with configId prepended
+     * @return bytes4 ERC1271_SUCCESS or ERC1271_FAILED
+     */
     function _validateSignatureViaErc7739(
         address sender,
         address account,
@@ -688,7 +758,14 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         return _erc1271IsValidSignatureWithSender(sender, account, meeHash, sigWithConfigId);
     }
 
-    // @dev Wrapper method to validate the signature via erc-7780
+    /**
+     * @notice Wrapper method to validate signature via ERC-7780 stateless validator
+     * @param statelessValidatorAddress The address of the stateless validator to use
+     * @param validationData The validation data (e.g., owner public key)
+     * @param hash The hash that was signed
+     * @param signature The signature to validate
+     * @return isValidSig True if the signature is valid
+     */
     function _validateSignatureViaErc7780(
         address statelessValidatorAddress,
         bytes memory validationData,

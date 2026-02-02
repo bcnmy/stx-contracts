@@ -234,7 +234,7 @@ contract MeeK1Validator_Base_Test is BaseTest {
         bytes32[] memory leaves = new bytes32[](userOps.length);
         for (uint256 i = 0; i < userOps.length; i++) {
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[i]);
-            leaves[i] = MEEUserOpHashLib.getMEEUserOpHash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+            leaves[i] = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
         }
         return leaves;
     }

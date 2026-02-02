@@ -118,7 +118,7 @@ library TxValidatorLib {
         TxData memory decodedTx = decodeTx(parsedSignature);
 
         bytes32 meeUserOpHash =
-            MEEUserOpHashLib.getMEEUserOpHash(userOpHash, decodedTx.lowerBoundTimestamp, decodedTx.upperBoundTimestamp);
+            MEEUserOpHashLib.getMeeUserOpHash(userOpHash, decodedTx.lowerBoundTimestamp, decodedTx.upperBoundTimestamp);
 
         bytes memory signature = abi.encodePacked(decodedTx.r, decodedTx.s, decodedTx.v);
         if (!EcdsaHelperLib.isValidSignature(expectedSigner, decodedTx.utxHash, signature)) {
