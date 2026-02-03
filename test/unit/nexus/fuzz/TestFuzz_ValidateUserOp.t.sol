@@ -57,7 +57,7 @@ contract TestFuzz_ValidateUserOp is NexusTestBase {
     /// @notice Fuzz testing for validateUserOp with an invalid nonce.
     /// @param randomNonce The random nonce for the user operation.
     /// @param missingAccountFunds The random missing funds for the account.
-    function testFuzz_RevertWhen_InvalidNonce(uint256 randomNonce, uint256 missingAccountFunds) public {
+    function testFuzz_RevertWhen_InvalidValidatorInTheNonce(uint256 randomNonce, uint256 missingAccountFunds) public {
         vm.assume(randomNonce < type(uint192).max);
         vm.assume(missingAccountFunds < 100 ether);
 
@@ -70,6 +70,12 @@ contract TestFuzz_ValidateUserOp is NexusTestBase {
 
         vm.prank(BOB.addr);
         prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), missingAccountFunds + 0.1 ether);
+        vm.prank(address(BOB_ACCOUNT));
+        stxValidator.onInstall(
+            abi.encodePacked(
+                address(permitSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(BOB.addr)
+            )
+        );
 
         address validator;
         assembly {
@@ -82,11 +88,12 @@ contract TestFuzz_ValidateUserOp is NexusTestBase {
         }
 
         // Attempt to validate the user operation
+        // since the call doesn't go via EP, no nonce sequence validation is performed
         vm.startPrank(address(ENTRYPOINT));
         uint256 vd = BOB_ACCOUNT.validateUserOp(userOps[0], userOpHash, 0);
         vm.stopPrank();
         if (validator == address(0)) {
-            assertEq(vd, 1);
+            assertEq(vd, 0); // properly validates since properly signed
         }
     }
 }

@@ -173,7 +173,7 @@ contract TestNexusAccountFactory_Deployments is NexusTestBase {
         vm.expectRevert(EntryPointCanNotBeZero.selector);
 
         // Try deploying the Nexus contract with an entry point address of zero
-        new Nexus(zeroAddress, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
+        new Nexus(zeroAddress, address(VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
     }
 
     /// @notice TestsNexusBootstrapLib.createArrayConfig function for multiple modules and data inNexusBootstrapLib and

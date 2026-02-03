@@ -6,10 +6,10 @@ import { NexusTestBase } from "../../../../NexusTestBase.t.sol";
 /// @title Test suite for checking account ID in AccountConfig
 contract TestAccountConfig_AccountId is NexusTestBase {
     /// @notice Initialize the testing environment
-    /// @notice Initialize the testing environment
     function setUp() public virtual override {
-        setupPredefinedWallets();
-        deployTestContracts();
+        /*     setupPredefinedWallets();
+            deployTestContracts(); */
+        init();
     }
 
     /// @notice Tests if the account ID returns the expected value

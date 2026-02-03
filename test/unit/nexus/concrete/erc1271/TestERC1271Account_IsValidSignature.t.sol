@@ -4,25 +4,27 @@ pragma solidity ^0.8.27;
 import "../../../../util/Imports.sol";
 import "../../../../NexusTestBase.t.sol";
 import "../../../../mock/modules/MockValidator_7739v2.sol";
-import { K1MeeValidator } from "contracts/validators/stx-validator/K1MeeValidator.sol";
+import { StxValidator } from "contracts/validators/stx-validator/StxValidator.sol";
 
 /// @title TestERC1271Account_IsValidSignature
 /// @notice This contract tests the ERC1271 signature validation functionality.
 /// @dev Uses MockValidator for testing signature validation.
 contract TestERC1271Account_IsValidSignature is NexusTestBase {
-    K1MeeValidator private validator;
+    StxValidator private stxValidatorLocalInstance;
 
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
     /// @notice Initializes the testing environment.
     function setUp() public virtual override {
         init();
-        validator = new K1MeeValidator();
+        stxValidatorLocalInstance = new StxValidator();
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
             MODULE_TYPE_VALIDATOR,
-            address(validator),
-            abi.encodePacked(ALICE_ADDRESS)
+            address(stxValidatorLocalInstance),
+            abi.encodePacked(
+                address(permitSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(ALICE_ADDRESS)
+            )
         );
         // Create an execution array with the installation call data
         Execution[] memory execution = new Execution[](1);
@@ -44,7 +46,10 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, hashToSign);
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
         assertEq(
-            ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(validator), signature)),
+            ALICE_ACCOUNT.isValidSignature(
+                t.contents,
+                abi.encodePacked(address(stxValidatorLocalInstance), NO_STX_CONFIG_ID_VANILLA_1271, signature)
+            ),
             bytes4(0x1626ba7e)
         );
     }
@@ -60,8 +65,10 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
             t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
         );
         if (random() % 4 == 0) signature = erc6492Wrap(signature);
-        bytes4 ret =
-            ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(validator), signature));
+        bytes4 ret = ALICE_ACCOUNT.isValidSignature(
+            toContentsHash(t.contents),
+            abi.encodePacked(address(stxValidatorLocalInstance), NO_STX_CONFIG_ID_7739, signature)
+        );
         assertEq(ret, bytes4(0x1626ba7e));
     }
 
@@ -74,8 +81,10 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         bytes memory signature = abi.encodePacked(
             t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
         );
-        bytes4 ret =
-            ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(validator), signature));
+        bytes4 ret = ALICE_ACCOUNT.isValidSignature(
+            toContentsHash(t.contents),
+            abi.encodePacked(address(stxValidatorLocalInstance), NO_STX_CONFIG_ID_7739, signature)
+        );
         assertEq(ret, bytes4(0xFFFFFFFF));
     }
 
@@ -97,7 +106,8 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         bytes memory wrappedSignature = erc6492Wrap(signature);
 
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(
-            toContentsHash(t.contents), abi.encodePacked(address(validator), wrappedSignature)
+            toContentsHash(t.contents),
+            abi.encodePacked(address(stxValidatorLocalInstance), NO_STX_CONFIG_ID_7739, wrappedSignature)
         );
         assertEq(ret, bytes4(0x1626ba7e));
     }
@@ -116,8 +126,10 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
             t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
         );
 
-        bytes4 ret =
-            ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), abi.encodePacked(address(validator), signature));
+        bytes4 ret = ALICE_ACCOUNT.isValidSignature(
+            toContentsHash(t.contents),
+            abi.encodePacked(address(stxValidatorLocalInstance), NO_STX_CONFIG_ID_7739, signature)
+        );
         assertEq(ret, bytes4(0x1626ba7e));
     }
 

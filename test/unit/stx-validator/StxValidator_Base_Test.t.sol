@@ -31,14 +31,9 @@ contract StxValidator_Base_Test is BaseTest {
     Vm.Wallet wallet;
     MockAccount mockAccount;
     uint256 valueToSet;
-    StxValidator internal stxValidator;
-    EOAStatelessValidator internal eoaStatelessValidator;
 
     function setUp() public virtual override {
         super.setUp();
-
-        stxValidator = new StxValidator();
-        eoaStatelessValidator = new EOAStatelessValidator();
 
         wallet = createAndFundWallet("wallet", 5 ether);
         mockAccount = deployMockAccount({ validator: address(stxValidator), handler: address(0) });

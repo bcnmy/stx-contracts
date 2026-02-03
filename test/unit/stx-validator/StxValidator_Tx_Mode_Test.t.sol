@@ -5,7 +5,6 @@ import { MockERC20PermitToken } from "test/mock/tokens/MockERC20PermitToken.sol"
 import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
-import { SIG_TYPE_ON_CHAIN } from "contracts/types/Constants.sol";
 import { LibRLP } from "solady/utils/LibRLP.sol";
 import { MockTarget } from "../../mock/MockTarget.sol";
 import { TxSubmodule } from "../../../contracts/validators/stx-validator/submodules/TxSubmodule.sol";

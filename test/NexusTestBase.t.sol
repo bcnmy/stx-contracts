@@ -36,7 +36,6 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
     MockHandler internal HANDLER_MODULE;
     MockExecutor internal EXECUTOR_MODULE;
     MockValidator internal VALIDATOR_MODULE;
-    K1MeeValidator internal DEFAULT_VALIDATOR_MODULE;
     MockMultiModule internal MULTI_MODULE;
     Nexus internal ACCOUNT_IMPLEMENTATION;
 
@@ -79,20 +78,23 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
 
     function deployTestContracts() internal {
         setupEntrypoint();
-        DEFAULT_VALIDATOR_MODULE = new K1MeeValidator();
-        // This is the implementation of the account => default module initialized with an unusable configuration
-        ACCOUNT_IMPLEMENTATION = new Nexus(
-            address(ENTRYPOINT),
-            address(DEFAULT_VALIDATOR_MODULE),
+        // prepare initdata for stx validator to initialize stx validator
+        // for the Implementation contract
+        bytes memory stxValidatorMockInitData = abi.encodePacked(
+            address(permitSubmodule),
+            address(eoaStatelessValidator),
+            uint8(0),
             abi.encodePacked(address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE))
         );
+        // This is the implementation of the account => default module initialized with an unusable configuration
+        ACCOUNT_IMPLEMENTATION = new Nexus(address(ENTRYPOINT), address(stxValidator), stxValidatorMockInitData);
         FACTORY = new NexusAccountFactory(address(ACCOUNT_IMPLEMENTATION), address(FACTORY_OWNER.addr));
         HOOK_MODULE = new MockHook();
         HANDLER_MODULE = new MockHandler();
         EXECUTOR_MODULE = new MockExecutor();
         VALIDATOR_MODULE = new MockValidator();
         MULTI_MODULE = new MockMultiModule();
-        BOOTSTRAPPER = new NexusBootstrap(address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xa11ce)));
+        BOOTSTRAPPER = new NexusBootstrap(address(stxValidator), stxValidatorMockInitData);
     }
 
     // etch the 7702 code

@@ -266,7 +266,7 @@ contract TestEIP7702 is NexusTestBase {
 
     function test_amIERC7702_success() public {
         ExposedNexus exposedNexus =
-            new ExposedNexus(address(ENTRYPOINT), address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xEeEe)));
+            new ExposedNexus(address(ENTRYPOINT), address(VALIDATOR_MODULE), abi.encodePacked(address(0xEeEe)));
         address eip7702account = address(0x7702acc7702acc7702acc7702acc);
         vm.etch(eip7702account, abi.encodePacked(bytes3(0xef0100), bytes20(address(exposedNexus))));
         assertTrue(IExposedNexus(eip7702account).amIERC7702());

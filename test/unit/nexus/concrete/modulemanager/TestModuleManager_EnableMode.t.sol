@@ -190,7 +190,8 @@ contract TestModuleManager_EnableMode is Test, TestModuleManagement_Base {
             makeInstallDataAndHash(BOB_ADDRESS, MODULE_TYPE_MULTI, userOpHash);
 
         bytes memory enableModeSig = signMessage(BOB, hashToSign); //should be signed by current owner
-        enableModeSig = abi.encodePacked(address(0), enableModeSig); //append validator address
+        enableModeSig = abi.encodePacked(address(0), NO_STX_CONFIG_ID_VANILLA_1271, enableModeSig); //append validator
+        // address
 
         bytes memory enableModeSigPrefix = abi.encodePacked(
             moduleToEnable,

@@ -6,25 +6,9 @@ import { IValidator, MODULE_TYPE_VALIDATOR } from "erc7579/interfaces/IERC7579Mo
 import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { EnumerableSet } from "EnumerableSet4337/EnumerableSet4337.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
-import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
+import { _packValidationData } from "account-abstraction/core/Helpers.sol";
 import { ERC7739Validator } from "./ERC7739Validator.sol";
-import {
-    SIG_TYPE_SIMPLE,
-    SIG_TYPE_ON_CHAIN,
-    SIG_TYPE_ERC20_PERMIT,
-    SIG_TYPE_SAFE_ACCOUNT,
-    ERC1271_SUCCESS,
-    ERC1271_FAILED,
-    MODULE_TYPE_STATELESS_VALIDATOR,
-    SIG_TYPE_MEE_FLOW
-} from "contracts/types/Constants.sol";
-// Fusion libraries - validate userOp using on-chain tx or off-chain permit
-import { PermitValidatorLib } from "../../lib/stx-validator/validation-modes/PermitValidatorLib.sol";
-import { TxValidatorLib } from "../../lib/stx-validator/validation-modes/TxValidatorLib.sol";
-import { SimpleValidatorLib } from "../../lib/stx-validator/validation-modes/SimpleValidatorLib.sol";
-import { SafeAccountValidatorLib } from "../../lib/stx-validator/validation-modes/SafeAccountValidatorLib.sol";
-import { NoMeeFlowLib } from "../../lib/stx-validator/validation-modes/NoMeeFlowLib.sol";
-import { EcdsaHelperLib } from "../../lib/util/EcdsaHelperLib.sol";
+import { ERC1271_SUCCESS, ERC1271_FAILED, MODULE_TYPE_STATELESS_VALIDATOR } from "contracts/types/Constants.sol";
 import { FlatBytesLib } from "flatbytes/BytesLib.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739Multiplexer.sol";

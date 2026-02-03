@@ -7,7 +7,6 @@ import { MockResourceLockPreValidationHook } from "../../mock/modules/MockResour
 import { Mock7739PreValidationHook } from "../../mock/modules/Mock7739PreValidationHook.sol";
 import { MockAccountLocker } from "../../mock/accounts/MockAccountLocker.sol";
 import { MockSimpleValidator } from "../../mock/modules/MockSimpleValidator.sol";
-import { K1MeeValidator } from "../../../contracts/validators/stx-validator/K1MeeValidator.sol";
 
 /// @title TestNexusPreValidation_Integration_HookMultiplexer
 /// @notice This contract tests the integration of the PreValidation hook multiplexer with the PreValidation resource
@@ -20,7 +19,7 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
     Mock7739PreValidationHook private erc7739Hook;
     MockAccountLocker private accountLocker;
     MockSimpleValidator private SIMPLE_VALIDATOR;
-    K1MeeValidator private K1_MEE_VALIDATOR;
+    StxValidator private stxValidatorLocalInstance; // to get the separate address
 
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
 
@@ -32,9 +31,9 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         hookMultiplexer = new MockPreValidationHookMultiplexer();
         erc7739Hook = new Mock7739PreValidationHook(address(hookMultiplexer));
         resourceLockHook = new MockResourceLockPreValidationHook(address(accountLocker), address(hookMultiplexer));
-        K1_MEE_VALIDATOR = new K1MeeValidator();
         // Deploy the simple validator
         SIMPLE_VALIDATOR = new MockSimpleValidator();
+        stxValidatorLocalInstance = new StxValidator();
         // Format install data with owner
         bytes memory validatorSetupData = abi.encodePacked(BOB_ADDRESS); // Set BOB as owner
         // Prepare the call data for installing the validator module
@@ -49,14 +48,18 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         // Install account locker
         installModule(accountLockerInstallCallData, MODULE_TYPE_HOOK, address(accountLocker), EXECTYPE_DEFAULT);
         // Install the K1 validator
-        bytes memory k1ValidatorInstallData = abi.encodePacked(BOB_ADDRESS);
-        bytes memory k1ValidatorInstallCallData = abi.encodeWithSelector(
+        bytes memory stxValidatorInitData = abi.encodePacked(
+            address(permitSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(BOB_ADDRESS)
+        );
+        bytes memory stxValidatorInstallCallData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
             MODULE_TYPE_VALIDATOR,
-            address(K1_MEE_VALIDATOR),
-            k1ValidatorInstallData
+            address(stxValidatorLocalInstance),
+            stxValidatorInitData
         );
-        installModule(k1ValidatorInstallCallData, MODULE_TYPE_VALIDATOR, address(K1_MEE_VALIDATOR), EXECTYPE_DEFAULT);
+        installModule(
+            stxValidatorInstallCallData, MODULE_TYPE_VALIDATOR, address(stxValidatorLocalInstance), EXECTYPE_DEFAULT
+        );
     }
 
     function test_installMultiplePreValidationHooks() public {
@@ -169,7 +172,9 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
 
         // Prepare signature with validator prefix and triggering both hooks
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
-        bytes memory validatorSignature = abi.encodePacked(address(K1_MEE_VALIDATOR), bytes1(0x01), signature);
+        bytes memory validatorSignature = abi.encodePacked(
+            address(stxValidatorLocalInstance), bytes1(0x01), NO_STX_CONFIG_ID_VANILLA_1271, signature
+        );
 
         // Validate signature through hook chain
         bytes4 result = BOB_ACCOUNT.isValidSignature(t.contents, validatorSignature);
@@ -197,8 +202,9 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         assertEq(result, bytes4(0x1626ba7e), "Signature should be valid after hook chaining");
 
         // Prepare signature with validator prefix and triggering both hooks
-        bytes memory validatorSignature2 = abi.encodePacked(address(K1_MEE_VALIDATOR), bytes1(0x01), signature); // Skip
-        // 7739 wrap
+        bytes memory validatorSignature2 = abi.encodePacked(
+            address(stxValidatorLocalInstance), bytes1(0x01), NO_STX_CONFIG_ID_VANILLA_1271, signature
+        );
 
         // Validate signature through hook chain
         bytes4 result2 = BOB_ACCOUNT.isValidSignature(t.contents, validatorSignature2);

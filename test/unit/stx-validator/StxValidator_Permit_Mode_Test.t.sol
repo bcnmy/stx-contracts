@@ -11,8 +11,7 @@ import { EcdsaHelperLib } from "contracts/lib/util/EcdsaHelperLib.sol";
 import {
     DecodedErc20PermitSig,
     DecodedErc20PermitSigShort,
-    PERMIT_TYPEHASH,
-    PermitSubmodule
+    PERMIT_TYPEHASH
 } from "contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 
@@ -23,13 +22,11 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
     // make token storage var to reduce stack size in some methods by not passing it as a param
     // do not forget to reinit it at every test if required
     MockERC20PermitToken token;
-    PermitSubmodule internal permitSubmodule;
 
     function setUp() public virtual override {
         super.setUp();
 
-        // deploy permit submodule and use it with the default config
-        permitSubmodule = new PermitSubmodule();
+        // use permit submodule with the default config
         vm.prank(address(mockAccount));
         // set the default config
         stxValidator.onInstall(

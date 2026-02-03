@@ -11,12 +11,20 @@ import { BaseNodePaymaster } from "../contracts/node-pm/BaseNodePaymaster.sol";
 import { NodePaymaster } from "../contracts/node-pm/NodePaymaster.sol";
 import { EmittingNodePaymaster } from "./mock/EmittingNodePaymaster.sol";
 import { MockNodePaymaster } from "./mock/MockNodePaymaster.sol";
-import { K1MeeValidator } from "../contracts/validators/stx-validator/K1MeeValidator.sol";
 import { CopyUserOpLib } from "./util/CopyUserOpLib.sol";
 import "contracts/types/Constants.sol";
 import { LibZip } from "solady/utils/LibZip.sol";
 import { MockTarget } from "./mock/MockTarget.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
+import {
+    StxValidator,
+    NO_STX_CONFIG_ID_4337,
+    NO_STX_CONFIG_ID_7739,
+    NO_STX_CONFIG_ID_VANILLA_1271,
+    DEFAULT_CONFIG_ID
+} from "../contracts/validators/stx-validator/StxValidator.sol";
+import { EOAStatelessValidator } from "../contracts/validators/stx-validator/submodules/EOAStatelessValidator.sol";
+import { PermitSubmodule } from "../contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
 
 contract BaseTest is Test {
     address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
@@ -50,10 +58,13 @@ contract BaseTest is Test {
     NodePaymaster internal NODE_PAYMASTER;
     EmittingNodePaymaster internal EMITTING_NODE_PAYMASTER;
     MockNodePaymaster internal MOCK_NODE_PAYMASTER;
-    K1MeeValidator internal k1MeeValidator;
     address internal MEE_NODE_ADDRESS;
     Vm.Wallet internal MEE_NODE;
     MockTarget internal mockTarget;
+
+    StxValidator internal stxValidator;
+    EOAStatelessValidator internal eoaStatelessValidator;
+    PermitSubmodule internal permitSubmodule;
 
     address nodePmDeployer = address(0x011a23423423423);
 
@@ -68,7 +79,11 @@ contract BaseTest is Test {
         MEE_NODE_ADDRESS = MEE_NODE.addr;
 
         deployNodePaymaster();
-        k1MeeValidator = new K1MeeValidator();
+        stxValidator = new StxValidator();
+
+        eoaStatelessValidator = new EOAStatelessValidator();
+        permitSubmodule = new PermitSubmodule();
+
         mockTarget = new MockTarget();
     }
 
