@@ -462,6 +462,10 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         emit ConfigAdded(configId, msg.sender);
     }
 
+    function setOwnershipData(address statelessValidatorAddress, bytes calldata ownershipData) external {
+        _storeOwnershipData(msg.sender, statelessValidatorAddress, ownershipData);
+    }
+
     /**
      * @dev Adds a new config to the module with the generated configId
      * @param stxModeVerifierAddress The address of the stx mode verifier
