@@ -76,9 +76,7 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
         mockAccountChain1 = deployMockAccount({ validator: address(stxValidator), handler: address(0) });
         vm.prank(address(mockAccountChain1));
         stxValidator.onInstall(
-            abi.encodePacked(
-                address(simpleModeSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr)
-            )
+            abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr))
         );
 
         vm.chainId(CHAIN_2);
@@ -86,9 +84,7 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
         mockAccountChain2 = deployMockAccount({ validator: address(stxValidator), handler: address(0) });
         vm.prank(address(mockAccountChain2));
         stxValidator.onInstall(
-            abi.encodePacked(
-                address(simpleModeSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr)
-            )
+            abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr))
         );
 
         // mock target 1, mock target 2, mock account 1, mock account 2
@@ -167,25 +163,30 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
         bytes memory superTxHashSignature = abi.encodePacked(r, s, v);
 
         // ============ CREATE SIGNED USER OPS ============
-        // Note: StxValidator simple mode doesn't use SIG_TYPE_SIMPLE prefix
         PackedUserOperation[] memory signedUserOps = new PackedUserOperation[](2);
 
         signedUserOps[0] = userOpChain1.deepCopy();
-        signedUserOps[0].signature = abi.encode(
-            stxStructTypeHash,
-            uint256(0),
-            stxItemHashes,
-            superTxHashSignature,
-            uint256((uint256(lowerBoundTimestamp) << 128) | uint256(upperBoundTimestamp))
+        signedUserOps[0].signature = abi.encodePacked(
+            SIG_TYPE_SIMPLE,
+            abi.encode(
+                stxStructTypeHash,
+                uint256(0), // entry index
+                stxItemHashes,
+                superTxHashSignature,
+                uint256((uint256(lowerBoundTimestamp) << 128) | uint256(upperBoundTimestamp))
+            )
         );
 
         signedUserOps[1] = userOpChain2.deepCopy();
-        signedUserOps[1].signature = abi.encode(
-            stxStructTypeHash,
-            uint256(1),
-            stxItemHashes,
-            superTxHashSignature,
-            uint256((uint256(lowerBoundTimestamp) << 128) | uint256(upperBoundTimestamp))
+        signedUserOps[1].signature = abi.encodePacked(
+            SIG_TYPE_SIMPLE,
+            abi.encode(
+                stxStructTypeHash,
+                uint256(1), // entry index
+                stxItemHashes,
+                superTxHashSignature,
+                uint256((uint256(lowerBoundTimestamp) << 128) | uint256(upperBoundTimestamp))
+            )
         );
 
         // ============ EXECUTE ON EACH CHAIN ============
@@ -289,8 +290,24 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
             uint16(bytes(entryTypeBDefinition).length)
         );
 
-        signature1 = abi.encode(stxStructTypeHash, 0, stxItemHashes, signature1);
-        signature2 = abi.encode(stxStructTypeHash, 1, stxItemHashes, signature2);
+        signature1 = abi.encodePacked(
+            SIG_TYPE_SIMPLE,
+            abi.encode(
+                stxStructTypeHash,
+                uint256(0), // entry index
+                stxItemHashes,
+                signature1
+            )
+        );
+        signature2 = abi.encodePacked(
+            SIG_TYPE_SIMPLE,
+            abi.encode(
+                stxStructTypeHash,
+                uint256(1), // entry index
+                stxItemHashes,
+                signature2
+            )
+        );
 
         // hashes
         bytes32 hashForIsValidSignature1 = EcdsaHelperLib.toTypedDataHash(APP_DOMAIN_SEPARATOR_CHAIN_1, entryHash1);

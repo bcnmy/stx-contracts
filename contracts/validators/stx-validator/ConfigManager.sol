@@ -120,7 +120,7 @@ contract ConfigManager {
             return (config.stxModeVerifierAddress, config.statelessValidatorAddress, sigData[36:]);
         } else if (bytes3(sigData[:3]) == SIG_TYPE_MEE_FLOW) {
             // 0x177eee
-        // prefix is MEE, but the preconfigured set is not recognized => revert
+            // prefix is MEE, but the preconfigured set is not recognized => revert
             revert UnrecognizedSignatureType();
         } else {
             // fallback to no stx mode
