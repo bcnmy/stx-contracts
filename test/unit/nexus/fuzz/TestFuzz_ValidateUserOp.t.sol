@@ -71,11 +71,7 @@ contract TestFuzz_ValidateUserOp is NexusTestBase {
         vm.prank(BOB.addr);
         prefundSmartAccountAndAssertSuccess(address(BOB_ACCOUNT), missingAccountFunds + 0.1 ether);
         vm.prank(address(BOB_ACCOUNT));
-        stxValidator.onInstall(
-            abi.encodePacked(
-                address(permitSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(BOB.addr)
-            )
-        );
+        stxValidator.onInstall(abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(BOB.addr)));
 
         address validator;
         assembly {

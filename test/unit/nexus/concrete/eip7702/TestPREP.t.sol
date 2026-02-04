@@ -100,7 +100,8 @@ contract TestPREP is NexusTestBase {
         bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, valueToSet);
 
         bytes memory initData = abi.encodeWithSelector(
-            NexusBootstrap.initNexusWithDefaultValidator.selector, abi.encodePacked(BOB_ADDRESS)
+            NexusBootstrap.initNexusWithDefaultValidator.selector,
+            abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(BOB_ADDRESS))
         );
         initData = abi.encode(address(BOOTSTRAPPER), initData);
         bytes32 initDataHash = keccak256(abi.encodePacked(initData));

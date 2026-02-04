@@ -35,7 +35,7 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         SIMPLE_VALIDATOR = new MockSimpleValidator();
         stxValidatorLocalInstance = new StxValidator(
             SubmoduleAddresses({
-                noStxModeVerifier: address(0),
+                noStxModeVerifier: address(noStxModeVerifier),
                 simpleModeVerifier: address(0),
                 permitModeVerifier: address(0),
                 txModeVerifier: address(0),
@@ -58,9 +58,8 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         // Install account locker
         installModule(accountLockerInstallCallData, MODULE_TYPE_HOOK, address(accountLocker), EXECTYPE_DEFAULT);
         // Install the K1 validator
-        bytes memory stxValidatorInitData = abi.encodePacked(
-            address(permitSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(BOB_ADDRESS)
-        );
+        bytes memory stxValidatorInitData =
+            abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(BOB_ADDRESS));
         bytes memory stxValidatorInstallCallData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
             MODULE_TYPE_VALIDATOR,
@@ -168,7 +167,7 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         assertEq(result, bytes4(0x1626ba7e), "Signature should be valid after hook chaining");
     }
 
-    function test_1271_HookChaining_K1Validator_Success() public {
+    function test_1271_HookChaining_StxValidator_Success() public {
         // Install hooks and multiplexer
         test_installMultiplePreValidationHooks();
 
@@ -182,16 +181,14 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
 
         // Prepare signature with validator prefix and triggering both hooks
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
-        bytes memory validatorSignature = abi.encodePacked(
-            address(stxValidatorLocalInstance), bytes1(0x01), SIG_TYPE_NO_STX_VANILLA_1271_EOA, signature
-        );
+        bytes memory validatorSignature = abi.encodePacked(address(stxValidatorLocalInstance), bytes1(0x01), signature);
 
         // Validate signature through hook chain
         bytes4 result = BOB_ACCOUNT.isValidSignature(t.contents, validatorSignature);
         assertEq(result, bytes4(0x1626ba7e), "Signature should be valid after hook chaining");
     }
 
-    function test_1271_HookChaining_MockSimpleValidator_K1Validator_SameSignature_Success() public {
+    function test_1271_HookChaining_MockSimpleValidator_StxValidator_SameSignature_Success() public {
         // Install hooks and multiplexer
         test_installMultiplePreValidationHooks();
 
@@ -212,9 +209,7 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         assertEq(result, bytes4(0x1626ba7e), "Signature should be valid after hook chaining");
 
         // Prepare signature with validator prefix and triggering both hooks
-        bytes memory validatorSignature2 = abi.encodePacked(
-            address(stxValidatorLocalInstance), bytes1(0x01), SIG_TYPE_NO_STX_VANILLA_1271_EOA, signature
-        );
+        bytes memory validatorSignature2 = abi.encodePacked(address(stxValidatorLocalInstance), bytes1(0x01), signature);
 
         // Validate signature through hook chain
         bytes4 result2 = BOB_ACCOUNT.isValidSignature(t.contents, validatorSignature2);

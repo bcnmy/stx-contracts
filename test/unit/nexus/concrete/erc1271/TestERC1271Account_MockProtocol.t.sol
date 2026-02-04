@@ -30,16 +30,14 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
 
         StxValidator validator = StxValidator(validatorAddress);
         // initialize the default module
-        bytes memory stxValidatorInitDataBob = abi.encodePacked(
-            address(permitSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(BOB.addr)
-        );
+        bytes memory stxValidatorInitDataBob =
+            abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(BOB.addr));
         vm.startPrank(address(BOB_ACCOUNT));
         validator.onInstall(stxValidatorInitDataBob);
         vm.stopPrank();
 
-        bytes memory stxValidatorInitDataAlice = abi.encodePacked(
-            address(permitSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(ALICE.addr)
-        );
+        bytes memory stxValidatorInitDataAlice =
+            abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(ALICE.addr));
         vm.startPrank(address(ALICE_ACCOUNT));
         validator.onInstall(stxValidatorInitDataAlice);
         vm.stopPrank();
