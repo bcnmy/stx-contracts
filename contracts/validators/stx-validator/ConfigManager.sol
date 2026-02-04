@@ -147,7 +147,7 @@ contract ConfigManager {
         }
     }
 
-    function _storeOwnershipData(
+    function _storeOwnershipDataForAccount(
         address smartAccount,
         address statelessValidator,
         bytes calldata _ownershipData
@@ -155,5 +155,36 @@ contract ConfigManager {
         internal
     {
         ownershipData[statelessValidator][smartAccount].store(_ownershipData);
+    }
+
+    function _enableConfigForAccount(
+        address smartAccount,
+        bytes32 configId,
+        address stxModeVerifierAddress,
+        address statelessValidatorAddress
+    )
+        internal
+    {
+        _storeConfigForAccount(smartAccount, configId, stxModeVerifierAddress, statelessValidatorAddress);
+        enabledCustomConfigs.add(smartAccount, configId);
+    }
+
+    /**
+     * @dev Internal function to enable a new config for the smart account
+     * @param configId The id of the config to add
+     * @param stxModeVerifierAddress The address of the stx mode verifier
+     * @param statelessValidatorAddress The address of the stateless validator
+     */
+    function _storeConfigForAccount(
+        address smartAccount,
+        bytes32 configId,
+        address stxModeVerifierAddress,
+        address statelessValidatorAddress
+    )
+        internal
+    {
+        customConfigs[configId][smartAccount] = ValidationConfig({
+            stxModeVerifierAddress: stxModeVerifierAddress, statelessValidatorAddress: statelessValidatorAddress
+        });
     }
 }
