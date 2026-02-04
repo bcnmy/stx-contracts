@@ -292,7 +292,14 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
      *
      * @param data The data to initialize the module with
      *   data format:
-     *   TODO: describe the data format
+     *   [20 bytes] stateless validator address
+     *   ----If custom config is being enabled----:
+     *   [20 bytes] stx mode verifier address
+     *   [32 bytes] configId
+     *   -----------------------------------------:
+     *   [1 byte] safe senders number
+     *   [safeSendersNumber * 20 bytes] safe senders addresses
+     *   [ownershipDataLength bytes] ownership data
      */
     function onInstall(bytes calldata data) external override {
         require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
