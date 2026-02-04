@@ -168,8 +168,6 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
         bytes memory data = abi.encode(
             address(mockAccount), // account
-            address(simpleModeSubmodule), // stx mode verifier address
-            address(eoaStatelessValidator), // stateless validator address
             validationDataForStatelessValidator // validation data for stateless validator
         );
 
@@ -205,8 +203,6 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         // compose data
         bytes memory data = abi.encode(
             address(mockAccount), // account
-            address(simpleModeSubmodule), // stx mode verifier address
-            address(p256StatelessValidator), // stateless validator address
             p256ValidationData
         );
 
@@ -637,11 +633,17 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
 
         // ==== STEP 6: Sign the superTxEip712Hash ====
         // Use the superTxSigner's private key to sign the EIP-712 hash
-        /*
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(superTxSigner.privateKey, superTxEip712Hash);
-        bytes memory superTxHashSignature = abi.encodePacked(r, s, v);
-        */
+
         bytes memory superTxHashSignature = signatureFunction(superTxSigner, superTxEip712Hash);
+
+        bytes4 sigType;
+        if (signatureFunction == _signWithSecp256k1) {
+            sigType = SIG_TYPE_SIMPLE;
+        } else if (signatureFunction == _signWithP256) {
+            sigType = SIG_TYPE_SIMPLE_P256;
+        } else {
+            revert InvalidSignatureTypeForSimpleMode();
+        }
 
         // ==== STEP 7: Build individual signatures for each entry ====
         // Each entry's signature contains: encode(stxStructTypeHash, index, stxItemHashes,
@@ -658,12 +660,15 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
 
             if (stxLayout[i].entryType == EntryType.MEE_USER_OP) {
                 // For MeeUserOps: signature includes timestamps
-                signature = abi.encode(
-                    stxStructTypeHash,
-                    i, // index in the SuperTx
-                    stxItemHashes,
-                    superTxHashSignature,
-                    uint256((uint256(lowerBoundTimestamp) << 128) | uint256(upperBoundTimestamp))
+                signature = abi.encodePacked(
+                    sigType,
+                    abi.encode(
+                        stxStructTypeHash,
+                        i, // index in the SuperTx
+                        stxItemHashes,
+                        superTxHashSignature,
+                        uint256((uint256(lowerBoundTimestamp) << 128) | uint256(upperBoundTimestamp))
+                    )
                 );
 
                 // Copy the userOp and replace its signature
@@ -692,11 +697,14 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
                     );
                 }
                 // wrap as per Simple Mode
-                signature = abi.encode(
-                    stxStructTypeHash,
-                    i, // index in the SuperTx
-                    stxItemHashes,
-                    applyErc7739 ? erc7739Signature : superTxHashSignature
+                signature = abi.encodePacked(
+                    sigType,
+                    abi.encode(
+                        stxStructTypeHash,
+                        i, // index in the SuperTx
+                        stxItemHashes,
+                        applyErc7739 ? erc7739Signature : superTxHashSignature
+                    )
                 );
 
                 bytes32 hashForIsValidSignature;

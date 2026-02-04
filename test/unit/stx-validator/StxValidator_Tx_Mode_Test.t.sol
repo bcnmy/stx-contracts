@@ -10,6 +10,7 @@ import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
 import { LibRLP } from "solady/utils/LibRLP.sol";
 import { MockTarget } from "../../mock/MockTarget.sol";
+import { SIG_TYPE_ON_CHAIN } from "contracts/types/Constants.sol";
 
 contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
@@ -23,9 +24,7 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
 
         vm.prank(address(mockAccount));
         stxValidator.onInstall(
-            abi.encodePacked(
-                address(txSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr)
-            )
+            abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr))
         );
     }
 
@@ -103,8 +102,6 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
         bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
         bytes memory data = abi.encode(
             address(mockAccount), // account
-            address(txSubmodule), // stx mode verifier address
-            address(eoaStatelessValidator), // stateless validator address
             validationDataForStatelessValidator // validation data for stateless validator
         );
 
@@ -141,7 +138,12 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
             superTxUserOps[i] = userOps[i].deepCopy();
             bytes32[] memory proof = tree.leafProof(i);
             bytes memory signature = abi.encodePacked(
-                serializedTx, abi.encodePacked(proof), uint8(proof.length), lowerBoundTimestamp, upperBoundTimestamp
+                SIG_TYPE_ON_CHAIN,
+                serializedTx,
+                abi.encodePacked(proof),
+                uint8(proof.length),
+                lowerBoundTimestamp,
+                upperBoundTimestamp
             );
             superTxUserOps[i].signature = signature;
         }
@@ -215,7 +217,8 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
 
         for (uint256 i = 0; i < total; i++) {
             bytes32[] memory proof = tree.leafProof(i);
-            bytes memory signature = abi.encodePacked(serializedTx, abi.encodePacked(proof), uint8(proof.length));
+            bytes memory signature =
+                abi.encodePacked(SIG_TYPE_ON_CHAIN, serializedTx, abi.encodePacked(proof), uint8(proof.length));
             meeSigs[i] = signature;
         }
         return meeSigs;
