@@ -19,7 +19,7 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         init();
         stxValidatorLocalInstance = new StxValidator(
             SubmoduleAddresses({
-                noStxModeVerifier: address(0),
+                noStxModeVerifier: address(noStxModeVerifier),
                 simpleModeVerifier: address(0),
                 permitModeVerifier: address(0),
                 txModeVerifier: address(0),
@@ -32,9 +32,7 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
             IModuleManager.installModule.selector,
             MODULE_TYPE_VALIDATOR,
             address(stxValidatorLocalInstance),
-            abi.encodePacked(
-                address(permitSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(ALICE_ADDRESS)
-            )
+            abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(ALICE_ADDRESS))
         );
         // Create an execution array with the installation call data
         Execution[] memory execution = new Execution[](1);
@@ -56,10 +54,7 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         (t.v, t.r, t.s) = vm.sign(ALICE.privateKey, hashToSign);
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
         assertEq(
-            ALICE_ACCOUNT.isValidSignature(
-                t.contents,
-                abi.encodePacked(address(stxValidatorLocalInstance), SIG_TYPE_NO_STX_VANILLA_1271_EOA, signature)
-            ),
+            ALICE_ACCOUNT.isValidSignature(t.contents, abi.encodePacked(address(stxValidatorLocalInstance), signature)),
             bytes4(0x1626ba7e)
         );
     }

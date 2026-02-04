@@ -81,7 +81,6 @@ abstract contract NexusTestBase is BaseTest, EventsAndErrors {
         // prepare initdata for stx validator to initialize stx validator
         // for the Implementation contract
         bytes memory stxValidatorMockInitData = abi.encodePacked(
-            address(permitSubmodule),
             address(eoaStatelessValidator),
             uint8(0),
             abi.encodePacked(address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE))

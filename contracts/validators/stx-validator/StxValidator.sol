@@ -234,7 +234,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         }
 
         (address stxModeVerifierAddress, address statelessValidatorAddress, bytes calldata parsedSigData) =
-            _getSubmodules(msg.sender, signature);
+            _getSubmodules(msg.sender, _erc1271UnwrapSignature(signature));
 
         bytes32 meeHash;
         bytes memory cleanSignature;
