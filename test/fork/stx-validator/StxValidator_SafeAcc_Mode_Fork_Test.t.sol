@@ -19,7 +19,7 @@ import {
     SafeAccountSubmodule
 } from "contracts/validators/stx-validator/submodules/SafeAccountSubmodule.sol";
 import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
-import { console2 } from "forge-std/console2.sol";
+import { SIG_TYPE_SAFE_ACCOUNT } from "contracts/types/Constants.sol";
 
 contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
@@ -102,7 +102,6 @@ contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
         stxValidator.onInstall(
             abi.encodePacked(
                 address(safeAccountSubmodule), // stxModeVerifier
-                address(0), // statelessValidator (use stxModeVerifier since SafeAccountSubmodule implements both)
                 uint8(0), // no safe senders
                 abi.encodePacked(address(safe), address(orchestrator)) // validationData: safeAccount + smartAccount
             )
@@ -201,9 +200,6 @@ contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
 
         bytes memory validationData = abi.encode(
             address(orchestrator), // account
-            address(safeAccountSubmodule), // stx mode verifier address
-            address(safeAccountSubmodule), // stateless validator (use stx mode verifier since SafeAccountSubmodule
-            // implements both)
             abi.encodePacked(address(safe), address(orchestrator)) // validationData: safeAccount + smartAccount
         );
 
@@ -392,16 +388,19 @@ contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
 
             // StxValidator signature format: no SIG_TYPE prefix, just abi.encode the struct
             // DecodedSafeAccountSignatureFull includes safeAccount address as first field
-            bytes memory signature = abi.encode(
-                DecodedSafeAccountSignatureFull({
-                    safeAccount: address(safe),
-                    safeTxnData: safeTxnData,
-                    proof: proof,
-                    executeTrigger: i == 0 ? true : false, // only the first userOp on the first chain should
-                    // execute the safe transaction
-                    lowerBoundTimestamp: lowerBoundTimestamp,
-                    upperBoundTimestamp: upperBoundTimestamp
-                })
+            bytes memory signature = abi.encodePacked(
+                SIG_TYPE_SAFE_ACCOUNT,
+                abi.encode(
+                    DecodedSafeAccountSignatureFull({
+                        safeAccount: address(safe),
+                        safeTxnData: safeTxnData,
+                        proof: proof,
+                        executeTrigger: i == 0 ? true : false, // only the first userOp on the first chain should
+                        // execute the safe transaction
+                        lowerBoundTimestamp: lowerBoundTimestamp,
+                        upperBoundTimestamp: upperBoundTimestamp
+                    })
+                )
             );
             superTxUserOps[i].signature = signature;
         }
@@ -480,24 +479,27 @@ contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
         // Encode signatures for each leaf
         for (uint256 i; i < total; i++) {
             bytes32[] memory proof = tree.leafProof(i);
-            bytes memory signature = abi.encode(
-                DecodedSafeAccountSignatureShort({
-                    safeTxnData: SafeTxnData({
-                        ogDomainSeparator: domainSeparator,
-                        to: address(erc20),
-                        value: 0,
-                        data: safeTxnCalldata,
-                        operation: SafeEnumLib.Operation.Call,
-                        safeTxGas: 0,
-                        baseGas: 0,
-                        gasPrice: 0,
-                        gasToken: address(0),
-                        refundReceiver: payable(address(0)),
-                        nonce: curNonce,
-                        signatures: signatures
-                    }),
-                    proof: proof
-                })
+            bytes memory signature = abi.encodePacked(
+                SIG_TYPE_SAFE_ACCOUNT,
+                abi.encode(
+                    DecodedSafeAccountSignatureShort({
+                        safeTxnData: SafeTxnData({
+                            ogDomainSeparator: domainSeparator,
+                            to: address(erc20),
+                            value: 0,
+                            data: safeTxnCalldata,
+                            operation: SafeEnumLib.Operation.Call,
+                            safeTxGas: 0,
+                            baseGas: 0,
+                            gasPrice: 0,
+                            gasToken: address(0),
+                            refundReceiver: payable(address(0)),
+                            nonce: curNonce,
+                            signatures: signatures
+                        }),
+                        proof: proof
+                    })
+                )
             );
             meeSigs[i] = signature;
         }
