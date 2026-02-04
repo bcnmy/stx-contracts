@@ -27,10 +27,8 @@ contract StxValidator_P256_StatelessValidator_Integration_Test is StxValidator_B
         validationData = abi.encodePacked(p256PublicKeyX, p256PublicKeyY);
 
         vm.startPrank(address(mockAccount));
-        // set the default config, won't be used in this test btw
-        stxValidator.onInstall(
-            abi.encodePacked(address(0xa11ce), address(p256StatelessValidator), uint8(0), validationData)
-        );
+        // set ownership data
+        stxValidator.onInstall(abi.encodePacked(address(p256StatelessValidator), uint8(0), validationData));
 
         vm.stopPrank();
     }
