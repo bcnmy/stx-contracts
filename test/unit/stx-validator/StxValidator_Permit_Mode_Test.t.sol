@@ -14,6 +14,7 @@ import {
     PERMIT_TYPEHASH
 } from "contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
+import { SIG_TYPE_ERC20_PERMIT } from "contracts/types/Constants.sol";
 
 contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
@@ -30,9 +31,7 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
         vm.prank(address(mockAccount));
         // set the default config
         stxValidator.onInstall(
-            abi.encodePacked(
-                address(permitSubmodule), address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr)
-            )
+            abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr))
         );
     }
 
@@ -91,12 +90,7 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
         bytes32 baseHash = keccak256(abi.encode("test"));
 
         bytes memory validationDataForStatelessValidator = abi.encodePacked(wallet.addr);
-        bytes memory data = abi.encode(
-            address(mockAccount), // account
-            address(permitSubmodule), // stx mode verifier address
-            address(eoaStatelessValidator), // stateless validator address
-            validationDataForStatelessValidator // validation data for stateless validator
-        );
+        bytes memory data = abi.encode(address(mockAccount), validationDataForStatelessValidator);
 
         meeSigs = _makePermitSuperTxSignaturesForErc7780Flow({
             baseHash: baseHash, total: numOfObjs, signer: wallet, spender: address(mockAccount), amount: 1e18
@@ -149,21 +143,24 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
             superTxUserOps[i] = userOps[i].deepCopy();
             bytes32[] memory proof = tree.leafProof(i);
 
-            bytes memory signature = abi.encode(
-                DecodedErc20PermitSig({
-                    token: token,
-                    owner: signer.addr,
-                    spender: spender,
-                    domainSeparator: token.DOMAIN_SEPARATOR(),
-                    amount: amount,
-                    nonce: token.nonces(signer.addr),
-                    isPermitTx: i == 0 ? true : false,
-                    superTxHash: root,
-                    lowerBoundTimestamp: lowerBoundTimestamp,
-                    upperBoundTimestamp: upperBoundTimestamp,
-                    signature: abi.encodePacked(r, s, v),
-                    proof: proof
-                })
+            bytes memory signature = abi.encodePacked(
+                SIG_TYPE_ERC20_PERMIT,
+                abi.encode(
+                    DecodedErc20PermitSig({
+                        token: token,
+                        owner: signer.addr,
+                        spender: spender,
+                        domainSeparator: token.DOMAIN_SEPARATOR(),
+                        amount: amount,
+                        nonce: token.nonces(signer.addr),
+                        isPermitTx: i == 0 ? true : false,
+                        superTxHash: root,
+                        lowerBoundTimestamp: lowerBoundTimestamp,
+                        upperBoundTimestamp: upperBoundTimestamp,
+                        signature: abi.encodePacked(r, s, v),
+                        proof: proof
+                    })
+                )
             );
 
             superTxUserOps[i].signature = signature;
@@ -244,17 +241,20 @@ contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {
 
         for (uint256 i = 0; i < total; i++) {
             bytes32[] memory proof = tree.leafProof(i);
-            bytes memory signature = abi.encode(
-                DecodedErc20PermitSigShort({
-                    owner: signer.addr,
-                    spender: spender,
-                    domainSeparator: token.DOMAIN_SEPARATOR(),
-                    amount: amount,
-                    nonce: token.nonces(signer.addr),
-                    superTxHash: root,
-                    signature: abi.encodePacked(r, s, v),
-                    proof: proof
-                })
+            bytes memory signature = abi.encodePacked(
+                SIG_TYPE_ERC20_PERMIT,
+                abi.encode(
+                    DecodedErc20PermitSigShort({
+                        owner: signer.addr,
+                        spender: spender,
+                        domainSeparator: token.DOMAIN_SEPARATOR(),
+                        amount: amount,
+                        nonce: token.nonces(signer.addr),
+                        superTxHash: root,
+                        signature: abi.encodePacked(r, s, v),
+                        proof: proof
+                    })
+                )
             );
             meeSigs[i] = signature;
         }

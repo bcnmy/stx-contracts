@@ -327,21 +327,15 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         view
         returns (bool isValidSig)
     {
-        // parse the config entries from the data parameter
-        // no sanity checks for the config entries, we expect the caller to provide valid data
-        // stateless validator address should be provided explicitly even if it's the same as the stx mode verifier
-        // address
-        (
-            address account,
-            address stxModeVerifierAddress,
-            address statelessValidatorAddress,
-            bytes memory validationData
-        ) = abi.decode(data, (address, address, address, bytes));
+        (address account, bytes memory _ownershipData) = abi.decode(data, (address, bytes));
+
+        (address stxModeVerifierAddress, address statelessValidatorAddress, bytes calldata parsedSigData) =
+            _getSubmodules(account, sig);
 
         (bytes32 meeHash, bytes memory cleanSignature) =
-            IStxModeVerifier(stxModeVerifierAddress).processStxDataObjectFor7780Flow(account, hash, sig);
+            IStxModeVerifier(stxModeVerifierAddress).processStxDataObjectFor7780Flow(account, hash, parsedSigData);
 
-        isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, meeHash, cleanSignature);
+        isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, _ownershipData, meeHash, cleanSignature);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
