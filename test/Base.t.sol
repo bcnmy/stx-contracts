@@ -16,15 +16,18 @@ import "contracts/types/Constants.sol";
 import { LibZip } from "solady/utils/LibZip.sol";
 import { MockTarget } from "./mock/MockTarget.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
-import {
-    StxValidator,
-    NO_STX_CONFIG_ID_4337,
-    NO_STX_CONFIG_ID_7739,
-    NO_STX_CONFIG_ID_VANILLA_1271,
-    DEFAULT_CONFIG_ID
-} from "../contracts/validators/stx-validator/StxValidator.sol";
+
+import { StxValidator } from "../contracts/validators/stx-validator/StxValidator.sol";
+import { SubmoduleAddresses } from "../contracts/validators/stx-validator/ConfigManager.sol";
 import { EOAStatelessValidator } from "../contracts/validators/stx-validator/submodules/EOAStatelessValidator.sol";
+import { NoStxModeVerifier } from "../contracts/validators/stx-validator/submodules/NoStxModeVerifier.sol";
 import { PermitSubmodule } from "../contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
+import { SafeAccountSubmodule } from "../contracts/validators/stx-validator/submodules/SafeAccountSubmodule.sol";
+import { SimpleModeSubmodule } from "../contracts/validators/stx-validator/submodules/SimpleModeSubmodule.sol";
+import { TxSubmodule } from "../contracts/validators/stx-validator/submodules/TxSubmodule.sol";
+import {
+    P256StatelessValidator
+} from "../contracts/validators/stx-validator/submodules/p256/P256StatelessValidator.sol";
 
 contract BaseTest is Test {
     address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
@@ -64,7 +67,12 @@ contract BaseTest is Test {
 
     StxValidator internal stxValidator;
     EOAStatelessValidator internal eoaStatelessValidator;
+    NoStxModeVerifier internal noStxModeVerifier;
     PermitSubmodule internal permitSubmodule;
+    SafeAccountSubmodule internal safeAccountSubmodule;
+    SimpleModeSubmodule internal simpleModeSubmodule;
+    TxSubmodule internal txSubmodule;
+    P256StatelessValidator internal p256StatelessValidator;
 
     address nodePmDeployer = address(0x011a23423423423);
 
@@ -79,10 +87,26 @@ contract BaseTest is Test {
         MEE_NODE_ADDRESS = MEE_NODE.addr;
 
         deployNodePaymaster();
-        stxValidator = new StxValidator();
 
         eoaStatelessValidator = new EOAStatelessValidator();
+        noStxModeVerifier = new NoStxModeVerifier();
         permitSubmodule = new PermitSubmodule();
+        safeAccountSubmodule = new SafeAccountSubmodule();
+        simpleModeSubmodule = new SimpleModeSubmodule();
+        txSubmodule = new TxSubmodule();
+        p256StatelessValidator = new P256StatelessValidator();
+
+        stxValidator = new StxValidator(
+            SubmoduleAddresses({
+                noStxModeVerifier: address(noStxModeVerifier),
+                simpleModeVerifier: address(simpleModeSubmodule),
+                permitModeVerifier: address(permitSubmodule),
+                txModeVerifier: address(txSubmodule),
+                safeAccountSubmodule: address(safeAccountSubmodule),
+                eoaStatelessValidator: address(eoaStatelessValidator),
+                p256StatelessValidator: address(p256StatelessValidator)
+            })
+        );
 
         mockTarget = new MockTarget();
     }

@@ -60,16 +60,10 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
     MockTarget mockTargetChain1;
     MockTarget mockTargetChain2;
 
-    SimpleModeSubmodule internal simpleModeSubmodule;
-
     uint256 originalChainId;
 
     function setUp() public virtual override {
         super.setUp();
-
-        // Deploy simple mode submodule once - in Foundry's single-state simulation,
-        // this is accessible from all "chains"
-        simpleModeSubmodule = new SimpleModeSubmodule();
 
         // Save original chain ID
         originalChainId = block.chainid;

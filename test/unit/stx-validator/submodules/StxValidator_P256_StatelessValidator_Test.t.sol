@@ -1,22 +1,19 @@
-import {
-    StxValidator_Base_Test,
-    NO_STX_CONFIG_ID_4337,
-    NO_STX_CONFIG_ID_7739,
-    NO_STX_CONFIG_ID_VANILLA_1271
-} from "../StxValidator_Base_Test.t.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
+
+import { StxValidator_Base_Test } from "../StxValidator_Base_Test.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { MockTarget } from "../../../mock/MockTarget.sol";
-import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
-import { EIP712 } from "solady/utils/EIP712.sol";
 import {
-    P256StatelessValidator
-} from "../../../../contracts/validators/stx-validator/submodules/p256/P256StatelessValidator.sol";
+    ERC1271_SUCCESS,
+    SIG_TYPE_NO_STX_P256,
+    SIG_TYPE_NO_STX_VANILLA_1271_P256
+} from "contracts/types/Constants.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
 
 contract StxValidator_P256_StatelessValidator_Integration_Test is StxValidator_Base_Test {
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
-
-    P256StatelessValidator internal p256StatelessValidator;
 
     uint256 internal p256PublicKeyX;
     uint256 internal p256PublicKeyY;
@@ -24,8 +21,6 @@ contract StxValidator_P256_StatelessValidator_Integration_Test is StxValidator_B
 
     function setUp() public virtual override {
         super.setUp();
-
-        p256StatelessValidator = new P256StatelessValidator();
 
         // create a p256 signer
         (p256PublicKeyX, p256PublicKeyY) = vm.publicKeyP256(wallet.privateKey);
@@ -37,12 +32,6 @@ contract StxValidator_P256_StatelessValidator_Integration_Test is StxValidator_B
             abi.encodePacked(address(0xa11ce), address(p256StatelessValidator), uint8(0), validationData)
         );
 
-        stxValidator.addConfig(NO_STX_CONFIG_ID_4337, address(0), address(p256StatelessValidator), validationData);
-
-        stxValidator.addConfig(NO_STX_CONFIG_ID_7739, address(0), address(p256StatelessValidator), validationData);
-        stxValidator.addConfig(
-            NO_STX_CONFIG_ID_VANILLA_1271, address(0), address(p256StatelessValidator), validationData
-        );
         vm.stopPrank();
     }
 
@@ -65,7 +54,7 @@ contract StxValidator_P256_StatelessValidator_Integration_Test is StxValidator_B
 
         bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOp);
         (bytes32 r, bytes32 s) = vm.signP256(wallet.privateKey, userOpHash);
-        bytes memory signature = abi.encodePacked(NO_STX_CONFIG_ID_4337, r, s);
+        bytes memory signature = abi.encodePacked(SIG_TYPE_NO_STX_P256, r, s);
         userOp.signature = signature;
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
@@ -86,7 +75,7 @@ contract StxValidator_P256_StatelessValidator_Integration_Test is StxValidator_B
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
             abi.encodePacked(t.r, t.s, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
-        signature = abi.encodePacked(NO_STX_CONFIG_ID_7739, signature);
+        signature = abi.encodePacked(SIG_TYPE_NO_STX_P256, signature);
         bytes4 ret = mockAccount.isValidSignature(toContentsHash(t.contents), signature);
         assertEq(ret, bytes4(ERC1271_SUCCESS));
     }
@@ -96,7 +85,7 @@ contract StxValidator_P256_StatelessValidator_Integration_Test is StxValidator_B
         bytes32 dataToSign = keccak256("0x1234");
         (t.r, t.s) = vm.signP256(wallet.privateKey, dataToSign);
         bytes memory signature = abi.encodePacked(t.r, t.s);
-        signature = abi.encodePacked(NO_STX_CONFIG_ID_VANILLA_1271, signature);
+        signature = abi.encodePacked(SIG_TYPE_NO_STX_VANILLA_1271_P256, signature);
         bytes4 ret = mockAccount.isValidSignature(dataToSign, signature);
         assertEq(ret, bytes4(ERC1271_SUCCESS));
     }

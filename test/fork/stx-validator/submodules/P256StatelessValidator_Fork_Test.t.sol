@@ -10,8 +10,6 @@ import { SimpleModeSubmodule } from "contracts/validators/stx-validator/submodul
 contract P256StatelessValidator_Fork_Test is StxValidator_Base_Test {
     address constant RIP_7212_PRECOMPILE = address(0x100);
 
-    P256StatelessValidator internal p256StatelessValidator;
-
     uint256 internal p256PublicKeyX;
     uint256 internal p256PublicKeyY;
     bytes internal p256ValidationData;

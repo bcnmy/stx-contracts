@@ -4,15 +4,15 @@ pragma solidity ^0.8.27;
 
 import { IValidator, MODULE_TYPE_VALIDATOR } from "erc7579/interfaces/IERC7579Module.sol";
 import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
-import { EnumerableSet } from "EnumerableSet4337/EnumerableSet4337.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 import { _packValidationData } from "account-abstraction/core/Helpers.sol";
+import { EnumerableSet } from "EnumerableSet4337/EnumerableSet4337.sol";
 import { ERC7739Validator } from "./ERC7739Validator.sol";
 import { ERC1271_SUCCESS, ERC1271_FAILED, MODULE_TYPE_STATELESS_VALIDATOR } from "contracts/types/Constants.sol";
 import { FlatBytesLib } from "flatbytes/BytesLib.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739Multiplexer.sol";
-import { ConfigManager } from "./ConfigManager.sol";
+import { ConfigManager, SubmoduleAddresses, ValidationConfig } from "./ConfigManager.sol";
 
 /**
  * @title StxValidator
@@ -39,23 +39,11 @@ import { ConfigManager } from "./ConfigManager.sol";
  *      specify which submodules to use for verification. Multiple configs can be enabled
  *      per account to support different signing methods or Stx modes.
  *
- *      Special configIds are reserved for non-Stx flows:
- *      - NO_STX_CONFIG_ID_4337 (0x00): Vanilla ERC-4337 UserOp validation
- *      - NO_STX_CONFIG_ID_7739 (0x01): Full ERC-7739 flow for off-chain signatures
- *      - NO_STX_CONFIG_ID_VANILLA_1271 (0x02): Direct ERC-1271 validation
  */
 
-// keccak256("default");
-bytes32 constant DEFAULT_CONFIG_ID = 0xcfee7c08a98f4b565d124c7e4e28acc52e1bc780e3887db0a02a7d2d5bc66728;
-// flags for 4337/7739/1271 no stx modes
-bytes32 constant NO_STX_CONFIG_ID_4337 = 0x0000000000000000000000000000000000000000000000000000000000000000;
-bytes32 constant NO_STX_CONFIG_ID_7739 = 0x0000000000000000000000000000000000000000000000000000000000000001;
-bytes32 constant NO_STX_CONFIG_ID_VANILLA_1271 = 0x0000000000000000000000000000000000000000000000000000000000000002;
-
 contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC7739Multiplexer, ConfigManager {
-    using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
-    using FlatBytesLib for FlatBytesLib.Bytes;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
@@ -142,7 +130,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         returns (uint256)
     {
         (address stxModeVerifierAddress, address statelessValidatorAddress, bytes calldata parsedSigData) =
-            getSubmodules(msg.sender, userOp.signature);
+            _getSubmodules(msg.sender, userOp.signature);
 
         uint48 lowerBoundTimestamp;
         uint48 upperBoundTimestamp;
@@ -246,7 +234,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         }
 
         (address stxModeVerifierAddress, address statelessValidatorAddress, bytes calldata parsedSigData) =
-            getSubmodules(msg.sender, signature);
+            _getSubmodules(msg.sender, signature);
 
         bytes32 meeHash;
         bytes memory cleanSignature;
@@ -391,11 +379,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
      *
      * @param data The data to initialize the module with
      *   data format:
-     *   - 20 bytes - stx mode verifier address
-     *   - 20 bytes - custom validator address
-     *   - 1 byte - safe senders length (n)
-     *   - n*20 bytes - safe senders if any
-     *   - config validation data
+     *   TODO: describe the data format
      */
     function onInstall(bytes calldata data) external override {
         require(!_isInitialized(msg.sender), ModuleAlreadyInitialized());
@@ -411,10 +395,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         bool _enableCustomConfig = _checkStatelessValidatorAddress(statelessValidatorAddress);
         if (_enableCustomConfig) {
             require(data.length >= 72, InvalidDataLength());
-            // 20 bytes - stx mode verifier address
-            address stxModeVerifierAddress = address(bytes20(data[20:40]));
-            // 32 bytes config id
-            bytes32 configId = bytes32(data[40:72]);
             // start safe senders offset
             startSafeSendersOffset = 72;
         }
@@ -428,15 +408,19 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         }
 
         if (_enableCustomConfig) {
-            // TODO: wrap this into one function and move to parent contract
+            // 20 bytes - stx mode verifier address
+            address stxModeVerifierAddress = address(bytes20(data[20:40]));
+            // 32 bytes config id
+            bytes32 configId = bytes32(data[40:72]);
 
+            // TODO: wrap this into one function and move to parent contract
             // store address under custom config id
             _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress);
             // add custom config id to the enabled configs
             enabledCustomConfigs.add(msg.sender, configId);
         }
 
-        _storeOwnershipData(statelessValidatorAddress, data[ownershipDataOffset:]);
+        _storeOwnershipData(msg.sender, statelessValidatorAddress, data[ownershipDataOffset:]);
     }
 
     /**
@@ -467,16 +451,17 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         */
     }
 
+    function _checkStatelessValidatorAddress(address statelessValidatorAddress) internal view returns (bool) { }
+
     /**
      * @dev Adds a new config to the module with the given configId
      * @param configId The id of the config to add
      * @param stxModeVerifierAddress The address of the stx mode verifier
      * @param statelessValidatorAddress The address of the stateless validator
-     * @param validationData The data to validate against
      */
 
     function addConfig(bytes32 configId, address stxModeVerifierAddress, address statelessValidatorAddress) external {
-        require(!enabledConfigs.contains(msg.sender, configId), ConfigAlreadyEnabled());
+        require(!enabledCustomConfigs.contains(msg.sender, configId), ConfigAlreadyEnabled());
         _validateConfigAddresses(stxModeVerifierAddress, statelessValidatorAddress);
 
         _storeConfigData(configId, stxModeVerifierAddress, statelessValidatorAddress);
@@ -569,8 +554,8 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
 
     /**
      * @dev Internal function to validate the stx mode verifier address
-     * @param configId The id of the config about to use the stx mode verifier provided
      * @param stxModeVerifierAddress The address of the stx mode verifier
+     * @param statelessValidatorAddress The address of the stateless validator
      */
     function _validateConfigAddresses(address stxModeVerifierAddress, address statelessValidatorAddress) internal view {
         require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
@@ -582,7 +567,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
      * @param configId The id of the config to add
      * @param stxModeVerifierAddress The address of the stx mode verifier
      * @param statelessValidatorAddress The address of the stateless validator
-     * @param validationData The data to validate against
      */
     function _storeConfigData(
         bytes32 configId,
@@ -776,7 +760,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     /**
      * @notice Wrapper method to validate signature via ERC-7780 stateless validator
      * @param statelessValidatorAddress The address of the stateless validator to use
-     * @param validationData The validation data (e.g., owner public key)
+     * @param ownershipData The ownership data (e.g., owner public key)
      * @param hash The hash that was signed
      * @param signature The signature to validate
      * @return isValidSig True if the signature is valid
@@ -808,7 +792,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     /// @param signature The signature of the data, with all the potential
     ///                  erc7739 payload trimmed off, just with the configId prepended
 
-    /*
     function _erc1271IsValidSignatureNowCalldata(
         address account,
         bytes32 hash,
@@ -819,14 +802,11 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         override
         returns (bool isValidSig)
     {
-        // parse the active configId from the signature
-        bytes32 activeConfigId = bytes32(signature[0:32]);
-        (, address statelessValidatorAddress, bytes memory validationData) =
-            _getConfigData(configs, account, activeConfigId);
-
-        isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, validationData, hash, signature[32:]);
+        address stxModeVerifierAddress = address(bytes20(signature[0:20]));
+        address statelessValidatorAddress = address(bytes20(signature[20:40]));
+        bytes memory _ownershipData = _getOwnershipData(account, statelessValidatorAddress);
+        isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, _ownershipData, hash, signature[40:]);
     }
-    */
 
     /// @dev Returns whether the `sender` is considered safe, such
     /// that we don't need to use the nested EIP-712 workflow.

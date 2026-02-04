@@ -17,7 +17,17 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
     /// @notice Initializes the testing environment.
     function setUp() public virtual override {
         init();
-        stxValidatorLocalInstance = new StxValidator();
+        stxValidatorLocalInstance = new StxValidator(
+            SubmoduleAddresses({
+                noStxModeVerifier: address(0),
+                simpleModeVerifier: address(0),
+                permitModeVerifier: address(0),
+                txModeVerifier: address(0),
+                safeAccountSubmodule: address(0),
+                eoaStatelessValidator: address(eoaStatelessValidator),
+                p256StatelessValidator: address(p256StatelessValidator)
+            })
+        );
         bytes memory callData = abi.encodeWithSelector(
             IModuleManager.installModule.selector,
             MODULE_TYPE_VALIDATOR,
@@ -39,7 +49,7 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
     }
 
     /// @notice Tests the validation of a personal signature using the mock validator.
-    function test_isValidSignature_PersonalSign_K1Validator_Success() public {
+    function test_isValidSignature_PersonalSign_StxValidator_EOA_Success() public {
         TestTemps memory t;
         t.contents = keccak256("123");
         bytes32 hashToSign = toERC1271HashPersonalSign(t.contents, address(ALICE_ACCOUNT));
@@ -48,14 +58,14 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         assertEq(
             ALICE_ACCOUNT.isValidSignature(
                 t.contents,
-                abi.encodePacked(address(stxValidatorLocalInstance), NO_STX_CONFIG_ID_VANILLA_1271, signature)
+                abi.encodePacked(address(stxValidatorLocalInstance), SIG_TYPE_NO_STX_VANILLA_1271_EOA, signature)
             ),
             bytes4(0x1626ba7e)
         );
     }
 
     /// @notice Tests the validation of an EIP-712 signature using the mock validator.
-    function test_isValidSignature_EIP712Sign_K1Validator_Success() public {
+    function test_isValidSignature_EIP712Sign_7739_StxValidator_EOA_Success() public {
         TestTemps memory t;
         t.contents = keccak256("0x1234");
         bytes32 dataToSign = toERC1271Hash(t.contents, address(ALICE_ACCOUNT));
@@ -66,14 +76,13 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         );
         if (random() % 4 == 0) signature = erc6492Wrap(signature);
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(
-            toContentsHash(t.contents),
-            abi.encodePacked(address(stxValidatorLocalInstance), NO_STX_CONFIG_ID_7739, signature)
+            toContentsHash(t.contents), abi.encodePacked(address(stxValidatorLocalInstance), signature)
         );
         assertEq(ret, bytes4(0x1626ba7e));
     }
 
     /// @notice Tests the failure of an EIP-712 signature validation due to a wrong signer.
-    function test_isValidSignature_EIP712Sign_K1Validator_Wrong1271Signer_Fail() public view {
+    function test_isValidSignature_EIP712Sign_7739_StxValidator_EOA_Wrong1271Signer_Fail() public view {
         TestTemps memory t;
         t.contents = keccak256("123");
         (t.v, t.r, t.s) = vm.sign(BOB.privateKey, toERC1271Hash(t.contents, address(ALICE_ACCOUNT)));
@@ -82,8 +91,7 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
             t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
         );
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(
-            toContentsHash(t.contents),
-            abi.encodePacked(address(stxValidatorLocalInstance), NO_STX_CONFIG_ID_7739, signature)
+            toContentsHash(t.contents), abi.encodePacked(address(stxValidatorLocalInstance), signature)
         );
         assertEq(ret, bytes4(0xFFFFFFFF));
     }
@@ -106,8 +114,7 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         bytes memory wrappedSignature = erc6492Wrap(signature);
 
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(
-            toContentsHash(t.contents),
-            abi.encodePacked(address(stxValidatorLocalInstance), NO_STX_CONFIG_ID_7739, wrappedSignature)
+            toContentsHash(t.contents), abi.encodePacked(address(stxValidatorLocalInstance), wrappedSignature)
         );
         assertEq(ret, bytes4(0x1626ba7e));
     }
@@ -127,8 +134,7 @@ contract TestERC1271Account_IsValidSignature is NexusTestBase {
         );
 
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(
-            toContentsHash(t.contents),
-            abi.encodePacked(address(stxValidatorLocalInstance), NO_STX_CONFIG_ID_7739, signature)
+            toContentsHash(t.contents), abi.encodePacked(address(stxValidatorLocalInstance), signature)
         );
         assertEq(ret, bytes4(0x1626ba7e));
     }

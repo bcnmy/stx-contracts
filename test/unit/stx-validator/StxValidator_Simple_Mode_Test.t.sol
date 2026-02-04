@@ -2,22 +2,18 @@
 pragma solidity ^0.8.27;
 
 import { Vm, console2 } from "forge-std/Test.sol";
-import { StxValidator_Base_Test, DEFAULT_CONFIG_ID } from "./StxValidator_Base_Test.t.sol";
+import { StxValidator_Base_Test } from "./StxValidator_Base_Test.t.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
-import { SimpleModeSubmodule } from "contracts/validators/stx-validator/submodules/SimpleModeSubmodule.sol";
 import { MockTarget } from "test/mock/MockTarget.sol";
 import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
 import "contracts/types/Constants.sol";
 import { EcdsaHelperLib } from "contracts/lib/util/EcdsaHelperLib.sol";
-import { P256StatelessValidator } from "contracts/validators/stx-validator/submodules/p256/P256StatelessValidator.sol";
 
 contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
 
-    SimpleModeSubmodule internal simpleModeSubmodule;
-    P256StatelessValidator internal p256StatelessValidator;
     bytes internal p256ValidationData;
     uint256 internal p256PublicKeyX;
     uint256 internal p256PublicKeyY;
@@ -30,12 +26,9 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
     function setUp() public virtual override {
         super.setUp();
 
-        p256StatelessValidator = new P256StatelessValidator();
         (p256PublicKeyX, p256PublicKeyY) = vm.publicKeyP256(wallet.privateKey);
         p256ValidationData = abi.encodePacked(p256PublicKeyX, p256PublicKeyY);
 
-        // deploy permit submodule and use it with the default config
-        simpleModeSubmodule = new SimpleModeSubmodule();
         vm.prank(address(mockAccount));
 
         defaultConfigData = abi.encodePacked(
@@ -59,20 +52,24 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         numOfClones = bound(numOfClones, 1, 25);
 
         vm.prank(address(mockAccount));
+        /*
         stxValidator.replaceConfig(
-            DEFAULT_CONFIG_ID, address(simpleModeSubmodule), address(p256StatelessValidator), p256ValidationData
+            bytes32(0), address(simpleModeSubmodule), address(p256StatelessValidator), p256ValidationData
         );
+        */
 
         _validateUserOp_with_MeeUserOps_only_as_entries(numOfClones, 900_000, _signWithP256);
 
         // revert to the default config
         vm.prank(address(mockAccount));
+        /*
         stxValidator.replaceConfig(
-            DEFAULT_CONFIG_ID,
+            bytes32(0),
             address(simpleModeSubmodule),
             address(eoaStatelessValidator),
             abi.encodePacked(wallet.addr)
         );
+        */
     }
 
     function _validateUserOp_with_MeeUserOps_only_as_entries(
@@ -137,9 +134,11 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         numOfClones = bound(numOfClones, 1, 9);
 
         vm.prank(address(mockAccount));
+        /*
         stxValidator.replaceConfig(
-            DEFAULT_CONFIG_ID, address(simpleModeSubmodule), address(p256StatelessValidator), p256ValidationData
+            bytes32(0), address(simpleModeSubmodule), address(p256StatelessValidator), p256ValidationData
         );
+        */
 
         (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation({
             numOfClones: numOfClones,
@@ -159,12 +158,14 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
 
         // revert to the default config
         vm.prank(address(mockAccount));
+        /*
         stxValidator.replaceConfig(
-            DEFAULT_CONFIG_ID,
+            bytes32(0),
             address(simpleModeSubmodule),
             address(eoaStatelessValidator),
             abi.encodePacked(wallet.addr)
         );
+        */
     }
 
     // validate userOps via validateUserOp and data objects via validateSignatureWithData (7780 flow)
@@ -203,9 +204,11 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
         numOfClones = bound(numOfClones, 1, 9);
 
         vm.prank(address(mockAccount));
+        /*
         stxValidator.replaceConfig(
-            DEFAULT_CONFIG_ID, address(simpleModeSubmodule), address(p256StatelessValidator), p256ValidationData
+            bytes32(0), address(simpleModeSubmodule), address(p256StatelessValidator), p256ValidationData
         );
+        */
 
         (, NonUserOpEntryData[] memory nonUserOpEntryDatas) = _prepareDataAndDoUserOpValidation({
             numOfClones: numOfClones,
@@ -235,12 +238,14 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
 
         // revert to the default config
         vm.prank(address(mockAccount));
+        /*
         stxValidator.replaceConfig(
-            DEFAULT_CONFIG_ID,
+            bytes32(0),
             address(simpleModeSubmodule),
             address(eoaStatelessValidator),
             abi.encodePacked(wallet.addr)
         );
+        */
     }
 
     // ===== 1271/7739/7780 test helper =====

@@ -1,24 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-// TODO: CLEAN UNUSED IMPORTS
-
 import { Vm, console2 } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
-import { BaseTest } from "../../Base.t.sol";
+import { BaseTest, SubmoduleAddresses } from "../../Base.t.sol";
 import { MEEUserOpHashLib } from "../../../contracts/lib/stx-validator/MEEUserOpHashLib.sol";
 import { MockAccount } from "../../mock/accounts/MockAccount.sol";
 import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
 import "contracts/types/Constants.sol";
-import {
-    StxValidator,
-    NO_STX_CONFIG_ID_4337,
-    NO_STX_CONFIG_ID_7739,
-    NO_STX_CONFIG_ID_VANILLA_1271,
-    DEFAULT_CONFIG_ID
-} from "../../../contracts/validators/stx-validator/StxValidator.sol";
 import {
     EOAStatelessValidator
 } from "../../../contracts/validators/stx-validator/submodules/EOAStatelessValidator.sol";

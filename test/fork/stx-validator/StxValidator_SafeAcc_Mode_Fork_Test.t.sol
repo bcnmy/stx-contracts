@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { Vm } from "forge-std/Test.sol";
-import { StxValidator_Base_Test } from "../../unit/stx-validator/StxValidator_Base_Test.t.sol";
+import { StxValidator_Base_Test, SubmoduleAddresses } from "../../unit/stx-validator/StxValidator_Base_Test.t.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { ISafe } from "contracts/interfaces/external/safe-smart-account/ISafe.sol";
 import { SafeEnumLib } from "contracts/interfaces/external/safe-smart-account/SafeEnumLib.sol";
@@ -40,7 +40,6 @@ contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
     Vm.Wallet signer3; // 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc = anvil account
 
     MockERC20PermitToken erc20;
-    SafeAccountSubmodule safeAccountSubmodule;
 
     address receiver = address(0xb0bb0b);
     uint256 amountToTransfer = 1 ether;
@@ -77,8 +76,19 @@ contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
         // ensures consistent addresses for the contracts
         // since they are deployed with CREATE thus addresses depend on the nonce
         vm.startPrank(address(0xa11ce));
-        stxValidator = new StxValidator();
         safeAccountSubmodule = new SafeAccountSubmodule();
+        stxValidator = new StxValidator(
+            SubmoduleAddresses({
+                noStxModeVerifier: address(0),
+                simpleModeVerifier: address(0),
+                permitModeVerifier: address(0),
+                txModeVerifier: address(0),
+                safeAccountSubmodule: address(safeAccountSubmodule), // we only need this on properly deployed on the
+                // forks
+                eoaStatelessValidator: address(0),
+                p256StatelessValidator: address(0)
+            })
+        );
         orchestrator = deployMockAccount({ validator: address(stxValidator), handler: address(0) });
         mockTarget = new MockTarget();
         erc20 = new MockERC20PermitToken("test", "TEST");

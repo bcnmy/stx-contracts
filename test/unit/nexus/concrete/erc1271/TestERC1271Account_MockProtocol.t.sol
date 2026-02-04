@@ -69,7 +69,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
-        bytes memory completeSignature = abi.encodePacked(address(0), NO_STX_CONFIG_ID_7739, signature);
+        bytes memory completeSignature = abi.encodePacked(address(0), signature);
         bytes4 ret = ALICE_ACCOUNT.isValidSignature(toContentsHash(t.contents), completeSignature);
         assertEq(ret, bytes4(0x1626ba7e));
         permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
@@ -93,7 +93,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
-        bytes memory completeSignature = abi.encodePacked(address(0), NO_STX_CONFIG_ID_7739, signature);
+        bytes memory completeSignature = abi.encodePacked(address(0), signature);
 
         vm.expectRevert(abi.encodeWithSelector(ERC1271InvalidSigner.selector, address(ALICE_ACCOUNT)));
         permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);
@@ -118,7 +118,7 @@ contract TestERC1271Account_MockProtocol is NexusTestBase {
         bytes memory contentsType = "Contents(bytes32 stuff)";
         bytes memory signature =
             abi.encodePacked(t.r, t.s, t.v, domainSepB, t.contents, contentsType, uint16(contentsType.length));
-        bytes memory completeSignature = abi.encodePacked(address(0), NO_STX_CONFIG_ID_7739, signature);
+        bytes memory completeSignature = abi.encodePacked(address(0), signature);
 
         vm.expectRevert(abi.encodeWithSelector(ERC1271InvalidSigner.selector, address(ALICE_ACCOUNT)));
         permitToken.permitWith1271(address(ALICE_ACCOUNT), address(0x69), 1e18, block.timestamp, completeSignature);

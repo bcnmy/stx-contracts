@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
+
 import { StxValidator_Base_Test } from "./StxValidator_Base_Test.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
@@ -7,20 +10,17 @@ import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
 import { LibRLP } from "solady/utils/LibRLP.sol";
 import { MockTarget } from "../../mock/MockTarget.sol";
-import { TxSubmodule } from "../../../contracts/validators/stx-validator/submodules/TxSubmodule.sol";
 
 contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
     using CopyUserOpLib for PackedUserOperation;
     using LibRLP for LibRLP.List;
     using MerkleTreeLib for bytes32[];
 
-    TxSubmodule internal txSubmodule;
     MockERC20PermitToken internal token;
 
     function setUp() public virtual override {
         super.setUp();
 
-        txSubmodule = new TxSubmodule();
         vm.prank(address(mockAccount));
         stxValidator.onInstall(
             abi.encodePacked(

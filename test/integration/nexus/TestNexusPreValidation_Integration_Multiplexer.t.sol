@@ -33,7 +33,17 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         resourceLockHook = new MockResourceLockPreValidationHook(address(accountLocker), address(hookMultiplexer));
         // Deploy the simple validator
         SIMPLE_VALIDATOR = new MockSimpleValidator();
-        stxValidatorLocalInstance = new StxValidator();
+        stxValidatorLocalInstance = new StxValidator(
+            SubmoduleAddresses({
+                noStxModeVerifier: address(0),
+                simpleModeVerifier: address(0),
+                permitModeVerifier: address(0),
+                txModeVerifier: address(0),
+                safeAccountSubmodule: address(0),
+                eoaStatelessValidator: address(eoaStatelessValidator), // only this one is used in the test
+                p256StatelessValidator: address(0)
+            })
+        );
         // Format install data with owner
         bytes memory validatorSetupData = abi.encodePacked(BOB_ADDRESS); // Set BOB as owner
         // Prepare the call data for installing the validator module
@@ -173,7 +183,7 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
         // Prepare signature with validator prefix and triggering both hooks
         bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
         bytes memory validatorSignature = abi.encodePacked(
-            address(stxValidatorLocalInstance), bytes1(0x01), NO_STX_CONFIG_ID_VANILLA_1271, signature
+            address(stxValidatorLocalInstance), bytes1(0x01), SIG_TYPE_NO_STX_VANILLA_1271_EOA, signature
         );
 
         // Validate signature through hook chain
@@ -203,7 +213,7 @@ contract TestNexusPreValidation_Integration_HookMultiplexer is TestModuleManagem
 
         // Prepare signature with validator prefix and triggering both hooks
         bytes memory validatorSignature2 = abi.encodePacked(
-            address(stxValidatorLocalInstance), bytes1(0x01), NO_STX_CONFIG_ID_VANILLA_1271, signature
+            address(stxValidatorLocalInstance), bytes1(0x01), SIG_TYPE_NO_STX_VANILLA_1271_EOA, signature
         );
 
         // Validate signature through hook chain
