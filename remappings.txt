@@ -3,7 +3,6 @@ account-abstraction/=node_modules/account-abstraction/contracts/
 solady/=node_modules/solady/src/
 sentinellist/=node_modules/@rhinestone/sentinellist/src/
 module-bases/=node_modules/@rhinestone/module-bases/src/
-erc7739Validator/=node_modules/@erc7579/erc7739-validator-base/src/
 EnumerableSet4337/=node_modules/@erc7579/enumerablemap4337/src/
 erc7579/=node_modules/@erc7579/implementation/src/
 byteslib/=node_modules/solidity-bytes-utils/contracts/
