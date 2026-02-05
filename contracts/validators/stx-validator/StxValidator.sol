@@ -64,8 +64,8 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     /// @notice Error to indicate that the safe senders length is invalid
     error SafeSendersLengthInvalid();
 
-    /// @notice Error to indicate that the ownership data already exists for the stateless validator
-    error OwnershipDataAlreadyExistsForStatelessValidator(address statelessValidatorAddress);
+    /// @notice Error to indicate that no ownership data exists for the given stateless validator and smart account
+    error NoOwnershipDataExists(address statelessValidatorAddress, address smartAccount);
 
     /// @notice Error to indicate that the module is not initialized
     error ModuleNotInitialized();
@@ -385,6 +385,10 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
      * @param statelessValidatorAddress The address of the stateless validator
      */
     function cleanOwnershipData(address statelessValidatorAddress) external {
+        require(
+            ownershipData[statelessValidatorAddress][msg.sender].totalLength > 0,
+            NoOwnershipDataExists(statelessValidatorAddress, msg.sender)
+        );
         _deleteOwnershipDataForAccount(msg.sender, statelessValidatorAddress);
     }
 
