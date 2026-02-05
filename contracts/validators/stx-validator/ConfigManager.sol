@@ -187,6 +187,15 @@ contract ConfigManager {
     }
 
     /**
+     * @dev Internal function to delete the ownership data for the given stateless validator address
+     * @param smartAccount The smart account that requested the validation
+     * @param statelessValidator The address of the stateless validator
+     */
+    function _deleteOwnershipDataForAccount(address smartAccount, address statelessValidator) internal {
+        ownershipData[statelessValidator][smartAccount].clear();
+    }
+
+    /**
      * @dev Internal function to enable a new config for the smart account
      *      stores the config and adds the config id to the enabled custom configs set
      * @param smartAccount The smart account that requested the validation

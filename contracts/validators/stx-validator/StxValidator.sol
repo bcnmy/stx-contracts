@@ -64,6 +64,12 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     /// @notice Error to indicate that the safe senders length is invalid
     error SafeSendersLengthInvalid();
 
+    /// @notice Error to indicate that the ownership data already exists for the stateless validator
+    error OwnershipDataAlreadyExistsForStatelessValidator(address statelessValidatorAddress);
+
+    /// @notice Error to indicate that the module is not initialized
+    error ModuleNotInitialized();
+
     /// @notice Emitted when a new config is added
     event ConfigAdded(bytes32 indexed configId, address indexed smartAccount);
 
@@ -339,15 +345,17 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
      * @dev Removes all configurations and data stored for the calling smart account
      */
     function onUninstall(bytes calldata) external override {
+        require(_isInitialized(msg.sender), ModuleNotInitialized());
+
         address account = msg.sender;
 
         // 1. Clear all safe senders for this account
         _safeSenders.removeAll(account);
 
         // 2. Clear ownership data for default stateless validators
-        ownershipData[EOA_STATELESS_VALIDATOR][account].clear();
-        ownershipData[P256_STATELESS_VALIDATOR][account].clear();
-        ownershipData[SAFE_ACCOUNT_SUBMODULE][account].clear();
+        _deleteOwnershipDataForAccount(account, EOA_STATELESS_VALIDATOR);
+        _deleteOwnershipDataForAccount(account, P256_STATELESS_VALIDATOR);
+        _deleteOwnershipDataForAccount(account, SAFE_ACCOUNT_SUBMODULE);
 
         // 3. Clear all custom configs and their associated ownership data
         uint256 configCount = enabledCustomConfigs.length(account);
@@ -377,21 +385,40 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
      * @param statelessValidatorAddress The address of the stateless validator
      */
     function cleanOwnershipData(address statelessValidatorAddress) external {
-        ownershipData[statelessValidatorAddress][msg.sender].clear();
+        _deleteOwnershipDataForAccount(msg.sender, statelessValidatorAddress);
+    }
+
+    /**
+     * @dev Returns the ownership data for the given stateless validator address
+     * @param statelessValidatorAddress The address of the stateless validator
+     * @return The ownership data
+     */
+    function getOwnershipData(
+        address smartAccount,
+        address statelessValidatorAddress
+    )
+        external
+        view
+        returns (bytes memory)
+    {
+        return _getOwnershipData(smartAccount, statelessValidatorAddress);
     }
 
     /**
      * @dev Adds a new config to the module with the given configId
+     *      Alert: it doesn't store the ownership data for the stateless validator associated with the config
+     *      If this config is reusing the same stateless validator as another config or preconfigured sig type,
+     *      then the existing ownership data will be used.
+     *      If this config is not sharing the same stateless validator with another config or preconfigured sig type,
+     *      then the ownership data should be set manually via setOwnershipData
      * @param configId The id of the config to add
      * @param stxModeVerifierAddress The address of the stx mode verifier
      * @param statelessValidatorAddress The address of the stateless validator
      */
-
     function addConfig(bytes32 configId, address stxModeVerifierAddress, address statelessValidatorAddress) external {
         require(!enabledCustomConfigs.contains(msg.sender, configId), ConfigAlreadyEnabled());
         _validateConfigAddresses(stxModeVerifierAddress, statelessValidatorAddress);
-
-        _storeConfigForAccount(msg.sender, configId, stxModeVerifierAddress, statelessValidatorAddress);
+        _enableConfigForAccount(msg.sender, configId, stxModeVerifierAddress, statelessValidatorAddress);
         emit ConfigAdded(configId, msg.sender);
     }
 
@@ -404,22 +431,45 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     function replaceConfig(
         bytes32 configId,
         address stxModeVerifierAddress,
-        address statelessValidatorAddress
+        address statelessValidatorAddress,
+        bytes calldata ownershipData
     )
         external
     {
+        // if a new stateless validator is provided, clear the ownership data for the old one
+        address oldStatelessValidatorAddress = customConfigs[configId][msg.sender].statelessValidatorAddress;
+        if (statelessValidatorAddress != oldStatelessValidatorAddress) {
+            _deleteOwnershipDataForAccount(msg.sender, oldStatelessValidatorAddress);
+        }
         _replaceConfigForAccount(msg.sender, configId, stxModeVerifierAddress, statelessValidatorAddress);
+        // in any case, we store the ownership data for the new stateless validator
+        _storeOwnershipDataForAccount(msg.sender, statelessValidatorAddress, ownershipData);
         emit ConfigReplaced(configId, msg.sender);
     }
 
     /**
      * @dev Deletes the config data for the given configId
+     *      Alert: it doesn't clear the ownership data for the stateless validator associated with the config
+     *      because it may be used by other configs or preconfigured sig types
+     *      if you want to clear the ownership data for the stateless validator associated with the config,
+     *      you should manually clear it via cleanOwnershipData
      * @param configId The id of the config to delete
      */
 
     function deleteConfig(bytes32 configId) external {
+        address statelessValidatorAddress = customConfigs[configId][msg.sender].statelessValidatorAddress;
         _deleteConfigForAccount(msg.sender, configId);
         emit ConfigDeleted(configId, msg.sender);
+    }
+
+    /**
+     * @dev Checks if the config is enabled for the given smart account
+     * @param smartAccount The smart account to check the config for
+     * @param configId The id of the config to check
+     * @return True if the config is enabled, false otherwise
+     */
+    function isConfigEnabled(address smartAccount, bytes32 configId) external view returns (bool) {
+        return enabledCustomConfigs.contains(smartAccount, configId);
     }
 
     /**
