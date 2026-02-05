@@ -131,7 +131,7 @@ contract ConfigManager {
             return (NO_STX_MODE_VERIFIER, P256_STATELESS_VALIDATOR, parsedSigData);
         } else if (sigType == SIG_TYPE_CUSTOM) {
             // 0x177eeeff
-            require(sigData.length > 36, InvalidSignatureDataLength());
+            require(sigData.length >= 36, InvalidSignatureDataLength());
             bytes32 configId = bytes32(sigData[4:36]);
             ValidationConfig storage config = customConfigs[configId][smartAccount];
             return (config.stxModeVerifierAddress, config.statelessValidatorAddress, sigData[36:]);
