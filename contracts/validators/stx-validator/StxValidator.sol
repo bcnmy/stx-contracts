@@ -61,19 +61,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     /// @notice Error to indicate that the data length is invalid
     error InvalidDataLength();
 
-    /// @notice Error to indicate that the stx mode verifier address cannot be the zero address
-    error StxModeVerifierAddressCannotBeZeroAddress();
-
-    /// @notice Error to indicate that the stateless validator address cannot be the zero address if the stx mode
-    /// verifier address is the zero address
-    error StatelessValidatorAddressCannotBeZeroIfStxModeVerifierIsZero();
-
-    /// @notice Error to indicate that the config is not enabled
-    error ConfigNotEnabled();
-
-    /// @notice Error to indicate that the config is already enabled
-    error ConfigAlreadyEnabled();
-
     /// @notice Error to indicate that the safe senders length is invalid
     error SafeSendersLengthInvalid();
 
@@ -89,9 +76,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     /*//////////////////////////////////////////////////////////////////////////
                                      CONSTRUCTOR
     //////////////////////////////////////////////////////////////////////////*/
-    constructor(SubmoduleAddresses memory submoduleAddresses) ConfigManager(submoduleAddresses) {
-        // empty constructor
-    }
+    constructor(SubmoduleAddresses memory submoduleAddresses) ConfigManager(submoduleAddresses) { }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      MODULE LOGIC
@@ -388,6 +373,14 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     }
 
     /**
+     * @dev Clears the ownership data for the given stateless validator address
+     * @param statelessValidatorAddress The address of the stateless validator
+     */
+    function cleanOwnershipData(address statelessValidatorAddress) external {
+        ownershipData[statelessValidatorAddress][msg.sender].clear();
+    }
+
+    /**
      * @dev Adds a new config to the module with the given configId
      * @param configId The id of the config to add
      * @param stxModeVerifierAddress The address of the stx mode verifier
@@ -415,9 +408,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     )
         external
     {
-        require(enabledCustomConfigs.contains(msg.sender, configId), ConfigNotEnabled());
-        _validateConfigAddresses(stxModeVerifierAddress, statelessValidatorAddress);
-        _storeConfigForAccount(msg.sender, configId, stxModeVerifierAddress, statelessValidatorAddress);
+        _replaceConfigForAccount(msg.sender, configId, stxModeVerifierAddress, statelessValidatorAddress);
         emit ConfigReplaced(configId, msg.sender);
     }
 
@@ -427,9 +418,7 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
      */
 
     function deleteConfig(bytes32 configId) external {
-        require(enabledCustomConfigs.contains(msg.sender, configId), ConfigNotEnabled());
-        delete customConfigs[configId][msg.sender];
-        enabledCustomConfigs.remove(msg.sender, configId);
+        _deleteConfigForAccount(msg.sender, configId);
         emit ConfigDeleted(configId, msg.sender);
     }
 
@@ -557,17 +546,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         isCustomConfig =
         !(statelessValidatorAddress == EOA_STATELESS_VALIDATOR || statelessValidatorAddress == P256_STATELESS_VALIDATOR
                 || statelessValidatorAddress == SAFE_ACCOUNT_SUBMODULE);
-    }
-
-    /**
-     * @dev Internal function to validate the stx mode verifier address
-     *      and the stateless validator address
-     * @param stxModeVerifierAddress The address of the stx mode verifier
-     * @param statelessValidatorAddress The address of the stateless validator
-     */
-    function _validateConfigAddresses(address stxModeVerifierAddress, address statelessValidatorAddress) internal view {
-        require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
-        require(statelessValidatorAddress != address(0), StatelessValidatorAddressCannotBeZeroIfStxModeVerifierIsZero());
     }
 
     /*//////////////////////////////////////////////////////////////////////////

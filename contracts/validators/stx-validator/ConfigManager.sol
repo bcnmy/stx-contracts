@@ -44,8 +44,19 @@ contract ConfigManager {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using FlatBytesLib for FlatBytesLib.Bytes;
 
+    /// @notice Error to indicate that the signature type is not recognized
     error UnrecognizedSignatureType();
+    /// @notice Error to indicate that the signature data length is invalid
     error InvalidSignatureDataLength();
+    /// @notice Error to indicate that the config is not enabled
+    error ConfigNotEnabled();
+    /// @notice Error to indicate that the config is already enabled
+    error ConfigAlreadyEnabled();
+    /// @notice Error to indicate that the stx mode verifier address cannot be the zero address
+    error StxModeVerifierAddressCannotBeZeroAddress();
+
+    /// @notice Error to indicate that the stateless validator address cannot be the zero address
+    error StatelessValidatorAddressCannotBeZeroAddress();
 
     address public immutable NO_STX_MODE_VERIFIER;
     address public immutable SIMPLE_MODE_VERIFIER;
@@ -71,6 +82,12 @@ contract ConfigManager {
         P256_STATELESS_VALIDATOR = submoduleAddresses.p256StatelessValidator;
     }
 
+    /**
+     * @dev Internal function to get the submodules for the given signature type
+     *      for no sig type prefix, fallback to no stx mode
+     * @param smartAccount The smart account that requested the validation
+     * @param sigData The signature data to get the submodules for
+     */
     function _getSubmodules(
         address smartAccount,
         bytes calldata sigData
@@ -128,6 +145,12 @@ contract ConfigManager {
         }
     }
 
+    /**
+     * @dev Internal function to get the ownership data for the given stateless validator address
+     * @param smartAccount The smart account that requested the validation
+     * @param statelessValidator The address of the stateless validator
+     * @return _ownershipData The ownership data
+     */
     function _getOwnershipData(
         address smartAccount,
         address statelessValidator
@@ -147,6 +170,12 @@ contract ConfigManager {
         }
     }
 
+    /**
+     * @dev Internal function to store the ownership data for the given stateless validator address
+     * @param smartAccount The smart account that requested the validation
+     * @param statelessValidator The address of the stateless validator
+     * @param _ownershipData The ownership data to store
+     */
     function _storeOwnershipDataForAccount(
         address smartAccount,
         address statelessValidator,
@@ -157,6 +186,14 @@ contract ConfigManager {
         ownershipData[statelessValidator][smartAccount].store(_ownershipData);
     }
 
+    /**
+     * @dev Internal function to enable a new config for the smart account
+     *      stores the config and adds the config id to the enabled custom configs set
+     * @param smartAccount The smart account that requested the validation
+     * @param configId The id of the config to add
+     * @param stxModeVerifierAddress The address of the stx mode verifier
+     * @param statelessValidatorAddress The address of the stateless validator
+     */
     function _enableConfigForAccount(
         address smartAccount,
         bytes32 configId,
@@ -167,6 +204,37 @@ contract ConfigManager {
     {
         _storeConfigForAccount(smartAccount, configId, stxModeVerifierAddress, statelessValidatorAddress);
         enabledCustomConfigs.add(smartAccount, configId);
+    }
+
+    /**
+     * @dev Internal function to replace a config for the smart account
+     * @param smartAccount The smart account that requested the validation
+     * @param configId The id of the config to replace
+     * @param stxModeVerifierAddress The address of the stx mode verifier
+     * @param statelessValidatorAddress The address of the stateless validator
+     */
+    function _replaceConfigForAccount(
+        address smartAccount,
+        bytes32 configId,
+        address stxModeVerifierAddress,
+        address statelessValidatorAddress
+    )
+        internal
+    {
+        require(enabledCustomConfigs.contains(smartAccount, configId), ConfigNotEnabled());
+        _validateConfigAddresses(stxModeVerifierAddress, statelessValidatorAddress);
+        _storeConfigForAccount(smartAccount, configId, stxModeVerifierAddress, statelessValidatorAddress);
+    }
+
+    /**
+     * @dev Internal function to delete a config for the smart account
+     * @param smartAccount The smart account that requested the validation
+     * @param configId The id of the config to delete
+     */
+    function _deleteConfigForAccount(address smartAccount, bytes32 configId) internal {
+        require(enabledCustomConfigs.contains(smartAccount, configId), ConfigNotEnabled());
+        delete customConfigs[configId][smartAccount];
+        enabledCustomConfigs.remove(smartAccount, configId);
     }
 
     /**
@@ -186,5 +254,16 @@ contract ConfigManager {
         customConfigs[configId][smartAccount] = ValidationConfig({
             stxModeVerifierAddress: stxModeVerifierAddress, statelessValidatorAddress: statelessValidatorAddress
         });
+    }
+
+    /**
+     * @dev Internal function to validate the stx mode verifier address
+     *      and the stateless validator address
+     * @param stxModeVerifierAddress The address of the stx mode verifier
+     * @param statelessValidatorAddress The address of the stateless validator
+     */
+    function _validateConfigAddresses(address stxModeVerifierAddress, address statelessValidatorAddress) internal view {
+        require(stxModeVerifierAddress != address(0), StxModeVerifierAddressCannotBeZeroAddress());
+        require(statelessValidatorAddress != address(0), StatelessValidatorAddressCannotBeZeroAddress());
     }
 }
