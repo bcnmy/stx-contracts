@@ -44,6 +44,7 @@ import { ConfigManager, SubmoduleAddresses, ValidationConfig } from "./ConfigMan
 contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC7739Multiplexer, ConfigManager {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.AddressSet;
+    using FlatBytesLib for FlatBytesLib.Bytes;
 
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
@@ -350,30 +351,31 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
 
     /**
      * De-initialize the module with the given data
+     * @dev Removes all configurations and data stored for the calling smart account
      */
     function onUninstall(bytes calldata) external override {
+        address account = msg.sender;
 
-        // TODO: implement this
-        /*
-        // Get all enabled configIds for this account
-        bytes32[] memory configIds = enabledConfigs.values(msg.sender);
-        uint256 len = configIds.length;
+        // 1. Clear all safe senders for this account
+        _safeSenders.removeAll(account);
 
-        // Delete each config's data
-        for (uint256 i; i < len; ++i) {
-            bytes32 configId = configIds[i];
-            // Clear the validationData stored via FlatBytesLib
-            configs[configId][msg.sender].validationData.clear();
-            // Delete the config struct
-            delete configs[configId][msg.sender];
+        // 2. Clear ownership data for default stateless validators
+        ownershipData[EOA_STATELESS_VALIDATOR][account].clear();
+        ownershipData[P256_STATELESS_VALIDATOR][account].clear();
+        ownershipData[SAFE_ACCOUNT_SUBMODULE][account].clear();
+
+        // 3. Clear all custom configs and their associated ownership data
+        uint256 configCount = enabledCustomConfigs.length(account);
+        for (uint256 i = 0; i < configCount; i++) {
+            bytes32 configId = enabledCustomConfigs.at(account, i);
+
+            // Get the stateless validator address from the config and clear its ownership data
+            address statelessValidator = customConfigs[configId][account].statelessValidatorAddress;
+            ownershipData[statelessValidator][account].clear();
+
+            delete customConfigs[configId][account];
         }
-
-        // Remove all configIds from the enabledConfigs set
-        enabledConfigs.removeAll(msg.sender);
-
-        // Remove all safe senders
-        _safeSenders.removeAll(msg.sender);
-        */
+        enabledCustomConfigs.removeAll(account);
     }
 
     /**
@@ -504,8 +506,10 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
     /// @param smartAccount The address of the smart account
     /// @return isInitializedRet True if the smart account has an owner, false otherwise
     function _isInitialized(address smartAccount) private view returns (bool isInitializedRet) {
-        return false;
-        // TODO: implement this
+        return ownershipData[EOA_STATELESS_VALIDATOR][smartAccount].totalLength > 0
+            || ownershipData[P256_STATELESS_VALIDATOR][smartAccount].totalLength > 0
+            || ownershipData[SAFE_ACCOUNT_SUBMODULE][smartAccount].totalLength > 0
+            || enabledCustomConfigs.length(smartAccount) > 0;
     }
 
     /**
