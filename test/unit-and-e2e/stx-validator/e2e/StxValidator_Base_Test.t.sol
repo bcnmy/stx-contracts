@@ -4,15 +4,15 @@ pragma solidity ^0.8.27;
 import { Vm, console2 } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
-import { BaseTest, SubmoduleAddresses } from "../../Base.t.sol";
-import { MEEUserOpHashLib } from "../../../contracts/lib/stx-validator/MEEUserOpHashLib.sol";
-import { MockAccount } from "../../mock/accounts/MockAccount.sol";
-import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
+import { BaseTest, SubmoduleAddresses } from "../../../Base.t.sol";
+import { MEEUserOpHashLib } from "../../../../contracts/lib/stx-validator/MEEUserOpHashLib.sol";
+import { MockAccount } from "../../../mock/accounts/MockAccount.sol";
+import { CopyUserOpLib } from "../../../util/CopyUserOpLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
 import "contracts/types/Constants.sol";
 import {
     EOAStatelessValidator
-} from "../../../contracts/validators/stx-validator/submodules/EOAStatelessValidator.sol";
+} from "../../../../contracts/validators/stx-validator/submodules/EOAStatelessValidator.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
 
 contract StxValidator_Base_Test is BaseTest {

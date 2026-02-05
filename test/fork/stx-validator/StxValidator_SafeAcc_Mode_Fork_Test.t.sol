@@ -2,7 +2,10 @@
 pragma solidity ^0.8.27;
 
 import { Vm } from "forge-std/Test.sol";
-import { StxValidator_Base_Test, SubmoduleAddresses } from "../../unit/stx-validator/StxValidator_Base_Test.t.sol";
+import {
+    StxValidator_Base_Test,
+    SubmoduleAddresses
+} from "../../unit-and-e2e/stx-validator/e2e/StxValidator_Base_Test.t.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { ISafe } from "contracts/interfaces/external/safe-smart-account/ISafe.sol";
 import { SafeEnumLib } from "contracts/interfaces/external/safe-smart-account/SafeEnumLib.sol";

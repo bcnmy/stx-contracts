@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { Vm } from "forge-std/Test.sol";
-import { StxValidator_Base_Test } from "../../../unit/stx-validator/StxValidator_Base_Test.t.sol";
+import { StxValidator_Base_Test } from "../../../unit-and-e2e/stx-validator/e2e/StxValidator_Base_Test.t.sol";
 import { StxValidator } from "contracts/validators/stx-validator/StxValidator.sol";
 import { P256StatelessValidator } from "contracts/validators/stx-validator/submodules/p256/P256StatelessValidator.sol";
 import { SimpleModeSubmodule } from "contracts/validators/stx-validator/submodules/SimpleModeSubmodule.sol";

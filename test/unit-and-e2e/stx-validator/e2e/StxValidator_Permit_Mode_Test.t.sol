@@ -13,7 +13,7 @@ import {
     DecodedErc20PermitSigShort,
     PERMIT_TYPEHASH
 } from "contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
-import { CopyUserOpLib } from "../../util/CopyUserOpLib.sol";
+import { CopyUserOpLib } from "../../../util/CopyUserOpLib.sol";
 import { SIG_TYPE_ERC20_PERMIT } from "contracts/types/Constants.sol";
 
 contract StxValidator_Permit_Mode_Test is StxValidator_Base_Test {

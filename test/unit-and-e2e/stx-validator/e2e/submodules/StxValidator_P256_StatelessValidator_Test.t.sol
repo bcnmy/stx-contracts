@@ -1,31 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { StxValidator_Base_Test } from "./StxValidator_Base_Test.t.sol";
+import { StxValidator_Base_Test } from "../StxValidator_Base_Test.t.sol";
 import { Vm } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
-import { MockTarget } from "../../mock/MockTarget.sol";
-import { ERC1271_SUCCESS } from "contracts/types/Constants.sol";
+import { MockTarget } from "../../../../mock/MockTarget.sol";
+import {
+    ERC1271_SUCCESS,
+    SIG_TYPE_NO_STX_P256,
+    SIG_TYPE_NO_STX_VANILLA_1271_P256
+} from "contracts/types/Constants.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
-import { SIG_TYPE_NO_STX_VANILLA_1271_EOA } from "contracts/types/Constants.sol";
 
-contract StxValidator_NoStx_Mode_Test is StxValidator_Base_Test {
+contract StxValidator_P256_StatelessValidator_Integration_Test is StxValidator_Base_Test {
     bytes32 internal constant APP_DOMAIN_SEPARATOR = 0xa1a044077d7677adbbfa892ded5390979b33993e0e2a457e3f974bbcda53821b;
+
+    uint256 internal p256PublicKeyX;
+    uint256 internal p256PublicKeyY;
+    bytes internal validationData;
 
     function setUp() public virtual override {
         super.setUp();
 
-        // use permit submodule with the default config
-        // it supports no stx mode detection for userOps flow
+        // create a p256 signer
+        (p256PublicKeyX, p256PublicKeyY) = vm.publicKeyP256(wallet.privateKey);
+        validationData = abi.encodePacked(p256PublicKeyX, p256PublicKeyY);
+
         vm.startPrank(address(mockAccount));
-        // set the default config
-        stxValidator.onInstall(
-            abi.encodePacked(address(eoaStatelessValidator), uint8(0), abi.encodePacked(wallet.addr))
-        );
+        // set ownership data
+        stxValidator.onInstall(abi.encodePacked(address(p256StatelessValidator), uint8(0), validationData));
+
         vm.stopPrank();
     }
 
-    function test_noStxMode_ValidateUserOp_EOA_success() public {
+    function test_ValidateUserOp_P256_StatelessValidator_success() public {
         uint256 counterBefore = mockTarget.counter();
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
 
@@ -38,13 +46,15 @@ contract StxValidator_NoStx_Mode_Test is StxValidator_Base_Test {
             ),
             wallet: wallet,
             preVerificationGasLimit: 3e5,
-            verificationGasLimit: 500e3,
+            verificationGasLimit: 900e3,
             callGasLimit: 3e6
         });
 
-        // we do no specific signature encoding / packing here.
-        // this falback flow will use the noStxModeVerifier to process the userOp
-        // and EOA stateless validator to validate the signature
+        bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOp);
+        (bytes32 r, bytes32 s) = vm.signP256(wallet.privateKey, userOpHash);
+        bytes memory signature = abi.encodePacked(SIG_TYPE_NO_STX_P256, r, s);
+        userOp.signature = signature;
+
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = userOp;
 
@@ -55,26 +65,25 @@ contract StxValidator_NoStx_Mode_Test is StxValidator_Base_Test {
         assertEq(mockTarget.counter(), counterBefore + 1);
     }
 
-    function test_noStxMode_isValidSignatureWithSender_7739_EOA_success() public {
+    function test_isValidSignatureWithSender_P256_StatelessValidator_7739_success() public {
         TestTemps memory t;
         t.contents = keccak256("0x1234");
         bytes32 dataToSign = toERC7739Hash(t.contents, address(mockAccount));
-        (t.v, t.r, t.s) = vm.sign(wallet.privateKey, dataToSign);
+        (t.r, t.s) = vm.signP256(wallet.privateKey, dataToSign);
         bytes memory contentsType = "Contents(bytes32 stuff)";
-        bytes memory signature = abi.encodePacked(
-            t.r, t.s, t.v, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length)
-        );
-        // sig w/o prefix should fallback for no stx mode verifier which uses erc-7739 by default
+        bytes memory signature =
+            abi.encodePacked(t.r, t.s, APP_DOMAIN_SEPARATOR, t.contents, contentsType, uint16(contentsType.length));
+        signature = abi.encodePacked(SIG_TYPE_NO_STX_P256, signature);
         bytes4 ret = mockAccount.isValidSignature(toContentsHash(t.contents), signature);
         assertEq(ret, bytes4(ERC1271_SUCCESS));
     }
 
-    function test_noStxMode_isValidSignatureWithSender_1271_EOA_success() public {
+    function test_isValidSignatureWithSender_P256_StatelessValidator_1271_success() public {
         TestTemps memory t;
         bytes32 dataToSign = keccak256("0x1234");
-        (t.v, t.r, t.s) = vm.sign(wallet.privateKey, dataToSign);
-        bytes memory signature = abi.encodePacked(t.r, t.s, t.v);
-        signature = abi.encodePacked(SIG_TYPE_NO_STX_VANILLA_1271_EOA, signature);
+        (t.r, t.s) = vm.signP256(wallet.privateKey, dataToSign);
+        bytes memory signature = abi.encodePacked(t.r, t.s);
+        signature = abi.encodePacked(SIG_TYPE_NO_STX_VANILLA_1271_P256, signature);
         bytes4 ret = mockAccount.isValidSignature(dataToSign, signature);
         assertEq(ret, bytes4(ERC1271_SUCCESS));
     }
