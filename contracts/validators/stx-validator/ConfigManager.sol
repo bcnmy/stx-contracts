@@ -52,9 +52,10 @@ contract ConfigManager {
     error ConfigNotEnabled();
     /// @notice Error to indicate that the config is already enabled
     error ConfigAlreadyEnabled();
+    /// @notice Error to indicate that the config is invalid or not enabled for the account
+    error InvalidOrNotEnabledConfigForAccount(address smartAccount, bytes32 configId);
     /// @notice Error to indicate that the stx mode verifier address cannot be the zero address
     error StxModeVerifierAddressCannotBeZeroAddress();
-
     /// @notice Error to indicate that the stateless validator address cannot be the zero address
     error StatelessValidatorAddressCannotBeZeroAddress();
 
@@ -134,6 +135,9 @@ contract ConfigManager {
             require(sigData.length >= 36, InvalidSignatureDataLength());
             bytes32 configId = bytes32(sigData[4:36]);
             ValidationConfig storage config = customConfigs[configId][smartAccount];
+            if (config.stxModeVerifierAddress == address(0) || config.statelessValidatorAddress == address(0)) {
+                revert InvalidOrNotEnabledConfigForAccount(smartAccount, configId);
+            }
             return (config.stxModeVerifierAddress, config.statelessValidatorAddress, sigData[36:]);
         } else if (bytes3(sigData[:3]) == SIG_TYPE_MEE_FLOW) {
             // 0x177eee

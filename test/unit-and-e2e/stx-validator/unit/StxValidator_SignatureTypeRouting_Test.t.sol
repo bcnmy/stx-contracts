@@ -197,19 +197,18 @@ contract StxValidator_SignatureTypeRouting_Test is StxValidator_Unit_Base_Test {
         assertEq(parsedSigData, bytes("test signature data"));
     }
 
-    /// @notice Test SIG_TYPE_CUSTOM with non-existent config returns zero addresses
-    function test_getSubmodules_sigTypeCustom_nonExistentConfigReturnsZeroAddresses() public view {
+    /// @notice Test SIG_TYPE_CUSTOM with non-existent config reverts
+    function test_getSubmodules_sigTypeCustom_nonExistentConfigReverts() public {
         // Build sig data with a config that doesn't exist
         bytes32 nonExistentConfigId = keccak256("non-existent-config");
         bytes memory sigData = abi.encodePacked(SIG_TYPE_CUSTOM, nonExistentConfigId, bytes("test signature data"));
 
-        (address stxModeVerifier, address statelessValidator, bytes memory parsedSigData) =
-            stxValidatorHarness.exposed_getSubmodules(smartAccount, sigData);
-
-        // Non-existent config returns zero addresses (no revert, but will fail validation later)
-        assertEq(stxModeVerifier, address(0));
-        assertEq(statelessValidator, address(0));
-        assertEq(parsedSigData, bytes("test signature data"));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ConfigManager.InvalidOrNotEnabledConfigForAccount.selector, smartAccount, nonExistentConfigId
+            )
+        );
+        stxValidatorHarness.exposed_getSubmodules(smartAccount, sigData);
     }
 
     /// @notice Test SIG_TYPE_CUSTOM reverts when sigData length is too short (< 36 bytes)
@@ -358,11 +357,13 @@ contract StxValidator_SignatureTypeRouting_Test is StxValidator_Unit_Base_Test {
         assertEq(stxModeVerifier1, customStxModeVerifier);
         assertEq(statelessValidator1, customStatelessValidator);
 
-        // Query for anotherSmartAccount - should return zero addresses (config not added for this account)
-        (address stxModeVerifier2, address statelessValidator2,) =
-            stxValidatorHarness.exposed_getSubmodules(anotherSmartAccount, sigData);
-        assertEq(stxModeVerifier2, address(0));
-        assertEq(statelessValidator2, address(0));
+        // Query for anotherSmartAccount - should revert (config not added for this account)
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ConfigManager.InvalidOrNotEnabledConfigForAccount.selector, anotherSmartAccount, customConfigId
+            )
+        );
+        stxValidatorHarness.exposed_getSubmodules(anotherSmartAccount, sigData);
     }
 
     // ==================== Edge Cases ====================
