@@ -15,6 +15,7 @@ import { MODULE_TYPE_STATELESS_VALIDATOR } from "../../../types/Constants.sol";
 
 contract EOAStatelessValidator is IStatelessValidator {
     error InvalidSignature();
+    error ZeroAddressOwner();
 
     using EcdsaHelperLib for bytes32;
 
@@ -37,6 +38,7 @@ contract EOAStatelessValidator is IStatelessValidator {
     {
         require(data.length >= 20, InvalidErc7780DataLength());
         address expectedSigner = address(bytes20(data[:20]));
+        require(expectedSigner != address(0), ZeroAddressOwner());
 
         // sig malleability prevention
         bytes32 s;
