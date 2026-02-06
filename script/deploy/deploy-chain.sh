@@ -72,6 +72,11 @@ VERIFY_BOOL=$(awk -v id="$CHAIN_ID" '/^\['"$CHAIN_ID"'\.bool\]/{flag=1;next} /^\
 VERIFY_FLAG=""
 if [ "$VERIFY_BOOL" = "true" ]; then
     VERIFY_FLAG="--verify"
+    # check if via_blockscout is set to true in the config.toml file
+    VIA_BLOCKSCOUT=$(awk -v id="$CHAIN_ID" '/^\['"$CHAIN_ID"'\.bool\]/{flag=1;next} /^\[/{flag=0} flag && /^via_blockscout =/{gsub(/"/, "", $3); print $3}' config.toml)
+    if [ "$VIA_BLOCKSCOUT" = "true" ]; then
+        VERIFY_FLAG="--verify --verifier blockscout"
+    fi
 fi
 
 ### ===== GAS SUFFIX ============
@@ -149,7 +154,7 @@ if [ $EP_V07_SIZE -eq 0 ]; then
         log_error "EP_V07_DEPLOY_TX_DATA is not set in .env"
         exit 1
     fi
-    cast send 0x4e59b44847b379578588920ca78fbf26c0b4956c $EP_V07_DEPLOY_TX_DATA --rpc-url $RPC_VAR --private-key $PRIVATE_KEY $GAS_SUFFIX_SEND
+    cast send 0x4e59b44847b379578588920ca78fbf26c0b4956c --data $EP_V07_DEPLOY_TX_DATA --rpc-url $RPC_VAR --private-key $PRIVATE_KEY $GAS_SUFFIX_SEND
     EP_V07_SIZE=$(cast codesize --rpc-url $RPC_VAR 0x0000000071727De22E5E9d8BAf0edAc6f37da032)
     if [ $EP_V07_SIZE -eq 0 ]; then
         printf "EP v0.7 deployment failed\n"
@@ -157,8 +162,18 @@ if [ $EP_V07_SIZE -eq 0 ]; then
     else
         printf "EP v0.7 deployed successfully\n"
     fi
-else 
+else
     printf "Entry point has already been deployed\n"
+fi
+
+# Check if Smart Sessions module is deployed at expected address
+SMART_SESSION_ADDRESS=$(awk '/^\[deployments\.singleton\.SmartSession\]/{flag=1;next} /^\[/{flag=0} flag && /^expected_address=/{gsub(/expected_address=/, ""); gsub(/"/, ""); print; exit}' deploy-ss.toml)
+if [ -n "$SMART_SESSION_ADDRESS" ]; then
+    SS_SIZE=$(cast codesize --rpc-url $RPC_VAR "$SMART_SESSION_ADDRESS" 2>/dev/null || echo "0")
+    if [ "$SS_SIZE" -eq 0 ]; then
+        log_warning "Smart Sessions module is NOT deployed at $SMART_SESSION_ADDRESS"
+        log_warning "Run 'bash deploy-ss.sh $CHAIN_ID' to deploy Smart Sessions contracts"
+    fi
 fi
 
 # STEP 2: Identify the contracts to deploy
@@ -207,13 +222,17 @@ if [ $CREATEX_SIZE -eq 0 ] && [ "$SKIP_CREATEX" = "false" ]; then
     { 
         # estimate the gas cost of the CreateX deployment transaction
         CREATEX_GAS_ESTIMATE=$(cast estimate --rpc-url $RPC_VAR --create $(cat ./util/createx-hex/contract-createx-bytescode.json | jq -r))
-        CREATEX_DEPLOY_PRESIGNED_TX="" 
+        printf "CreateX deployment gas estimate: $CREATEX_GAS_ESTIMATE\n"
+        CREATEX_DEPLOY_PRESIGNED_TX=""
         if [ $CREATEX_GAS_ESTIMATE -lt 3000000 ]; then # 3M gas
             CREATEX_DEPLOY_PRESIGNED_TX=$(cat ./util/createx-hex/signed_serialised_transaction_gaslimit_3000000_.json | jq -r)
+            printf "Using 3M gas presigned transaction\n"
         elif [ $CREATEX_GAS_ESTIMATE -lt 25000000 ]; then # 25M gas
             CREATEX_DEPLOY_PRESIGNED_TX=$(cat ./util/createx-hex/signed_serialised_transaction_gaslimit_25000000_ | jq -r)
+            printf "Using 25M gas presigned transaction\n"
         elif [ $CREATEX_GAS_ESTIMATE -lt 45000000 ]; then # 45M gas
             CREATEX_DEPLOY_PRESIGNED_TX=$(cat ./util/createx-hex/signed_serialised_transaction_gaslimit_45000000_.json | jq -r)
+            printf "Using 45M gas presigned transaction\n"
         else
             log_warning "CreateX deployment transaction gas cost is too high. Disperse contract will not be deployed."
             log_warning "Continuing with deployment without CreateX." 
@@ -227,7 +246,7 @@ if [ $CREATEX_SIZE -eq 0 ] && [ "$SKIP_CREATEX" = "false" ]; then
                 # fund the deployer address 0xeD456e05CaAb11d66C4c797dD6c1D6f9A7F352b5
                 cast send --rpc-url $RPC_VAR 0xeD456e05CaAb11d66C4c797dD6c1D6f9A7F352b5 --private-key $PRIVATE_KEY --value 0.3ether $GAS_SUFFIX_SEND
                 # publish the CreateX deployment transaction
-                cast publish $CREATEX_DEPLOY_PRESIGNED_TX --rpc-url $RPC_VAR
+                timeout 180 cast publish $CREATEX_DEPLOY_PRESIGNED_TX --rpc-url $RPC_VAR
                 CREATEX_SIZE=$(cast codesize --rpc-url $RPC_VAR $CREATEX_ADDRESS)
                 if [ $CREATEX_SIZE -eq 0 ]; then
                     # failed to deploy CreateX
