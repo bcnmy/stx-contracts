@@ -248,7 +248,7 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
             // if signature.length == 20, it means signature was implictly verified by safe account
             // that executed the trigger SafeTxn (see processStxUserOpData function)
             // the only thing we need to make sure is that the safe account owning smart account
-            //  is the same as the one that executed the trigger SafeTxn before
+            // is the same as the one that executed the trigger SafeTxn before
             // This is gas saving flow to avoid double signature checking which may be
             // gas heavy for Safe accounts with many signers
 
