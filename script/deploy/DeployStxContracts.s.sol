@@ -225,7 +225,7 @@ contract DeployStxContracts is Script, Config {
         bytes memory initData = abi.encode(
             expectedNexusBootstrapAddress,
             abi.encodeWithSelector(
-                NexusBootstrap.initNexusWithDefaultValidator.selector, abi.encodePacked(FACTORY_OWNER_ADDRESS)
+                NexusBootstrap.initNexusWithDefaultValidator.selector, _buildStxValidatorInitData(submoduleAddresses.eoaStatelessValidator)
             )
         );
         bytes32 initCodeHash = keccak256(
@@ -510,7 +510,7 @@ contract DeployStxContracts is Script, Config {
         bytes memory initData = abi.encode(
             deployedContractsPerChain[chainId].nexusBootstrap,
             abi.encodeWithSelector(
-                NexusBootstrap.initNexusWithDefaultValidator.selector, abi.encodePacked(FACTORY_OWNER_ADDRESS)
+                NexusBootstrap.initNexusWithDefaultValidator.selector, _buildStxValidatorInitData(deployedSubmodulesPerChain[chainId].eoaStatelessValidator)
             )
         );
         vm.startBroadcast();
