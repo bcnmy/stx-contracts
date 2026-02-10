@@ -50,6 +50,8 @@ contract MockERC7739Multiplexer is IERC7739Multiplexer {
     }
 }
 
+error UnexpectedSuperTxEntry(bytes32 occurredItemHash, bytes32 expectedItemHash);
+
 /// @title SimpleModeSubmodule Unit Tests
 /// @notice Unit tests for SimpleModeSubmodule error cases and edge cases
 /// @dev Full happy path flows are tested in e2e tests (StxValidator_Simple_Mode_Test)
@@ -94,9 +96,7 @@ contract SimpleModeSubmodule_Test is Test {
             packedTimestamps
         );
 
-        vm.expectRevert(
-            abi.encodeWithSelector(SimpleModeSubmodule.UnexpectedSuperTxEntry.selector, actualMeeHash, itemHashes[0])
-        );
+        vm.expectRevert(abi.encodeWithSelector(UnexpectedSuperTxEntry.selector, actualMeeHash, itemHashes[0]));
         submodule.processStxUserOpData(address(mockAccount), userOpHash, sigData);
     }
 
@@ -223,9 +223,7 @@ contract SimpleModeSubmodule_Test is Test {
         bytes memory sigData = abi.encode(SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH, uint256(0), itemHashes, signature);
 
         vm.prank(address(mockMultiplexer));
-        vm.expectRevert(
-            abi.encodeWithSelector(SimpleModeSubmodule.UnexpectedSuperTxEntry.selector, erc7739Hash, itemHashes[0])
-        );
+        vm.expectRevert(abi.encodeWithSelector(UnexpectedSuperTxEntry.selector, erc7739Hash, itemHashes[0]));
         submodule.processStxDataObject(address(mockAccount), address(0x1234), dataHash, sigData);
     }
 
@@ -276,9 +274,7 @@ contract SimpleModeSubmodule_Test is Test {
 
         bytes memory sigData = abi.encode(SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH, uint256(0), itemHashes, signature);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(SimpleModeSubmodule.UnexpectedSuperTxEntry.selector, dataHash, itemHashes[0])
-        );
+        vm.expectRevert(abi.encodeWithSelector(UnexpectedSuperTxEntry.selector, dataHash, itemHashes[0]));
         submodule.processStxDataObjectFor7780Flow(address(mockAccount), dataHash, sigData);
     }
 

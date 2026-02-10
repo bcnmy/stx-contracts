@@ -19,8 +19,6 @@ import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739
  */
 
 contract SimpleModeSubmodule is IStxModeVerifier {
-    error UnexpectedSuperTxEntry(bytes32 occurredItemHash, bytes32 expectedItemHash);
-
     /**
      * @dev
      *
@@ -62,9 +60,6 @@ contract SimpleModeSubmodule is IStxModeVerifier {
 
         bytes32 superTxEip712Hash =
             HashLib.compareAndGetFinalHashForAccount(account, outerTypeHash, currentItemHash, itemIndex, itemHashes);
-        if (superTxEip712Hash == bytes32(0)) {
-            revert UnexpectedSuperTxEntry(currentItemHash, itemHashes[itemIndex]);
-        }
 
         return (abi.encode(lowerBoundTimestamp, upperBoundTimestamp, superTxEip712Hash, signature));
     }
@@ -114,9 +109,6 @@ contract SimpleModeSubmodule is IStxModeVerifier {
         bytes32 superTxEip712Hash = HashLib.compareAndGetFinalHashForAccount(
             account, outerTypeHash, expectedIncludedErc7739Hash, itemIndex, itemHashes
         );
-        if (superTxEip712Hash == bytes32(0)) {
-            revert UnexpectedSuperTxEntry(expectedIncludedErc7739Hash, itemHashes[itemIndex]);
-        }
 
         return (superTxEip712Hash, erc7739Signature);
     }
@@ -143,9 +135,6 @@ contract SimpleModeSubmodule is IStxModeVerifier {
 
         bytes32 superTxEip712Hash =
             HashLib.compareAndGetFinalHashForAccount(account, outerTypeHash, dataHash, itemIndex, itemHashes);
-        if (superTxEip712Hash == bytes32(0)) {
-            revert UnexpectedSuperTxEntry(dataHash, itemHashes[itemIndex]);
-        }
 
         return (superTxEip712Hash, signature);
     }

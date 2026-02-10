@@ -133,7 +133,8 @@ contract PermitSubmodule is IStxModeVerifier {
      */
     function processStxDataObject(
         address account,
-        address sender,
+        address,
+        /* sender */
         bytes32 dataHash,
         bytes calldata sigData
     )

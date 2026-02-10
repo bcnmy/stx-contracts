@@ -26,6 +26,8 @@ bytes32 constant _DOMAIN_TYPEHASH = 0x95e78ac088fa46a576911187c70ccdc0642491fdb9
 uint256 constant STATIC_HEAD_LENGTH = 0x80; // introduced to re-use it in the contracts that use this library
 
 library HashLib {
+    error UnexpectedSuperTxEntry(bytes32 occurredItemHash, bytes32 expectedItemHash);
+
     using EfficientHashLib for *;
 
     function parsePackedSigDataHead(bytes calldata packedSignatureData)
@@ -77,9 +79,7 @@ library HashLib {
     {
         // Compare
         if (currentItemHash != itemHashes[itemIndex]) {
-            // should be treated as invalid in the caller code
-            // TODO: when we are to sunset MEEK1 Module, this can be changed to a revert
-            finalHash = bytes32(0);
+            revert UnexpectedSuperTxEntry(currentItemHash, itemHashes[itemIndex]);
         } else {
             // SuperTx is a dynamic struct { EntryType1 entryA, EntryType2 entryB, ... EntryTypeN entryX }
             // It's typehash is provided from the sdk, and the items are considered to be already
