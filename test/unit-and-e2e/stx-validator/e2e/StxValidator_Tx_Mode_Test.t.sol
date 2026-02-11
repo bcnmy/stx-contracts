@@ -38,7 +38,7 @@ contract StxValidator_Tx_Mode_Test is StxValidator_Base_Test {
 
         bytes memory innerCallData = abi.encodeWithSelector(token.transfer.selector, bob, amountToTransfer); // mock
         // Account transfers tokens to bob
-        PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildBasicMeeUserOpWithCalldata({
             callData: abi.encodeWithSelector(mockAccount.execute.selector, address(token), uint256(0), innerCallData),
             account: address(mockAccount),
             userOpSigner: wallet

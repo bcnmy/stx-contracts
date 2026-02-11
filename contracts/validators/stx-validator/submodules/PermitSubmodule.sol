@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { EcdsaHelperLib } from "../../../lib/util/EcdsaHelperLib.sol";
-import { MEEUserOpHashLib } from "../../../lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "../../../lib/stx-validator/MeeUserOpHashLib.sol";
 import { ERC20 } from "solady/tokens/ERC20.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
@@ -82,7 +82,7 @@ contract PermitSubmodule is IStxModeVerifier {
         DecodedErc20PermitSig calldata decodedSig = _decodeFullPermitSig(sigData);
 
         // Verify Merkle proof for the superTx hash
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(
             userOpHash, decodedSig.lowerBoundTimestamp, decodedSig.upperBoundTimestamp
         );
         if (!MerkleProofLib.verify(decodedSig.proof, decodedSig.superTxHash, meeUserOpHash)) {

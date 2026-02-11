@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { EcdsaHelperLib } from "../../../lib/util/EcdsaHelperLib.sol";
-import { MEEUserOpHashLib } from "../../../lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "../../../lib/stx-validator/MeeUserOpHashLib.sol";
 import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { RLPReader as RLPDecoder } from "rlp-reader/RLPReader.sol";
@@ -109,7 +109,7 @@ contract TxSubmodule is IStxModeVerifier {
         TxData memory decodedTx = decodeTx(sigData);
 
         bytes32 meeUserOpHash =
-            MEEUserOpHashLib.getMeeUserOpHash(userOpHash, decodedTx.lowerBoundTimestamp, decodedTx.upperBoundTimestamp);
+            MeeUserOpHashLib.getMeeUserOpHash(userOpHash, decodedTx.lowerBoundTimestamp, decodedTx.upperBoundTimestamp);
 
         if (!MerkleProofLib.verify(decodedTx.proof, decodedTx.superTxHash, meeUserOpHash)) {
             revert MerkleVerificationFailed();

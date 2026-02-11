@@ -14,7 +14,7 @@ import {
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
 import { LibRLP } from "solady/utils/LibRLP.sol";
-import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "contracts/lib/stx-validator/MeeUserOpHashLib.sol";
 import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 
 /**
@@ -71,7 +71,7 @@ contract TxSubmodule_Test is Test {
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
 
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
 
         // Build leaves with single element
         bytes32[] memory leaves = new bytes32[](1);
@@ -136,7 +136,7 @@ contract TxSubmodule_Test is Test {
         uint48 lowerBoundTimestamp = uint48(block.timestamp);
         uint48 upperBoundTimestamp = uint48(block.timestamp + 1000);
 
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
 
         bytes32[] memory leaves = new bytes32[](1);
         leaves[0] = meeUserOpHash;

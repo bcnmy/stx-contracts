@@ -5,7 +5,7 @@ import { Vm, console2 } from "forge-std/Test.sol";
 import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { BaseTest, SubmoduleAddresses } from "../../../Base.t.sol";
-import { MEEUserOpHashLib } from "../../../../contracts/lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "../../../../contracts/lib/stx-validator/MeeUserOpHashLib.sol";
 import { MockAccount } from "../../../mock/accounts/MockAccount.sol";
 import { CopyUserOpLib } from "../../../util/CopyUserOpLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
@@ -42,7 +42,7 @@ contract StxValidator_Base_Test is BaseTest {
      * @return userOp The built user operation
      */
     /* solhint-disable foundry-test-functions */
-    function buildBasicMEEUserOpWithCalldata(
+    function buildBasicMeeUserOpWithCalldata(
         bytes memory callData,
         address account,
         Vm.Wallet memory userOpSigner
@@ -60,7 +60,7 @@ contract StxValidator_Base_Test is BaseTest {
             callGasLimit: 3e6
         });
 
-        userOp = _makeMEEUserOp({
+        userOp = _makeMeeUserOp({
             userOp: userOp,
             pmValidationGasLimit: 40_000,
             pmPostOpGasLimit: 50_000,
@@ -83,7 +83,7 @@ contract StxValidator_Base_Test is BaseTest {
      * @param sigType The signature type
      * @return userOp The built user operation
      */
-    function _makeMEEUserOp(
+    function _makeMeeUserOp(
         PackedUserOperation memory userOp,
         uint128 pmValidationGasLimit,
         uint128 pmPostOpGasLimit,
@@ -187,7 +187,7 @@ contract StxValidator_Base_Test is BaseTest {
         for (uint256 i; i < superTxUserOps.length; ++i) {
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(superTxUserOps[i]);
             bytes32 meeUserOpEip712Hash =
-                MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+                MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
             a.set(i, meeUserOpEip712Hash);
         }
         encodedData = abi.encodePacked(a.hash());
@@ -202,7 +202,7 @@ contract StxValidator_Base_Test is BaseTest {
      * @param userOps The array of user operations to hash
      * @param lowerBoundTimestamp The lower bound timestamp
      * @param upperBoundTimestamp The upper bound timestamp
-     * @return itemHashes The array of hashed data structs: MEEUserOp(bytes32 userOpHash,uint256
+     * @return itemHashes The array of hashed data structs: MeeUserOp(bytes32 userOpHash,uint256
      * lowerBoundTimestamp,uint256 upperBoundTimestamp)
      */
     function _eip712HashMeeUserOps(
@@ -218,7 +218,7 @@ contract StxValidator_Base_Test is BaseTest {
         for (uint256 i; i < userOps.length; ++i) {
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[i]);
             itemHashes[i] =
-                MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+                MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
         }
         return itemHashes;
     }
@@ -237,7 +237,7 @@ contract StxValidator_Base_Test is BaseTest {
         bytes32[] memory leaves = new bytes32[](userOps.length);
         for (uint256 i = 0; i < userOps.length; i++) {
             bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[i]);
-            leaves[i] = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+            leaves[i] = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
         }
         return leaves;
     }

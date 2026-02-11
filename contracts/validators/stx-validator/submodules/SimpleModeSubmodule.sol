@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { EcdsaHelperLib } from "../../../lib/util/EcdsaHelperLib.sol";
-import { MEEUserOpHashLib } from "../../../lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "../../../lib/stx-validator/MeeUserOpHashLib.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
@@ -56,7 +56,7 @@ contract SimpleModeSubmodule is IStxModeVerifier {
         (uint256 lowerBoundTimestamp, uint256 upperBoundTimestamp) = UserOperationLib.unpackUints(packedTimestamps);
 
         bytes32 currentItemHash =
-            MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+            MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
 
         bytes32 superTxEip712Hash =
             HashLib.compareAndGetFinalHashForAccount(account, outerTypeHash, currentItemHash, itemIndex, itemHashes);

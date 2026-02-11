@@ -77,7 +77,7 @@ contract BaseTest is Test {
     address nodePmDeployer = address(0x011a23423423423);
 
     string constant MEE_USER_OP_SIGNATURE =
-        "MEEUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)";
+        "MeeUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)";
     string constant SUPER_TX_SIGNATURE_HEADER = "SuperTx";
 
     function setUp() public virtual {

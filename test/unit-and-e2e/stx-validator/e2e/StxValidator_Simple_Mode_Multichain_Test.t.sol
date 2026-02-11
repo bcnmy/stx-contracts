@@ -9,7 +9,7 @@ import { MockTarget } from "../../../mock/MockTarget.sol";
 import { MockAccount } from "../../../mock/accounts/MockAccount.sol";
 import { CopyUserOpLib } from "../../../util/CopyUserOpLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
-import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "contracts/lib/stx-validator/MeeUserOpHashLib.sol";
 import "contracts/types/Constants.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { SimpleModeSubmodule } from "contracts/validators/stx-validator/submodules/SimpleModeSubmodule.sol";
@@ -109,7 +109,7 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
 
         vm.chainId(CHAIN_1);
         bytes memory innerCallDataChain1 = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
-        PackedUserOperation memory userOpChain1 = buildBasicMEEUserOpWithCalldata({
+        PackedUserOperation memory userOpChain1 = buildBasicMeeUserOpWithCalldata({
             callData: abi.encodeWithSelector(
                 mockAccountChain1.execute.selector, address(mockTargetChain1), uint256(0), innerCallDataChain1
             ),
@@ -119,7 +119,7 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
 
         vm.chainId(CHAIN_2);
         bytes memory innerCallDataChain2 = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
-        PackedUserOperation memory userOpChain2 = buildBasicMEEUserOpWithCalldata({
+        PackedUserOperation memory userOpChain2 = buildBasicMeeUserOpWithCalldata({
             callData: abi.encodeWithSelector(
                 mockAccountChain2.execute.selector, address(mockTargetChain2), uint256(0), innerCallDataChain2
             ),
@@ -138,12 +138,12 @@ contract StxValidator_Simple_Mode_Multichain_Test is StxValidator_Base_Test {
         vm.chainId(CHAIN_1);
         bytes32 userOpHash1 = ENTRYPOINT.getUserOpHash(userOpChain1);
         stxItemHashes[0] =
-            MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash1, lowerBoundTimestamp, upperBoundTimestamp);
+            MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash1, lowerBoundTimestamp, upperBoundTimestamp);
 
         vm.chainId(CHAIN_2);
         bytes32 userOpHash2 = ENTRYPOINT.getUserOpHash(userOpChain2);
         stxItemHashes[1] =
-            MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash2, lowerBoundTimestamp, upperBoundTimestamp);
+            MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash2, lowerBoundTimestamp, upperBoundTimestamp);
 
         // ============ SIGN WITH CHAIN 1'S ACCOUNT ============
         vm.chainId(CHAIN_1);

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
-import { MEEUserOpHashLib } from "../../../lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "../../../lib/stx-validator/MeeUserOpHashLib.sol";
 import { ISafe, SAFE_TX_TYPEHASH } from "../../../interfaces/external/safe-smart-account/ISafe.sol";
 import { SafeEnumLib } from "../../../interfaces/external/safe-smart-account/SafeEnumLib.sol";
 import { IERC7739Multiplexer } from "../../../interfaces/stx-validator/IERC7739Multiplexer.sol";
@@ -74,7 +74,7 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
         SafeTxnData calldata safeTxnData = decodedSignature.safeTxnData;
         bytes32 superTxHash = _getSuperTxHash(safeTxnData);
 
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(
             userOpHash, decodedSignature.lowerBoundTimestamp, decodedSignature.upperBoundTimestamp
         );
 

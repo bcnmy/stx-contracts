@@ -3,9 +3,10 @@ pragma solidity ^0.8.27;
 
 import { Test, Vm } from "forge-std/Test.sol";
 import { SimpleModeSubmodule } from "contracts/validators/stx-validator/submodules/SimpleModeSubmodule.sol";
-import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "contracts/lib/stx-validator/MeeUserOpHashLib.sol";
 import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
 import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739Multiplexer.sol";
+import { _DOMAIN_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
 
 /// @title Mock ERC5267 for testing hashTypedDataForAccount
 contract MockERC5267 {
@@ -77,7 +78,7 @@ contract SimpleModeSubmodule_Test is Test {
         uint48 upperBound = 200;
 
         // Calculate actual MEE userOp hash
-        bytes32 actualMeeHash = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBound, upperBound);
+        bytes32 actualMeeHash = MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBound, upperBound);
 
         // Create itemHashes with a DIFFERENT hash at index 0
         bytes32[] memory itemHashes = new bytes32[](1);
@@ -107,7 +108,7 @@ contract SimpleModeSubmodule_Test is Test {
         uint48 upperBound = 67_890;
 
         // Calculate actual MEE userOp hash
-        bytes32 meeHash = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBound, upperBound);
+        bytes32 meeHash = MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBound, upperBound);
 
         // Create itemHashes with matching hash
         bytes32[] memory itemHashes = new bytes32[](1);
@@ -142,7 +143,7 @@ contract SimpleModeSubmodule_Test is Test {
         uint48 lowerBound = 0;
         uint48 upperBound = 0;
 
-        bytes32 meeHash = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBound, upperBound);
+        bytes32 meeHash = MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBound, upperBound);
 
         bytes32[] memory itemHashes = new bytes32[](1);
         itemHashes[0] = meeHash;
@@ -168,7 +169,7 @@ contract SimpleModeSubmodule_Test is Test {
         uint48 lowerBound = 100;
         uint48 upperBound = 200;
 
-        bytes32 meeHash = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBound, upperBound);
+        bytes32 meeHash = MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBound, upperBound);
 
         // Create itemHashes with our hash at index 2
         bytes32[] memory itemHashes = new bytes32[](3);
@@ -340,7 +341,7 @@ contract SimpleModeSubmodule_Test is Test {
     function testFuzz_processStxUserOpData_timestampUnpacking(uint48 lowerBound, uint48 upperBound) public {
         bytes32 userOpHash = keccak256("userOpHash");
 
-        bytes32 meeHash = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBound, upperBound);
+        bytes32 meeHash = MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBound, upperBound);
 
         bytes32[] memory itemHashes = new bytes32[](1);
         itemHashes[0] = meeHash;
@@ -418,8 +419,7 @@ contract SimpleModeSubmodule_Test is Test {
         (, string memory name,,,,,) = MockERC5267(account).eip712Domain();
 
         // Build domain separator: keccak256(_DOMAIN_TYPEHASH, keccak256(name))
-        bytes32 domainTypehash = 0x95e78ac088fa46a576911187c70ccdc0642491fdb90b2ed8674182c4aabca91d;
-        bytes32 domainSeparator = keccak256(abi.encode(domainTypehash, keccak256(bytes(name))));
+        bytes32 domainSeparator = keccak256(abi.encode(_DOMAIN_TYPEHASH, keccak256(bytes(name))));
 
         // Final EIP-712 hash
         return keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));

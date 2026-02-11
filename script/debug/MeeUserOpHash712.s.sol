@@ -1,23 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { MEEUserOpHashLib, MEE_USER_OP_TYPEHASH } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
-import { HashLib, SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH, _DOMAIN_TYPEHASH } from "contracts/lib/stx-validator/HashLib.sol";
+import { MeeUserOpHashLib, MEE_USER_OP_TYPEHASH } from "contracts/lib/stx-validator/MeeUserOpHashLib.sol";
+import {
+    HashLib,
+    SUPER_TX_MEE_USER_OP_ARRAY_TYPEHASH,
+    _DOMAIN_TYPEHASH
+} from "contracts/lib/stx-validator/HashLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { Script } from "forge-std/Script.sol";
 import { console2 } from "forge-std/console2.sol";
 
 contract MeeUserOpHash712_test_script is Script {
-
     using EfficientHashLib for *;
 
     function run() public pure {
-        
         /*
         bytes32 userOpHash = bytes32(uint256(0xb487febac9f1d06d0f5510f23ba4b5c52faabfe58ba771cbd62ec551be34e795));
         uint256 lowerBoundTimestamp = uint256(0);
         uint256 upperBoundTimestamp = uint256(0x69303e17);
-        bytes32 hash = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+        bytes32 hash = MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
         console2.logBytes32(hash);
         */
 
@@ -25,18 +27,17 @@ contract MeeUserOpHash712_test_script is Script {
         produceStxHash();
     }
 
-
-
     function produceStxHash() internal pure returns (bytes32) {
-
         uint256 lowerBoundTimestamp = uint256(0);
         uint256 upperBoundTimestamp = uint256(111);
-        
+
         bytes32 userOpHash1 = 0xb487febac9f1d06d0f5510f23ba4b5c52faabfe58ba771cbd62ec551be34e795;
         bytes32 userOpHash2 = 0xa525b841e423641448ae79b8eb0f60e42baf0cb497278c251dfe49da7dc1da48;
-        
-        bytes32 meeUserOpHash1 = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash1, lowerBoundTimestamp, upperBoundTimestamp);
-        bytes32 meeUserOpHash2 = MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash2, lowerBoundTimestamp, upperBoundTimestamp);
+
+        bytes32 meeUserOpHash1 =
+            MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash1, lowerBoundTimestamp, upperBoundTimestamp);
+        bytes32 meeUserOpHash2 =
+            MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash2, lowerBoundTimestamp, upperBoundTimestamp);
 
         //console2.logBytes32(meeUserOpHash1);
         //console2.logBytes32(meeUserOpHash2);
@@ -44,7 +45,7 @@ contract MeeUserOpHash712_test_script is Script {
         bytes32[] memory itemHashes = new bytes32[](2);
         itemHashes[0] = meeUserOpHash1;
         itemHashes[1] = meeUserOpHash2;
-        
+
         uint256 length = itemHashes.length;
         bytes32[] memory a = EfficientHashLib.malloc(length);
         for (uint256 i; i < length; ++i) {
@@ -60,19 +61,17 @@ contract MeeUserOpHash712_test_script is Script {
         console2.logBytes32(stxHash);
     }
 
-
-    /////====================   
+    /////====================
 
     function testHashingForAccount() public pure {
         string memory name = "Nexus";
         bytes32 structHash = bytes32(keccak256(abi.encodePacked("test"))); // random struct hash
-        
+
         bytes32 digest1 = hashTypedDataForAccount1(name, structHash);
         console2.logBytes32(digest1);
         bytes32 digest2 = hashTypedDataForAccount2(name, structHash);
         console2.logBytes32(digest2);
     }
-
 
     function hashTypedDataForAccount1(string memory name, bytes32 structHash) public pure returns (bytes32) {
         bytes32 digest;

@@ -10,7 +10,7 @@ import {
 } from "contracts/validators/stx-validator/submodules/SafeAccountSubmodule.sol";
 import { ISafe, SAFE_TX_TYPEHASH } from "contracts/interfaces/external/safe-smart-account/ISafe.sol";
 import { SafeEnumLib } from "contracts/interfaces/external/safe-smart-account/SafeEnumLib.sol";
-import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "contracts/lib/stx-validator/MeeUserOpHashLib.sol";
 import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 import { MerkleTreeLib } from "solady/utils/MerkleTreeLib.sol";
 import { InvalidErc7780DataLength } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
@@ -162,7 +162,7 @@ contract SafeAccountSubmodule_Test is Test {
         uint48 upperBound = 200;
 
         // Build merkle tree with single leaf
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
         bytes32[] memory leaves = new bytes32[](1);
 
         // Create SafeTxnData with superTxHash as last 32 bytes of data
@@ -212,7 +212,7 @@ contract SafeAccountSubmodule_Test is Test {
         uint48 lowerBound = 100;
         uint48 upperBound = 200;
 
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
         bytes32[] memory leaves = new bytes32[](1);
 
         SafeTxnData memory safeTxnData = _createSafeTxnData(meeUserOpHash);
@@ -258,7 +258,7 @@ contract SafeAccountSubmodule_Test is Test {
         uint48 lowerBound = 100;
         uint48 upperBound = 200;
 
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
 
         // Create tree with different leaf
         bytes32[] memory leaves = new bytes32[](1);
@@ -293,7 +293,7 @@ contract SafeAccountSubmodule_Test is Test {
         uint48 lowerBound = 100;
         uint48 upperBound = 200;
 
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
         bytes32[] memory leaves = new bytes32[](1);
 
         SafeTxnData memory safeTxnData = _createSafeTxnData(meeUserOpHash);
@@ -330,7 +330,7 @@ contract SafeAccountSubmodule_Test is Test {
         uint48 lowerBound = 100;
         uint48 upperBound = 200;
 
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
         bytes32[] memory leaves = new bytes32[](1);
 
         SafeTxnData memory safeTxnData = _createSafeTxnData(meeUserOpHash);

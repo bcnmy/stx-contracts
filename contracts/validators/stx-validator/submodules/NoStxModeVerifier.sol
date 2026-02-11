@@ -3,7 +3,7 @@ pragma solidity ^0.8.27;
 
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { EcdsaHelperLib } from "../../../lib/util/EcdsaHelperLib.sol";
-import { MEEUserOpHashLib } from "../../../lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "../../../lib/stx-validator/MeeUserOpHashLib.sol";
 import { ERC20 } from "solady/tokens/ERC20.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";

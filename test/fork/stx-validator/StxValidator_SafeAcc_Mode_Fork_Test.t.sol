@@ -128,7 +128,7 @@ contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
         bytes memory innerCallData = abi.encodeWithSelector(erc20.transfer.selector, receiver, amountToTransfer);
 
         vm.selectFork(baseSepolia);
-        PackedUserOperation memory userOp_baseSepolia = buildBasicMEEUserOpWithCalldata({
+        PackedUserOperation memory userOp_baseSepolia = buildBasicMeeUserOpWithCalldata({
             callData: abi.encodeWithSelector(orchestrator.execute.selector, address(erc20), uint256(0), innerCallData),
             account: address(orchestrator),
             userOpSigner: wallet
@@ -139,7 +139,7 @@ contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
 
         vm.selectFork(sepolia);
 
-        PackedUserOperation memory userOp_sepolia = buildBasicMEEUserOpWithCalldata({
+        PackedUserOperation memory userOp_sepolia = buildBasicMeeUserOpWithCalldata({
             callData: abi.encodeWithSelector(orchestrator.execute.selector, address(erc20), uint256(0), innerCallData),
             account: address(orchestrator),
             userOpSigner: wallet

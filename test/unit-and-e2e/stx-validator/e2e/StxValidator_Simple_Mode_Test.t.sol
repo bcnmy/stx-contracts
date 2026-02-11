@@ -7,7 +7,7 @@ import { PackedUserOperation } from "account-abstraction/core/UserOperationLib.s
 import { CopyUserOpLib } from "../../../util/CopyUserOpLib.sol";
 import { MockTarget } from "test/mock/MockTarget.sol";
 import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
-import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "contracts/lib/stx-validator/MeeUserOpHashLib.sol";
 import "contracts/types/Constants.sol";
 import { EcdsaHelperLib } from "contracts/lib/util/EcdsaHelperLib.sol";
 
@@ -66,7 +66,7 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
     {
         uint256 counterBefore = mockTarget.counter();
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
-        PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildBasicMeeUserOpWithCalldata({
             callData: abi.encodeWithSelector(
                 mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
             ),
@@ -208,7 +208,7 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
 
         // prepare user ops
         bytes memory innerCallData = abi.encodeWithSelector(MockTarget.incrementCounter.selector);
-        PackedUserOperation memory userOp = buildBasicMEEUserOpWithCalldata({
+        PackedUserOperation memory userOp = buildBasicMeeUserOpWithCalldata({
             callData: abi.encodeWithSelector(
                 mockAccount.execute.selector, address(mockTarget), uint256(0), innerCallData
             ),
@@ -442,7 +442,7 @@ contract StxValidator_Simple_Mode_Test is StxValidator_Base_Test {
                 // ‖ upperBound)
                 bytes32 userOpHash = ENTRYPOINT.getUserOpHash(userOps[userOpCounter]);
                 stxItemHashes[i] =
-                    MEEUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
+                    MeeUserOpHashLib.getMeeUserOpEip712Hash(userOpHash, lowerBoundTimestamp, upperBoundTimestamp);
                 userOpCounter++;
             } else if (stxLayout[i].entryType == EntryType.ENTRY_TYPE_A) {
                 // Create unique EntryTypeA: EntryTypeA(uint256 foo, bytes32 bar, address baz)

@@ -12,7 +12,7 @@ import {
     PERMIT_TYPEHASH
 } from "contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
-import { MEEUserOpHashLib } from "contracts/lib/stx-validator/MEEUserOpHashLib.sol";
+import { MeeUserOpHashLib } from "contracts/lib/stx-validator/MeeUserOpHashLib.sol";
 import { EcdsaHelperLib } from "contracts/lib/util/EcdsaHelperLib.sol";
 import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 
@@ -104,7 +104,7 @@ contract PermitSubmodule_Test is Test {
         uint48 upperBound = uint48(block.timestamp + 1000);
 
         // Build merkle tree with single leaf
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
         bytes32[] memory leaves = new bytes32[](1);
         leaves[0] = meeUserOpHash;
         bytes32[] memory tree = leaves.build();
@@ -148,7 +148,7 @@ contract PermitSubmodule_Test is Test {
         uint48 upperBound = uint48(block.timestamp + 1000);
 
         // Build merkle tree with single leaf
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
         bytes32[] memory leaves = new bytes32[](1);
         leaves[0] = meeUserOpHash;
         bytes32[] memory tree = leaves.build();
@@ -194,7 +194,7 @@ contract PermitSubmodule_Test is Test {
         assertEq(token.allowance(signer.addr, spender), 0);
 
         // Build merkle tree
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
         bytes32[] memory leaves = new bytes32[](1);
         leaves[0] = meeUserOpHash;
         bytes32[] memory tree = leaves.build();
@@ -242,7 +242,7 @@ contract PermitSubmodule_Test is Test {
         uint48 upperBound = uint48(block.timestamp + 1000);
 
         // Build merkle tree
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
         bytes32[] memory leaves = new bytes32[](1);
         leaves[0] = meeUserOpHash;
         bytes32[] memory tree = leaves.build();
@@ -293,7 +293,7 @@ contract PermitSubmodule_Test is Test {
         uint48 upperBound = uint48(block.timestamp + 1000);
 
         // Build merkle tree
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
         bytes32[] memory leaves = new bytes32[](1);
         leaves[0] = meeUserOpHash;
         bytes32[] memory tree = leaves.build();
@@ -625,7 +625,7 @@ contract PermitSubmodule_Test is Test {
         uint48 upperBound = uint48(block.timestamp + 1000);
 
         // Build merkle tree
-        bytes32 meeUserOpHash = MEEUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
+        bytes32 meeUserOpHash = MeeUserOpHashLib.getMeeUserOpHash(userOpHash, lowerBound, upperBound);
         bytes32[] memory leaves = new bytes32[](1);
         leaves[0] = meeUserOpHash;
         bytes32[] memory tree = leaves.build();
