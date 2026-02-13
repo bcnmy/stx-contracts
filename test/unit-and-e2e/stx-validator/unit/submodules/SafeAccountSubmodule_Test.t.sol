@@ -23,8 +23,8 @@ contract MockSafeAccount {
     uint256 public nonceValue;
     bool public execTransactionShouldSucceed = true;
     bool public execTransactionShouldRevert = false;
-    bool public modernCheckShouldRevert = false;
-    bool public legacyCheckShouldRevert = false;
+    bool public defaultCheckShouldRevert = false;
+    bool public fallbackCheckShouldRevert = false;
 
     bytes public lastExecTransactionData;
     bytes public lastCheckSignaturesData;
@@ -42,9 +42,9 @@ contract MockSafeAccount {
         execTransactionShouldRevert = shouldRevert;
     }
 
-    function setCheckSignaturesBehavior(bool modernRevert, bool legacyRevert) external {
-        modernCheckShouldRevert = modernRevert;
-        legacyCheckShouldRevert = legacyRevert;
+    function setCheckSignaturesBehavior(bool defaultRevert, bool fallbackRevert) external {
+        defaultCheckShouldRevert = defaultRevert;
+        fallbackCheckShouldRevert = fallbackRevert;
     }
 
     function domainSeparator() external view returns (bytes32) {
@@ -80,15 +80,15 @@ contract MockSafeAccount {
         return execTransactionShouldSucceed;
     }
 
-    function checkSignatures(bytes32, bytes memory, bytes memory) external view {
-        if (modernCheckShouldRevert) {
-            revert("checkSignatures failed");
+    function checkSignatures(bytes32, bytes memory, bytes memory) external {
+        if (defaultCheckShouldRevert) {
+            revert("default checkSignatures failed");
         }
     }
 
-    function checkSignatures(address, bytes32, bytes memory) external view {
-        if (legacyCheckShouldRevert) {
-            revert("legacy checkSignatures failed");
+    function checkSignatures(address, bytes32, bytes memory) external {
+        if (fallbackCheckShouldRevert) {
+            revert("fallback checkSignatures failed");
         }
     }
 
@@ -511,8 +511,8 @@ contract SafeAccountSubmodule_Test is Test {
         bytes memory signature = abi.encodePacked(safeAccount);
         assertEq(signature.length, 20);
 
-        // Data: safeAccount (20 bytes) + smartAccount (20 bytes)
-        bytes memory data = abi.encodePacked(safeAccount, smartAccount);
+        // Data: safeAccount (20 bytes)
+        bytes memory data = abi.encodePacked(safeAccount);
 
         bool result = submodule.validateSignatureWithData(hash, signature, data);
 
@@ -520,7 +520,7 @@ contract SafeAccountSubmodule_Test is Test {
     }
 
     /// @notice Test validateSignatureWithData with 20-byte signature fails when address mismatch
-    function test_validateSignatureWithData_20ByteSignature_addressMismatch_returnsFalse() public view {
+    function test_validateSignatureWithData_20ByteSignature_addressMismatch_returnsFalse() public {
         bytes32 hash = keccak256("hash");
         address safeAccount = address(mockSafe);
         address differentSafe = address(0xdead);
@@ -529,7 +529,7 @@ contract SafeAccountSubmodule_Test is Test {
         bytes memory signature = abi.encodePacked(differentSafe);
 
         // Data expects the original safe account
-        bytes memory data = abi.encodePacked(safeAccount, smartAccount);
+        bytes memory data = abi.encodePacked(safeAccount);
 
         bool result = submodule.validateSignatureWithData(hash, signature, data);
 
@@ -537,14 +537,16 @@ contract SafeAccountSubmodule_Test is Test {
     }
 
     /// @notice Test validateSignatureWithData with full signature calls checkSignatures
-    function test_validateSignatureWithData_fullSignature_callsCheckSignatures() public view {
+    function test_validateSignatureWithData_fullSignature_callsDefaultCheckSignatures() public {
         bytes32 hash = keccak256("hash");
         address safeAccount = address(mockSafe);
+
+        mockSafe.setCheckSignaturesBehavior({ defaultRevert: false, fallbackRevert: true });
 
         // Full signature (> 20 bytes)
         bytes memory signature = abi.encodePacked(bytes32(uint256(1)), bytes32(uint256(2)), uint8(27));
 
-        bytes memory data = abi.encodePacked(safeAccount, smartAccount);
+        bytes memory data = abi.encodePacked(safeAccount);
 
         bool result = submodule.validateSignatureWithData(hash, signature, data);
 
@@ -557,40 +559,41 @@ contract SafeAccountSubmodule_Test is Test {
         address safeAccount = address(mockSafe);
 
         // Set both check methods to revert
-        mockSafe.setCheckSignaturesBehavior(true, true);
+        mockSafe.setCheckSignaturesBehavior({ defaultRevert: true, fallbackRevert: true });
 
         bytes memory signature = abi.encodePacked(bytes32(uint256(1)), bytes32(uint256(2)), uint8(27));
-        bytes memory data = abi.encodePacked(safeAccount, smartAccount);
+        bytes memory data = abi.encodePacked(safeAccount);
 
+        // Both checks should revert
         bool result = submodule.validateSignatureWithData(hash, signature, data);
 
         assertFalse(result);
     }
 
-    /// @notice Test validateSignatureWithData falls back to legacy checkSignatures when modern fails
-    function test_validateSignatureWithData_fallsBackToLegacyCheckSignatures() public {
+    /// @notice Test validateSignatureWithData falls back to fallback checkSignatures when default fails
+    function test_validateSignatureWithData_fallsBackToFallbackCheckSignatures_whenDefaultFails() public {
         bytes32 hash = keccak256("hash");
         address safeAccount = address(mockSafe);
 
-        // Modern check reverts, legacy succeeds
-        mockSafe.setCheckSignaturesBehavior(true, false);
+        // Default check reverts, fallback succeeds
+        mockSafe.setCheckSignaturesBehavior({ defaultRevert: true, fallbackRevert: false });
 
         bytes memory signature = abi.encodePacked(bytes32(uint256(1)), bytes32(uint256(2)), uint8(27));
-        bytes memory data = abi.encodePacked(safeAccount, smartAccount);
+        bytes memory data = abi.encodePacked(safeAccount);
 
-        // Legacy check should succeed
+        // Fallback check should succeed
         bool result = submodule.validateSignatureWithData(hash, signature, data);
         assertTrue(result);
     }
 
-    /// @notice Test validateSignatureWithData reverts when data length < 40 bytes
-    function test_validateSignatureWithData_revertWhen_dataLengthLessThan40() public {
+    /// @notice Test validateSignatureWithData reverts when data length < 20 bytes
+    function test_validateSignatureWithData_revertWhen_dataLengthLessThan20() public {
         bytes32 hash = keccak256("hash");
         bytes memory signature = abi.encodePacked(bytes32(uint256(1)), bytes32(uint256(2)), uint8(27));
 
         // Only 20 bytes (missing smartAccount)
-        bytes memory shortData = abi.encodePacked(address(mockSafe));
-        assertEq(shortData.length, 20);
+        bytes memory shortData = abi.encodePacked(bytes19(0));
+        assertEq(shortData.length, 19);
 
         vm.expectRevert(InvalidErc7780DataLength.selector);
         submodule.validateSignatureWithData(hash, signature, shortData);

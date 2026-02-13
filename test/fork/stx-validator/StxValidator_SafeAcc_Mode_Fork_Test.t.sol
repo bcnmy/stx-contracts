@@ -106,7 +106,7 @@ contract StxValidator_SafeAcc_Mode_Fork_Test is StxValidator_Base_Test {
             abi.encodePacked(
                 address(safeAccountSubmodule), // stxModeVerifier
                 uint8(0), // no safe senders
-                abi.encodePacked(address(safe), address(orchestrator)) // validationData: safeAccount + smartAccount
+                abi.encodePacked(address(safe)) // validationData: safeAccount
             )
         );
 

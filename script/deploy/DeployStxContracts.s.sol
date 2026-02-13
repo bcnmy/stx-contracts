@@ -418,43 +418,82 @@ contract DeployStxContracts is Script, Config {
     }
 
     /**
-     * @notice Deploy all submodules required for StxValidator
+     * @notice Deploy all submodules required for StxValidator (skips already deployed)
      * @param chainId The chain ID to deploy to
      */
     function deployAllSubmodules(uint256 chainId) internal {
         console.log("  Deploying StxValidator submodules...");
 
-        address deployed;
+        address expected;
 
-        deployed = DeterministicDeployerLib.broadcastDeploy(noStxModeVerifierBytecode, NO_STX_MODE_VERIFIER_SALT);
-        deployedSubmodulesPerChain[chainId].noStxModeVerifier = deployed;
-        console.log("    NoStxModeVerifier:", deployed);
+        // in order not to overload the script interface with the submodules addresses,
+        // we just check them here, not in the main deploy-chain.sh script
 
-        deployed = DeterministicDeployerLib.broadcastDeploy(simpleModeSubmoduleBytecode, SIMPLE_MODE_VERIFIER_SALT);
-        deployedSubmodulesPerChain[chainId].simpleModeVerifier = deployed;
-        console.log("    SimpleModeSubmodule:", deployed);
 
-        deployed = DeterministicDeployerLib.broadcastDeploy(permitSubmoduleBytecode, PERMIT_MODE_VERIFIER_SALT);
-        deployedSubmodulesPerChain[chainId].permitModeVerifier = deployed;
-        console.log("    PermitSubmodule:", deployed);
+        expected = DeterministicDeployerLib.computeAddress(noStxModeVerifierBytecode, NO_STX_MODE_VERIFIER_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(noStxModeVerifierBytecode, NO_STX_MODE_VERIFIER_SALT);
+            console.log("    NoStxModeVerifier deployed:", expected);
+        } else {
+            console.log("    NoStxModeVerifier already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].noStxModeVerifier = expected;
 
-        deployed = DeterministicDeployerLib.broadcastDeploy(txSubmoduleBytecode, TX_MODE_VERIFIER_SALT);
-        deployedSubmodulesPerChain[chainId].txModeVerifier = deployed;
-        console.log("    TxSubmodule:", deployed);
+        expected = DeterministicDeployerLib.computeAddress(simpleModeSubmoduleBytecode, SIMPLE_MODE_VERIFIER_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(simpleModeSubmoduleBytecode, SIMPLE_MODE_VERIFIER_SALT);
+            console.log("    SimpleModeSubmodule deployed:", expected);
+        } else {
+            console.log("    SimpleModeSubmodule already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].simpleModeVerifier = expected;
 
-        deployed = DeterministicDeployerLib.broadcastDeploy(safeAccountSubmoduleBytecode, SAFE_ACCOUNT_SUBMODULE_SALT);
-        deployedSubmodulesPerChain[chainId].safeAccountSubmodule = deployed;
-        console.log("    SafeAccountSubmodule:", deployed);
+        expected = DeterministicDeployerLib.computeAddress(permitSubmoduleBytecode, PERMIT_MODE_VERIFIER_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(permitSubmoduleBytecode, PERMIT_MODE_VERIFIER_SALT);
+            console.log("    PermitSubmodule deployed:", expected);
+        } else {
+            console.log("    PermitSubmodule already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].permitModeVerifier = expected;
 
-        deployed = DeterministicDeployerLib.broadcastDeploy(eoaStatelessValidatorBytecode, EOA_STATELESS_VALIDATOR_SALT);
-        deployedSubmodulesPerChain[chainId].eoaStatelessValidator = deployed;
-        console.log("    EOAStatelessValidator:", deployed);
+        expected = DeterministicDeployerLib.computeAddress(txSubmoduleBytecode, TX_MODE_VERIFIER_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(txSubmoduleBytecode, TX_MODE_VERIFIER_SALT);
+            console.log("    TxSubmodule deployed:", expected);
+        } else {
+            console.log("    TxSubmodule already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].txModeVerifier = expected;
 
-        deployed = DeterministicDeployerLib.broadcastDeploy(p256StatelessValidatorBytecode, P256_STATELESS_VALIDATOR_SALT);
-        deployedSubmodulesPerChain[chainId].p256StatelessValidator = deployed;
-        console.log("    P256StatelessValidator:", deployed);
+        expected = DeterministicDeployerLib.computeAddress(safeAccountSubmoduleBytecode, SAFE_ACCOUNT_SUBMODULE_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(safeAccountSubmoduleBytecode, SAFE_ACCOUNT_SUBMODULE_SALT);
+            console.log("    SafeAccountSubmodule deployed:", expected);
+        } else {
+            console.log("    SafeAccountSubmodule already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].safeAccountSubmodule = expected;
 
-        console.log("  Submodules deployed successfully");
+        expected = DeterministicDeployerLib.computeAddress(eoaStatelessValidatorBytecode, EOA_STATELESS_VALIDATOR_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(eoaStatelessValidatorBytecode, EOA_STATELESS_VALIDATOR_SALT);
+            console.log("    EOAStatelessValidator deployed:", expected);
+        } else {
+            console.log("    EOAStatelessValidator already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].eoaStatelessValidator = expected;
+
+        expected = DeterministicDeployerLib.computeAddress(p256StatelessValidatorBytecode, P256_STATELESS_VALIDATOR_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(p256StatelessValidatorBytecode, P256_STATELESS_VALIDATOR_SALT);
+            console.log("    P256StatelessValidator deployed:", expected);
+        } else {
+            console.log("    P256StatelessValidator already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].p256StatelessValidator = expected;
+
+        console.log("  Submodules deployment check complete");
     }
 
     /**

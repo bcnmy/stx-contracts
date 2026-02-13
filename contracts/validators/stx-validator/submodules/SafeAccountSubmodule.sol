@@ -240,9 +240,8 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
         view
         returns (bool)
     {
-        require(data.length >= 40, InvalidErc7780DataLength());
+        require(data.length >= 20, InvalidErc7780DataLength());
         address safeAccountOwningSmartAccount = address(bytes20(data[:20]));
-        address smartAccount = address(bytes20(data[20:40]));
 
         if (signatures.length == 20) {
             // if signature.length == 20, it means signature was implictly verified by safe account
@@ -260,8 +259,12 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
         try ISafe(safeAccountOwningSmartAccount).checkSignatures(hash, hex"", signatures) {
             return true;
         } catch {
-            // if it reverts, try the legacy interface
-            try ISafe(safeAccountOwningSmartAccount).checkSignatures(smartAccount, hash, signatures) {
+            // if it reverts, try the fallback interface
+            // sending stx validator address as the executor
+            // this effectively makes v==1 (pre approved hash) flow on Safe account
+            // to never skip one signer, and always expect all the signers to
+            // pre-approve the hash
+            try ISafe(safeAccountOwningSmartAccount).checkSignatures(msg.sender, hash, signatures) {
                 return true;
             } catch {
                 return false;
