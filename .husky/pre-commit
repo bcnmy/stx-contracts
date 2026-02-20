@@ -14,7 +14,7 @@ for file in $STAGED_FILES; do
 done
 
 # Run Solhint and only output Errors, not warnings via awk
-ERROR_OUTPUT=$(pnpm lint:prod 2>&1 | awk '
+ERROR_OUTPUT=$(./node_modules/.bin/solhint 'contracts/**/*.sol' 2>&1 | awk '
 /\.sol$/ { current_file = $0 }
 /error/ && !/problems.*error/ {
     if (current_file && !file_printed[current_file]) {
