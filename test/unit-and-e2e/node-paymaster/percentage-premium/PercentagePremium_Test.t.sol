@@ -245,7 +245,7 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
     )
         public
         view
-        returns (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 actualRefund)
+        returns (uint256 meeNodeEarnings, uint256 expectedNodeEarnings, uint256 actualRefundIssuedByPM)
     {
         // parse UserOperationEvent
         (,, uint256 actualGasCostFromEP, uint256 actualGasUsedFromEP) =
@@ -262,16 +262,17 @@ contract PercentagePremium_Paymaster_Test is BaseTest {
         // nodePM does not charge for the penalty however because it still goes to the node EOA
         uint256 actualGasCost = gasCostPrePostOp + gasSpentInPostOp * actualGasPrice;
 
-        // NodePm doesn't charge for the penalty
         expectedNodeEarnings = getPremium(actualGasCost, meeNodePremiumPercentage);
 
         // deposit decrease = refund to sponsor (if any) + gas cost refund to beneficiary (EXECUTOR_EOA) =>
-        actualRefund = (nodePMDepositBefore - getDeposit(address(EMITTING_NODE_PAYMASTER))) - actualGasCostFromEP;
+        actualRefundIssuedByPM =
+            (nodePMDepositBefore - getDeposit(address(EMITTING_NODE_PAYMASTER))) - actualGasCostFromEP;
+        // this above calculation is correct, tested via withdrawn events in EP
 
         // earnings are (how much node receives in a payment userOp) minus (refund) minus (actual gas cost paid by
         // executor EOA)
-        meeNodeEarnings =
-            applyPremium(maxGasCost, meeNodePremiumPercentage) - actualRefund - gasSpentByExecutorEOA * actualGasPrice;
+        meeNodeEarnings = applyPremium(maxGasCost, meeNodePremiumPercentage) - actualRefundIssuedByPM
+            - gasSpentByExecutorEOA * actualGasPrice;
 
         assertTrue(meeNodeEarnings > 0, "MEE_NODE should have earned something");
         assertTrue(

@@ -22,6 +22,7 @@ library ComposableExecutionLib {
     error InvalidOutputParamFetcherType();
     error InvalidConstraintType();
     error InvalidSetOfInputParams(string message);
+    error ComposableExecutionFailed();
 
     // Process the input parameters and return the composed calldata
     function processInputs(

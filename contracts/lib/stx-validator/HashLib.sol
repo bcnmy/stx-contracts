@@ -56,13 +56,13 @@ library HashLib {
             itemIndex := calldataload(add(packedSignatureData.offset, 0x20))
             let u := calldataload(add(packedSignatureData.offset, 0x40)) // local offset of the array of hashes
             let s := add(packedSignatureData.offset, u) // global offset of the array of hashes
-            itemHashes.offset := add(s, 0x20) // account for 20 bytes length
+            itemHashes.offset := add(s, 0x20) // account for 32 bytes length
             itemHashes.length := calldataload(s) // get the length
             u := calldataload(add(packedSignatureData.offset, sub(STATIC_HEAD_LENGTH, 0x20))) // load local offset of
             // the
             // signature
             s := add(packedSignatureData.offset, u) // global offset of the signature
-            signature.offset := add(s, 0x20) // account for 20 bytes length
+            signature.offset := add(s, 0x20) // account for 32 bytes length
             signature.length := calldataload(s) // get the length
         }
     }

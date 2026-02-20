@@ -80,7 +80,7 @@ contract ComposableStorage {
     function getNamespace(address account, address _caller) public pure returns (bytes32 result) {
         assembly {
             mstore(0x00, account)
-            mstore(0x14, _caller)
+            mstore(0x20, shl(96, _caller))
             result := keccak256(0x0c, 0x28)
         }
     }

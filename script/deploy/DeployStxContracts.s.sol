@@ -156,7 +156,6 @@ contract DeployStxContracts is Script, Config {
      * @param contractNames Array of contract names to deploy (empty array = all contracts)
      */
     function run(uint256 chainId, string[] memory contractNames) external {
-        
         string memory fullConfigPath = string.concat(vm.projectRoot(), configPath);
         console.log("Loading config from:", fullConfigPath);
         
@@ -548,6 +547,7 @@ contract DeployStxContracts is Script, Config {
     function deployNexusProxy(uint256 chainId) internal returns (address) {
         bytes memory initData = abi.encode(
             deployedContractsPerChain[chainId].nexusBootstrap,
+            // or use the pre-deloyed address,
             abi.encodeWithSelector(
                 NexusBootstrap.initNexusWithDefaultValidator.selector, _buildStxValidatorInitData(deployedSubmodulesPerChain[chainId].eoaStatelessValidator)
             )
