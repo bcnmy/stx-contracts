@@ -22,7 +22,7 @@ contract P256StatelessValidator is IStatelessValidator, P256Verifier {
     ///      See https://github.com/ethereum/RIPs/blob/master/RIPS/rip-7212.md.
     address private constant _VERIFIER = address(0x100);
 
-    uint256 constant P256_N_DIV_2 =
+    uint256 internal constant P256_N_DIV_2 =
         57_896_044_605_178_124_381_348_723_474_703_786_764_998_477_612_067_880_171_211_129_530_534_256_022_184;
 
     error InvalidP256SignatureLength();
@@ -93,7 +93,13 @@ contract P256StatelessValidator is IStatelessValidator, P256Verifier {
         // do nothing
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
+    function isInitialized(
+        address /* smartAccount */
+    )
+        external
+        view
+        returns (bool)
+    {
         // stateless validator is always initialized
         return true;
     }

@@ -17,17 +17,23 @@ for file in $STAGED_FILES; do
   fi
 done
 
-# Run Solhint and only output Errors, not warnings via awk
-ERROR_OUTPUT=$(./node_modules/.bin/solhint 'contracts/**/*.sol' 2>&1 | awk '
+# Run Solhint to a temp file (pipes/subshells truncate large output)
+SOLHINT_TMP=$(mktemp)
+./node_modules/.bin/solhint 'contracts/**/*.sol' > "$SOLHINT_TMP" 2>&1 || true
+
+# Extract only error lines (not warnings) with their file context
+ERROR_OUTPUT=$(awk '
 /\.sol$/ { current_file = $0 }
-/error/ && !/problems.*error/ {
+/  error  / && !/problems.*error/ {
     if (current_file && !file_printed[current_file]) {
         print current_file
         file_printed[current_file] = 1
     }
     print $0
 }
-')
+' "$SOLHINT_TMP")
+
+rm -f "$SOLHINT_TMP"
 
 # If there are error lines, show them and exit
 if [ -n "$ERROR_OUTPUT" ]; then

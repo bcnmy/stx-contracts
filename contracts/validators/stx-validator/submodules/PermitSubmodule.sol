@@ -7,7 +7,6 @@ import { MeeUserOpHashLib } from "../../../lib/stx-validator/MeeUserOpHashLib.so
 import { ERC20 } from "solady/tokens/ERC20.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
-import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739Multiplexer.sol";
 import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 
 /**

@@ -1,14 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
-import { EcdsaHelperLib } from "../../../lib/util/EcdsaHelperLib.sol";
-import { MeeUserOpHashLib } from "../../../lib/stx-validator/MeeUserOpHashLib.sol";
-import { ERC20 } from "solady/tokens/ERC20.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
-import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { IERC7739Multiplexer } from "contracts/interfaces/stx-validator/IERC7739Multiplexer.sol";
-import { HashLib } from "contracts/lib/stx-validator/HashLib.sol";
 
 /**
  * @dev Fallback submodule for the no stx mode.

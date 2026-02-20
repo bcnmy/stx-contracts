@@ -1,2 +1,4 @@
 node_modules/
 scripts/
+contracts/validators/stx-validator/submodules/p256/P256Verifier.sol
+contracts/validators/stx-validator/ERC7739Validator.sol

@@ -461,7 +461,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
      */
 
     function deleteConfig(bytes32 configId) external {
-        address statelessValidatorAddress = customConfigs[configId][msg.sender].statelessValidatorAddress;
         _deleteConfigForAccount(msg.sender, configId);
         emit ConfigDeleted(configId, msg.sender);
     }
@@ -625,7 +624,6 @@ contract StxValidator is IValidator, IStatelessValidator, ERC7739Validator, IERC
         override
         returns (bool isValidSig)
     {
-        address stxModeVerifierAddress = address(bytes20(signature[0:20]));
         address statelessValidatorAddress = address(bytes20(signature[20:40]));
         bytes memory _ownershipData = _getOwnershipData(account, statelessValidatorAddress);
         isValidSig = _validateSignatureViaErc7780(statelessValidatorAddress, _ownershipData, hash, signature[40:]);

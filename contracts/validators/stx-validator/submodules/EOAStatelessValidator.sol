@@ -67,7 +67,13 @@ contract EOAStatelessValidator is IStatelessValidator {
         // do nothing
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
+    function isInitialized(
+        address /* smartAccount */
+    )
+        external
+        view
+        returns (bool)
+    {
         // stateless validator is always initialized
         return true;
     }

@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 
 import { EnumerableSet } from "EnumerableSet4337/EnumerableSet4337.sol";
 import { FlatBytesLib } from "flatbytes/BytesLib.sol";
-import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import {
     SIG_TYPE_MEE_FLOW,
     SIG_TYPE_SIMPLE,
@@ -89,6 +88,7 @@ contract ConfigManager {
      * @param smartAccount The smart account that requested the validation
      * @param sigData The signature data to get the submodules for
      */
+    // solhint-disable code-complexity
     function _getSubmodules(
         address smartAccount,
         bytes calldata sigData
@@ -148,6 +148,8 @@ contract ConfigManager {
             return (NO_STX_MODE_VERIFIER, EOA_STATELESS_VALIDATOR, sigData);
         }
     }
+
+    // solhint-enable code-complexity
 
     /**
      * @dev Internal function to get the ownership data for the given stateless validator address
