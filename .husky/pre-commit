@@ -1,5 +1,9 @@
 #!/usr/bin/env sh
 
+# Load nvm so node/pnpm are available in the hook
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
 # Get list of staged files
 STAGED_FILES=$(git diff --cached --name-only)
 
