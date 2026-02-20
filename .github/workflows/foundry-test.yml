@@ -22,7 +22,7 @@ jobs:
     - name: Install Foundry
       uses: foundry-rs/foundry-toolchain@v1
       with:
-        version: latest
+        version: nightly
     
     - name: Setup pnpm
       uses: pnpm/action-setup@v3

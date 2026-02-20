@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
-import { EcdsaHelperLib } from "../../../lib/util/EcdsaHelperLib.sol";
 import { MeeUserOpHashLib } from "../../../lib/stx-validator/MeeUserOpHashLib.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
-import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
-import { SIG_VALIDATION_FAILED, _packValidationData } from "account-abstraction/core/Helpers.sol";
 import { UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
 // solhint-disable-next-line no-unused-import
 import { HashLib, STATIC_HEAD_LENGTH } from "../../../lib/stx-validator/HashLib.sol";

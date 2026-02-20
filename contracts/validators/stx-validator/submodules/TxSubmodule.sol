@@ -4,7 +4,6 @@ pragma solidity ^0.8.27;
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { EcdsaHelperLib } from "../../../lib/util/EcdsaHelperLib.sol";
 import { MeeUserOpHashLib } from "../../../lib/stx-validator/MeeUserOpHashLib.sol";
-import { IStatelessValidator } from "contracts/interfaces/standard/erc-7780/IStatelessValidator.sol";
 import { IStxModeVerifier } from "contracts/interfaces/stx-validator/IStxModeVerifier.sol";
 import { RLPReader as RLPDecoder } from "rlp-reader/RLPReader.sol";
 import { RLPEncoder } from "../../../lib/stx-validator/rlp/RLPEncoder.sol";

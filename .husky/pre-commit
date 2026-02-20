@@ -14,9 +14,9 @@ for file in $STAGED_FILES; do
 done
 
 # Run Solhint and only output Errors, not warnings via awk
-ERROR_OUTPUT=$(pnpm lint | awk '
+ERROR_OUTPUT=$(pnpm lint:prod 2>&1 | awk '
 /\.sol$/ { current_file = $0 }
-/error/ && !/problems.*error/ { 
+/error/ && !/problems.*error/ {
     if (current_file && !file_printed[current_file]) {
         print current_file
         file_printed[current_file] = 1
@@ -25,11 +25,8 @@ ERROR_OUTPUT=$(pnpm lint | awk '
 }
 ')
 
-# Count error lines
-ERROR_COUNT=$(pnpm lint:prod | grep "error" | grep -v "problems.*error" | wc -l)
-
-# If there are some error lines, show errors and exit
-if [ "$ERROR_COUNT" -gt 0 ]; then
+# If there are error lines, show them and exit
+if [ -n "$ERROR_OUTPUT" ]; then
   echo "Solhint found errors, please fix them before committing"
   echo "$ERROR_OUTPUT"
   exit 1

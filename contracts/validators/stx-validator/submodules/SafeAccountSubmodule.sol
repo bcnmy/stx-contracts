@@ -3,9 +3,9 @@ pragma solidity ^0.8.27;
 
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { MeeUserOpHashLib } from "../../../lib/stx-validator/MeeUserOpHashLib.sol";
+// solhint-disable-next-line no-unused-import
 import { ISafe, SAFE_TX_TYPEHASH } from "../../../interfaces/external/safe-smart-account/ISafe.sol";
 import { SafeEnumLib } from "../../../interfaces/external/safe-smart-account/SafeEnumLib.sol";
-import { IERC7739Multiplexer } from "../../../interfaces/stx-validator/IERC7739Multiplexer.sol";
 import { IStxModeVerifier } from "../../../interfaces/stx-validator/IStxModeVerifier.sol";
 import { MODULE_TYPE_STATELESS_VALIDATOR } from "../../../types/Constants.sol";
 import {
@@ -146,7 +146,8 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
      */
     function processStxDataObject(
         address account,
-        address sender,
+        address,
+        /* sender */
         bytes32 dataHash,
         bytes calldata sigData
     )
@@ -401,7 +402,13 @@ contract SafeAccountSubmodule is IStxModeVerifier, IStatelessValidator {
         // do nothing
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
+    function isInitialized(
+        address /* smartAccount */
+    )
+        external
+        view
+        returns (bool)
+    {
         // stateless validator is always initialized
         return true;
     }
