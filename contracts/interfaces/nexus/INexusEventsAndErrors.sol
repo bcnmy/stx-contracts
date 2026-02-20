@@ -47,4 +47,14 @@ interface INexusEventsAndErrors {
 
     /// @notice Error thrown when the provided signature is invalid.
     error InvalidSignature();
+
+    /// @notice Thrown when there is an attempt to remove the last validator.
+    error CanNotRemoveLastValidator();
+
+    /// @notice Error thrown when the `r` component of the PREP signature restores as invalid.
+    error InvalidPREP();
+
+    /// @notice Event emitted when a PREP is initialized.
+    /// @param r The `r` component of the PREP signature.
+    event PREPInitialized(bytes32 r);
 }

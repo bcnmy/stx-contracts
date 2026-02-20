@@ -132,9 +132,6 @@
   worldchain = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "480"}
   worldchain-sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "4801"}
 
-  # FLUENT
-  # fluent-testnet = { key = "", url = "", chain = "20994"}
-
   # MONAD
   # monad = { key = "", url = "", chain = "143"}
   monad-testnet = { key = "${ETHERSCAN_API_KEY}", url = "https://api.etherscan.io/api", chain = "10143"}

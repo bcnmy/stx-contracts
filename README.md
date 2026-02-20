@@ -121,4 +121,5 @@ $ pnpm test
 ```
 
 ### Deployments
-See [`script/deploy/README.MD`](script/deploy/README.MD) to learn how to deploy the stx contracts to your chain.
+- Open any of the `deploy/vx.x.x` baranches
+- Read `script/deploy/README.MD` to learn how to deploy the stx contracts to your chain.
