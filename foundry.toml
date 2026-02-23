@@ -41,22 +41,27 @@
 [lint]
   lint_on_build = true
   ignore = [
+    # Dependencies
+    "node_modules/",
+    "node_modules/**",
+    "node_modules/**/*.sol",
+
     # Test files
     "test/*/*.t.sol",
-    "test/*.t.sol", 
+    "test/*.t.sol",
     "test/**/*.t.sol",
-    
+
     # Mock contracts
     "test/mock/*.sol",
     "contracts/mock/*.sol",
     "**/mock/*.sol",
-    
+
     # Specific file patterns that are often problematic
     "**/*Mock*.sol",
     "**/*Test*.sol",
 
     # borrowed p256 verifier from Daimo's lib
-    "contracts/validators/stx-validator/submodules/p256/P256Verifier.sol",    
+    "contracts/validators/stx-validator/submodules/p256/P256Verifier.sol",
   ]
   severity = ["high", "med", "gas"]
 
