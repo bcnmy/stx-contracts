@@ -120,7 +120,16 @@ abstract contract ERC7739Validator {
     /// that we don't need to use the nested EIP-712 workflow.
     /// Override to return true for more callers.
     /// See: https://mirror.xyz/curiousapple.eth/pFqAdW2LiJ-6S4sg_u1z08k4vK6BCJ33LcyXpnNb8yU
-    function _erc1271CallerIsSafe(address account, address sender) internal view virtual returns (bool) {
+    function _erc1271CallerIsSafe(
+        address,
+        /* account */
+        address sender
+    )
+        internal
+        view
+        virtual
+        returns (bool)
+    {
         // The canonical `MulticallerWithSigner` at 0x000000000000D9ECebf3C23529de49815Dac1c4c
         // is known to include the account in the hash to be signed.
         return sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c;
