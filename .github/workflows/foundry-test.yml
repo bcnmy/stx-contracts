@@ -35,21 +35,8 @@ jobs:
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
 
-    - name: Build
-      run: forge build
-      env:
-        FOUNDRY_PROFILE: ci
-
-    - name: Run node-paymaster tests
-      run: forge test --match-path 'test/unit-and-e2e/node-paymaster/**' --isolate
-      env:
-        FOUNDRY_PROFILE: ci
-        RPC_84532: https://sepolia.base.org
-        RPC_11155111_TEST: https://0xrpc.io/sep
-        TESTNET_PRIVATE_KEY: ${{ secrets.TESTNET_PRIVATE_KEY }}
-
-    - name: Run all other tests
-      run: forge test --no-match-path 'test/unit-and-e2e/node-paymaster/**'
+    - name: Run Forge tests
+      run: pnpm test
       env:
         FOUNDRY_PROFILE: ci
         RPC_84532: https://sepolia.base.org

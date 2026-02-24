@@ -23,7 +23,6 @@
 [profile.ci]
   fuzz = { runs = 1_000 }
   verbosity = 3
-  optimizer = false
 
 [profile.via-ir]
   via-ir = true
