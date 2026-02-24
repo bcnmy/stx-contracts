@@ -46,4 +46,5 @@ jobs:
         FOUNDRY_PROFILE: ci
         RPC_84532: https://sepolia.base.org
         RPC_11155111_TEST: https://0xrpc.io/sep
+        RPC_1: https://ethereum-rpc.publicnode.com
         TESTNET_PRIVATE_KEY: ${{ secrets.TESTNET_PRIVATE_KEY }}
