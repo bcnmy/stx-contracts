@@ -49,4 +49,5 @@ jobs:
         RPC_11155111: https://0xrpc.io/sep
         RPC_1: https://ethereum-rpc.publicnode.com
         RPC_10: https://mainnet.optimism.io
+        RPC_137: https://polygon.drpc.org
         TESTNET_PRIVATE_KEY: ${{ secrets.TESTNET_PRIVATE_KEY }}
