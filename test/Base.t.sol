@@ -11,12 +11,23 @@ import { BaseNodePaymaster } from "../contracts/node-pm/BaseNodePaymaster.sol";
 import { NodePaymaster } from "../contracts/node-pm/NodePaymaster.sol";
 import { EmittingNodePaymaster } from "./mock/EmittingNodePaymaster.sol";
 import { MockNodePaymaster } from "./mock/MockNodePaymaster.sol";
-import { K1MeeValidator } from "../contracts/validators/stx-validator/K1MeeValidator.sol";
 import { CopyUserOpLib } from "./util/CopyUserOpLib.sol";
 import "contracts/types/Constants.sol";
 import { LibZip } from "solady/utils/LibZip.sol";
 import { MockTarget } from "./mock/MockTarget.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
+
+import { StxValidator } from "../contracts/validators/stx-validator/StxValidator.sol";
+import { SubmoduleAddresses } from "../contracts/validators/stx-validator/ConfigManager.sol";
+import { EOAStatelessValidator } from "../contracts/validators/stx-validator/submodules/EOAStatelessValidator.sol";
+import { NoStxModeVerifier } from "../contracts/validators/stx-validator/submodules/NoStxModeVerifier.sol";
+import { PermitSubmodule } from "../contracts/validators/stx-validator/submodules/PermitSubmodule.sol";
+import { SafeAccountSubmodule } from "../contracts/validators/stx-validator/submodules/SafeAccountSubmodule.sol";
+import { SimpleModeSubmodule } from "../contracts/validators/stx-validator/submodules/SimpleModeSubmodule.sol";
+import { TxSubmodule } from "../contracts/validators/stx-validator/submodules/TxSubmodule.sol";
+import {
+    P256StatelessValidator
+} from "../contracts/validators/stx-validator/submodules/p256/P256StatelessValidator.sol";
 
 contract BaseTest is Test {
     address constant ENTRYPOINT_V07_ADDRESS = 0x0000000071727De22E5E9d8BAf0edAc6f37da032;
@@ -50,15 +61,23 @@ contract BaseTest is Test {
     NodePaymaster internal NODE_PAYMASTER;
     EmittingNodePaymaster internal EMITTING_NODE_PAYMASTER;
     MockNodePaymaster internal MOCK_NODE_PAYMASTER;
-    K1MeeValidator internal k1MeeValidator;
     address internal MEE_NODE_ADDRESS;
     Vm.Wallet internal MEE_NODE;
     MockTarget internal mockTarget;
 
+    StxValidator internal stxValidator;
+    EOAStatelessValidator internal eoaStatelessValidator;
+    NoStxModeVerifier internal noStxModeVerifier;
+    PermitSubmodule internal permitSubmodule;
+    SafeAccountSubmodule internal safeAccountSubmodule;
+    SimpleModeSubmodule internal simpleModeSubmodule;
+    TxSubmodule internal txSubmodule;
+    P256StatelessValidator internal p256StatelessValidator;
+
     address nodePmDeployer = address(0x011a23423423423);
 
     string constant MEE_USER_OP_SIGNATURE =
-        "MEEUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)";
+        "MeeUserOp(bytes32 userOpHash,uint256 lowerBoundTimestamp,uint256 upperBoundTimestamp)";
     string constant SUPER_TX_SIGNATURE_HEADER = "SuperTx";
 
     function setUp() public virtual {
@@ -68,7 +87,27 @@ contract BaseTest is Test {
         MEE_NODE_ADDRESS = MEE_NODE.addr;
 
         deployNodePaymaster();
-        k1MeeValidator = new K1MeeValidator();
+
+        eoaStatelessValidator = new EOAStatelessValidator();
+        noStxModeVerifier = new NoStxModeVerifier();
+        permitSubmodule = new PermitSubmodule();
+        safeAccountSubmodule = new SafeAccountSubmodule();
+        simpleModeSubmodule = new SimpleModeSubmodule();
+        txSubmodule = new TxSubmodule();
+        p256StatelessValidator = new P256StatelessValidator();
+
+        stxValidator = new StxValidator(
+            SubmoduleAddresses({
+                noStxModeVerifier: address(noStxModeVerifier),
+                simpleModeVerifier: address(simpleModeSubmodule),
+                permitModeVerifier: address(permitSubmodule),
+                txModeVerifier: address(txSubmodule),
+                safeAccountSubmodule: address(safeAccountSubmodule),
+                eoaStatelessValidator: address(eoaStatelessValidator),
+                p256StatelessValidator: address(p256StatelessValidator)
+            })
+        );
+
         mockTarget = new MockTarget();
     }
 

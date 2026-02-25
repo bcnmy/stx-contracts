@@ -1,5 +1,9 @@
 #!/usr/bin/env sh
 
+# Load nvm so node/pnpm are available in the hook
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
 # Get list of staged files
 STAGED_FILES=$(git diff --cached --name-only)
 
@@ -13,23 +17,26 @@ for file in $STAGED_FILES; do
   fi
 done
 
-# Run Solhint and only output Errors, not warnings via awk
-ERROR_OUTPUT=$(pnpm lint | awk '
+# Run Solhint to a temp file (pipes/subshells truncate large output)
+SOLHINT_TMP=$(mktemp)
+./node_modules/.bin/solhint 'contracts/**/*.sol' > "$SOLHINT_TMP" 2>&1 || true
+
+# Extract only error lines (not warnings) with their file context
+ERROR_OUTPUT=$(awk '
 /\.sol$/ { current_file = $0 }
-/error/ && !/problems.*error/ { 
+/  error  / && !/problems.*error/ {
     if (current_file && !file_printed[current_file]) {
         print current_file
         file_printed[current_file] = 1
     }
     print $0
 }
-')
+' "$SOLHINT_TMP")
 
-# Count error lines
-ERROR_COUNT=$(pnpm lint:prod | grep "error" | grep -v "problems.*error" | wc -l)
+rm -f "$SOLHINT_TMP"
 
-# If there are some error lines, show errors and exit
-if [ "$ERROR_COUNT" -gt 0 ]; then
+# If there are error lines, show them and exit
+if [ -n "$ERROR_OUTPUT" ]; then
   echo "Solhint found errors, please fix them before committing"
   echo "$ERROR_OUTPUT"
   exit 1

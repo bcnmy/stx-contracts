@@ -14,7 +14,7 @@ import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOp
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { ERC7739Validator } from "erc7739Validator/ERC7739Validator.sol";
+import { ERC7739Validator } from "contracts/validators/stx-validator/ERC7739Validator.sol";
 
 contract MockValidator_7739v2 is ERC7739Validator {
     mapping(address => address) public smartAccountOwners;
@@ -83,6 +83,7 @@ contract MockValidator_7739v2 is ERC7739Validator {
     ///      module's specific internal function to validate the signature
     ///      against credentials.
     function _erc1271IsValidSignatureNowCalldata(
+        address account,
         bytes32 hash,
         bytes calldata signature
     )
@@ -105,7 +106,7 @@ contract MockValidator_7739v2 is ERC7739Validator {
     // is known to include the account in the hash to be signed.
     // msg.sender = Smart Account
     // sender = 1271 og request sender
-    function _erc1271CallerIsSafe(address sender) internal view virtual override returns (bool) {
+    function _erc1271CallerIsSafe(address account, address sender) internal view virtual override returns (bool) {
         return (sender == 0x000000000000D9ECebf3C23529de49815Dac1c4c // MulticallerWithSigner
                 || sender == msg.sender);
     }

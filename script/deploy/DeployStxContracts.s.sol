@@ -6,7 +6,7 @@ import { Config } from "node_modules/forge-std/src/Config.sol";
 import { LibVariable, Variable, TypeKind } from "node_modules/forge-std/src/LibVariable.sol";
 import { NexusProxy } from "contracts/nexus/utils/NexusProxy.sol";
 import { DeterministicDeployerLib } from "script/deploy/util/DeterministicDeployerLib.sol";
-import { K1MeeValidator } from "contracts/validators/stx-validator/K1MeeValidator.sol";
+import { SubmoduleAddresses } from "contracts/validators/stx-validator/ConfigManager.sol";
 import { NexusBootstrap } from "contracts/nexus/utils/NexusBootstrap.sol";
 import { NexusAccountFactory } from "contracts/nexus/factory/NexusAccountFactory.sol";
 import { INexus } from "contracts/interfaces/nexus/INexus.sol";
@@ -14,8 +14,18 @@ import { CreateX } from "script/deploy/util/CreateX.sol";
 
 contract DeployStxContracts is Script, Config {
     /* ===== salts ===== */
-    bytes32 constant MEE_K1_VALIDATOR_SALT = 0x0000000000000000000000000000000000000000370009c6e5487202d5362d82; //=>
-    // 0x0000000002d3cC5642A748B6783F32C032616E03;
+    // Note: StxValidator salt is kept for now, will need to mine a new one for production
+    bytes32 constant STX_VALIDATOR_SALT = 0x0000000000000000000000000000000000000000972d15c771cbed0134f06e96; //=>
+    // TODO: mine new salt for StxValidator vanity address
+
+    // Submodule salts (arbitrary, not mined for vanity addresses)
+    bytes32 constant NO_STX_MODE_VERIFIER_SALT = 0x0000000000000000000000000000000000000000000000000000000000000001;
+    bytes32 constant SIMPLE_MODE_VERIFIER_SALT = 0x0000000000000000000000000000000000000000000000000000000000000002;
+    bytes32 constant PERMIT_MODE_VERIFIER_SALT = 0x0000000000000000000000000000000000000000000000000000000000000003;
+    bytes32 constant TX_MODE_VERIFIER_SALT = 0x0000000000000000000000000000000000000000000000000000000000000004;
+    bytes32 constant SAFE_ACCOUNT_SUBMODULE_SALT = 0x0000000000000000000000000000000000000000000000000000000000000005;
+    bytes32 constant EOA_STATELESS_VALIDATOR_SALT = 0x0000000000000000000000000000000000000000000000000000000000000006;
+    bytes32 constant P256_STATELESS_VALIDATOR_SALT = 0x0000000000000000000000000000000000000000000000000000000000000007;
 
     bytes32 constant NEXUS_SALT = 0x000000000000000000000000000000000000000073a42ee9e159d8001cbebd2d; // =>
     // 0x0000000020fe2F30453074aD916eDeB653eC7E9D;
@@ -49,7 +59,8 @@ contract DeployStxContracts is Script, Config {
     address constant EEEEEE_ADDRESS = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
     address constant FACTORY_OWNER_ADDRESS = 0x129443cA2a9Dec2020808a2868b38dDA457eaCC7;
 
-    bytes private meeK1ValidatorBytecode;
+    // Bytecode storage variables (populated in setUp)
+    bytes private stxValidatorBytecode;
     bytes private nexusBytecode;
     bytes private nexusBootstrapBytecode;
     bytes private nexusAccountFactoryBytecode;
@@ -58,14 +69,33 @@ contract DeployStxContracts is Script, Config {
     bytes private etherForwarderBytecode;
     bytes private nodePaymasterFactoryBytecode;
 
+    // Submodule bytecode storage variables
+    bytes private noStxModeVerifierBytecode;
+    bytes private simpleModeSubmoduleBytecode;
+    bytes private permitSubmoduleBytecode;
+    bytes private txSubmoduleBytecode;
+    bytes private safeAccountSubmoduleBytecode;
+    bytes private eoaStatelessValidatorBytecode;
+    bytes private p256StatelessValidatorBytecode;
+
     struct ChainConfig {
         uint256 chainId;
         string name;
         bool isTestnet;
     }
 
+    struct DeployedSubmodules {
+        address noStxModeVerifier;
+        address simpleModeVerifier;
+        address permitModeVerifier;
+        address txModeVerifier;
+        address safeAccountSubmodule;
+        address eoaStatelessValidator;
+        address p256StatelessValidator;
+    }
+
     struct DeployedContracts {
-        address meeK1Validator;
+        address stxValidator;
         address nexus;
         address nexusBootstrap;
         address nexusAccountFactory;
@@ -77,13 +107,31 @@ contract DeployStxContracts is Script, Config {
         address disperse;
     }
 
+    mapping(uint256 => DeployedSubmodules) internal deployedSubmodulesPerChain;
+
     mapping(uint256 => DeployedContracts) internal deployedContractsPerChain;
+
+    /**
+     * @notice Build the StxValidator init data for making implementations unusable
+     * @param eoaStatelessValidator The EOA stateless validator address
+     * @return The encoded init data
+     * @dev Format: [20 bytes statelessValidator][1 byte safeSendersCount][ownershipData]
+     * Uses EEEEEE_ADDRESS as owner to make implementation unusable (impossible to sign for)
+     */
+    function _buildStxValidatorInitData(address eoaStatelessValidator) internal pure returns (bytes memory) {
+        return abi.encodePacked(
+            eoaStatelessValidator,
+            uint8(0), // no safe senders
+            abi.encodePacked(EEEEEE_ADDRESS) // ownership data: impossible to sign for this address
+        );
+    }
 
     mapping(uint256 => ChainConfig) internal chainConfigs;
     string internal configPath = "/script/deploy/config.toml";
 
     function setUp() public {
-        meeK1ValidatorBytecode = vm.getCode("script/deploy/artifacts/K1MeeValidator/K1MeeValidator.json");
+        // Load main contract bytecodes
+        stxValidatorBytecode = vm.getCode("script/deploy/artifacts/stx-validator/StxValidator/StxValidator.json");
         nexusBytecode = vm.getCode("script/deploy/artifacts/Nexus/Nexus.json");
         nexusBootstrapBytecode = vm.getCode("script/deploy/artifacts/NexusBootstrap/NexusBootstrap.json");
         nexusAccountFactoryBytecode = vm.getCode("script/deploy/artifacts/NexusAccountFactory/NexusAccountFactory.json");
@@ -91,6 +139,15 @@ contract DeployStxContracts is Script, Config {
         composableStorageBytecode = vm.getCode("script/deploy/artifacts/ComposableStorage/ComposableStorage.json");
         etherForwarderBytecode = vm.getCode("script/deploy/artifacts/EtherForwarder/EtherForwarder.json");
         nodePaymasterFactoryBytecode = vm.getCode("script/deploy/artifacts/NodePaymasterFactory/NodePaymasterFactory.json");
+
+        // Load submodule bytecodes
+        noStxModeVerifierBytecode = vm.getCode("script/deploy/artifacts/stx-validator/submodules/NoStxModeVerifier/NoStxModeVerifier.json");
+        simpleModeSubmoduleBytecode = vm.getCode("script/deploy/artifacts/stx-validator/submodules/SimpleModeSubmodule/SimpleModeSubmodule.json");
+        permitSubmoduleBytecode = vm.getCode("script/deploy/artifacts/stx-validator/submodules/PermitSubmodule/PermitSubmodule.json");
+        txSubmoduleBytecode = vm.getCode("script/deploy/artifacts/stx-validator/submodules/TxSubmodule/TxSubmodule.json");
+        safeAccountSubmoduleBytecode = vm.getCode("script/deploy/artifacts/stx-validator/submodules/SafeAccountSubmodule/SafeAccountSubmodule.json");
+        eoaStatelessValidatorBytecode = vm.getCode("script/deploy/artifacts/stx-validator/submodules/EOAStatelessValidator/EOAStatelessValidator.json");
+        p256StatelessValidatorBytecode = vm.getCode("script/deploy/artifacts/stx-validator/submodules/P256StatelessValidator/P256StatelessValidator.json");
     }
 
     /**
@@ -122,49 +179,52 @@ contract DeployStxContracts is Script, Config {
      * @param isDryRun Whether to perform a dry run (only calculate expected addresses)
      */
     function run(uint256 chainId, bool isDryRun) external {
-        
-    
         bytes memory args;
 
-        // K1MeeValidator
-        address expecteK1MeeValidatorAddress;
-        expecteK1MeeValidatorAddress = calculateK1MeeValidatorAddress(chainId);
-        checkAndLogContractStatus(chainId, expecteK1MeeValidatorAddress, "K1MeeValidator", isDryRun);
+        // Compute submodule addresses first (they are dependencies for StxValidator)
+        SubmoduleAddresses memory submoduleAddresses = computeSubmoduleAddresses();
+
+        // StxValidator
+        address expectedStxValidatorAddress = calculateStxValidatorAddress(submoduleAddresses);
+        checkAndLogContractStatus(chainId, expectedStxValidatorAddress, "StxValidator", isDryRun);
         if (isDryRun) {
-            console.logBytes32(keccak256(meeK1ValidatorBytecode));
+            console.logBytes32(keccak256(abi.encodePacked(stxValidatorBytecode, abi.encode(submoduleAddresses))));
         }
+
+        bytes memory stxValidatorInitData = _buildStxValidatorInitData(submoduleAddresses.eoaStatelessValidator);
 
         // Nexus
         address expectedNexusAddress;
-        (expectedNexusAddress, args) = calculateNexusAddress(chainId, expecteK1MeeValidatorAddress);
+        (expectedNexusAddress, args) = calculateNexusAddress(expectedStxValidatorAddress, stxValidatorInitData);
         checkAndLogContractStatus(chainId, expectedNexusAddress, "Nexus", isDryRun);
         if (isDryRun) {
             console2.logBytes(args);
             console2.logBytes32(keccak256(abi.encodePacked(nexusBytecode, args)));
         }
 
+        // NexusBootstrap
         address expectedNexusBootstrapAddress;
-        (expectedNexusBootstrapAddress, args) = calculateNexusBootstrapAddress(chainId, expecteK1MeeValidatorAddress);
+        (expectedNexusBootstrapAddress, args) = calculateNexusBootstrapAddress(expectedStxValidatorAddress, stxValidatorInitData);
         checkAndLogContractStatus(chainId, expectedNexusBootstrapAddress, "NexusBootstrap", isDryRun);
         if (isDryRun) {
             console2.logBytes(args);
             console2.logBytes32(keccak256(abi.encodePacked(nexusBootstrapBytecode, args)));
         }
 
+        // NexusAccountFactory
         address expectedNexusAccountFactoryAddress;
-        (expectedNexusAccountFactoryAddress, args) = calculateNexusAccountFactoryAddress(chainId, expectedNexusAddress);
+        (expectedNexusAccountFactoryAddress, args) = calculateNexusAccountFactoryAddress(expectedNexusAddress);
         checkAndLogContractStatus(chainId, expectedNexusAccountFactoryAddress, "NexusAccountFactory", isDryRun);
         if (isDryRun) {
             console2.logBytes(args);
             console2.logBytes32(keccak256(abi.encodePacked(nexusAccountFactoryBytecode, args)));
         }
 
-        // ================================ Nexus Proxy ================================
+        // NexusProxy
         bytes memory initData = abi.encode(
             expectedNexusBootstrapAddress,
-            // or use the pre-deloyed address,
             abi.encodeWithSelector(
-                NexusBootstrap.initNexusWithDefaultValidator.selector, abi.encodePacked(FACTORY_OWNER_ADDRESS)
+                NexusBootstrap.initNexusWithDefaultValidator.selector, _buildStxValidatorInitData(submoduleAddresses.eoaStatelessValidator)
             )
         );
         bytes32 initCodeHash = keccak256(
@@ -173,86 +233,98 @@ contract DeployStxContracts is Script, Config {
                 abi.encode(expectedNexusAddress, abi.encodeCall(INexus.initializeAccount, initData))
             )
         );
-        /// forge-lint:disable-end(asm-keccak256)
-
-        // Compute the predicted address
         address expectedNexusProxyAddress = payable(address(
-                uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), expectedNexusAccountFactoryAddress, NEXUS_PROXY_SALT, initCodeHash))))
-            ));
+            uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), expectedNexusAccountFactoryAddress, NEXUS_PROXY_SALT, initCodeHash))))
+        ));
         checkAndLogContractStatus(chainId, expectedNexusProxyAddress, "NexusProxy", isDryRun);
-        
-        // ===============================================================================
 
         address expectedAddress;
 
-        // composable execution module
-        (expectedAddress, args) = calculateComposableExecutionModuleAddress(chainId);
+        // ComposableExecutionModule
+        (expectedAddress, args) = calculateComposableExecutionModuleAddress();
         checkAndLogContractStatus(chainId, expectedAddress, "ComposableExecutionModule", isDryRun);
         if (isDryRun) {
             console2.logBytes(args);
             console2.logBytes32(keccak256(abi.encodePacked(composableExecutionModuleBytecode, args)));
         }
 
-        // composable storage
-        expectedAddress = calculateComposableStorageAddress(chainId);
+        // ComposableStorage
+        expectedAddress = calculateComposableStorageAddress();
         checkAndLogContractStatus(chainId, expectedAddress, "ComposableStorage", isDryRun);
         if (isDryRun) {
-            console2.logBytes32(keccak256(abi.encodePacked(composableStorageBytecode)));
+            console2.logBytes32(keccak256(composableStorageBytecode));
         }
 
-        // ether forwarder
-        expectedAddress = calculateEtherForwarderAddress(chainId);
+        // EtherForwarder
+        expectedAddress = calculateEtherForwarderAddress();
         checkAndLogContractStatus(chainId, expectedAddress, "EtherForwarder", isDryRun);
         if (isDryRun) {
             console2.logBytes32(keccak256(etherForwarderBytecode));
         }
 
-        // node paymaster factory
-        expectedAddress = calculateNodePaymasterFactoryAddress(chainId);
+        // NodePaymasterFactory
+        expectedAddress = calculateNodePaymasterFactoryAddress();
         checkAndLogContractStatus(chainId, expectedAddress, "NodePaymasterFactory", isDryRun);
         if (isDryRun) {
             console2.logBytes32(keccak256(nodePaymasterFactoryBytecode));
         }
     }
 
-    function calculateK1MeeValidatorAddress(uint256 chainId) internal returns (address) {
-        return DeterministicDeployerLib.computeAddress(meeK1ValidatorBytecode, MEE_K1_VALIDATOR_SALT);
+    // ============ Address calculation functions ============
+
+    function calculateStxValidatorAddress(SubmoduleAddresses memory submoduleAddresses) internal view returns (address) {
+        bytes memory args = abi.encode(submoduleAddresses);
+        return DeterministicDeployerLib.computeAddress(stxValidatorBytecode, args, STX_VALIDATOR_SALT);
     }
 
-    function calculateNexusAddress(uint256 chainId, address meeK1ValidatorAddress) internal returns (address, bytes memory) {
-        bytes memory args = abi.encode(ENTRYPOINT_ADDRESS, meeK1ValidatorAddress, abi.encodePacked(EEEEEE_ADDRESS));
+    function calculateNexusAddress(address stxValidatorAddress, bytes memory stxValidatorInitData) internal view returns (address, bytes memory) {
+        bytes memory args = abi.encode(ENTRYPOINT_ADDRESS, stxValidatorAddress, stxValidatorInitData);
         address nexusAddress = DeterministicDeployerLib.computeAddress(nexusBytecode, args, NEXUS_SALT);
         return (nexusAddress, args);
     }
 
-    function calculateNexusBootstrapAddress(uint256 chainId, address meeK1ValidatorAddress) internal returns (address, bytes memory) {
-        bytes memory args = abi.encode(meeK1ValidatorAddress, abi.encodePacked(EEEEEE_ADDRESS));
+    function calculateNexusBootstrapAddress(address stxValidatorAddress, bytes memory stxValidatorInitData) internal view returns (address, bytes memory) {
+        bytes memory args = abi.encode(stxValidatorAddress, stxValidatorInitData);
         address nexusBootstrapAddress = DeterministicDeployerLib.computeAddress(nexusBootstrapBytecode, args, NEXUSBOOTSTRAP_SALT);
         return (nexusBootstrapAddress, args);
     }
-    
-    function calculateNexusAccountFactoryAddress(uint256 chainId, address nexusAddress) internal returns (address, bytes memory) {
+
+    function calculateNexusAccountFactoryAddress(address nexusAddress) internal view returns (address, bytes memory) {
         bytes memory args = abi.encode(nexusAddress, FACTORY_OWNER_ADDRESS);
         address nexusAccountFactoryAddress = DeterministicDeployerLib.computeAddress(nexusAccountFactoryBytecode, args, NEXUS_ACCOUNT_FACTORY_SALT);
         return (nexusAccountFactoryAddress, args);
     }
 
-    function calculateComposableExecutionModuleAddress(uint256 chainId) internal returns (address, bytes memory) {
+    function calculateComposableExecutionModuleAddress() internal view returns (address, bytes memory) {
         bytes memory args = abi.encode(ENTRYPOINT_ADDRESS);
         address composableExecutionModuleAddress = DeterministicDeployerLib.computeAddress(composableExecutionModuleBytecode, args, COMPOSABLE_EXECUTION_MODULE_SALT);
         return (composableExecutionModuleAddress, args);
     }
 
-    function calculateComposableStorageAddress(uint256 chainId) internal returns (address) {
+    function calculateComposableStorageAddress() internal view returns (address) {
         return DeterministicDeployerLib.computeAddress(composableStorageBytecode, COMPOSABLE_STORAGE_SALT);
     }
 
-    function calculateEtherForwarderAddress(uint256 chainId) internal returns (address) {
+    function calculateEtherForwarderAddress() internal view returns (address) {
         return DeterministicDeployerLib.computeAddress(etherForwarderBytecode, ETH_FORWARDER_SALT);
     }
 
-    function calculateNodePaymasterFactoryAddress(uint256 chainId) internal returns (address) {
+    function calculateNodePaymasterFactoryAddress() internal view returns (address) {
         return DeterministicDeployerLib.computeAddress(nodePaymasterFactoryBytecode, NODE_PMF_SALT);
+    }
+
+    /**
+     * @notice Compute the deterministic addresses of all submodules
+     * @return submoduleAddresses The computed submodule addresses
+     */
+    function computeSubmoduleAddresses() internal view returns (SubmoduleAddresses memory submoduleAddresses) {
+        submoduleAddresses.noStxModeVerifier = DeterministicDeployerLib.computeAddress(noStxModeVerifierBytecode, NO_STX_MODE_VERIFIER_SALT);
+        submoduleAddresses.simpleModeVerifier = DeterministicDeployerLib.computeAddress(simpleModeSubmoduleBytecode, SIMPLE_MODE_VERIFIER_SALT);
+        submoduleAddresses.permitModeVerifier = DeterministicDeployerLib.computeAddress(permitSubmoduleBytecode, PERMIT_MODE_VERIFIER_SALT);
+        submoduleAddresses.txModeVerifier = DeterministicDeployerLib.computeAddress(txSubmoduleBytecode, TX_MODE_VERIFIER_SALT);
+        submoduleAddresses.safeAccountSubmodule = DeterministicDeployerLib.computeAddress(safeAccountSubmoduleBytecode, SAFE_ACCOUNT_SUBMODULE_SALT);
+        submoduleAddresses.eoaStatelessValidator = DeterministicDeployerLib.computeAddress(eoaStatelessValidatorBytecode, EOA_STATELESS_VALIDATOR_SALT);
+        submoduleAddresses.p256StatelessValidator = DeterministicDeployerLib.computeAddress(p256StatelessValidatorBytecode, P256_STATELESS_VALIDATOR_SALT);
     }
 
     function deployContracts(uint256 chainId, string[] memory contractNames) internal {
@@ -263,40 +335,48 @@ contract DeployStxContracts is Script, Config {
         console.log("Chain ID:", chainId);
         console.log("=====================================\n");
 
-
-        // Fallback flow of creating a fork not via config but from .env file
-        // Use the RPC_{chainId} environment variable directly
-        // string memory rpcUrl = vm.envString(string.concat("RPC_", vm.toString(chainId)));
-        // Create and switch to fork for the chain
-        // vm.createSelectFork(rpcUrl);
-
         // Verify chain ID
         require(block.chainid == chainId, "Chain ID mismatch");
 
+        // Pre-compute submodule addresses (needed for StxValidator init data calculation)
+        SubmoduleAddresses memory submoduleAddresses = computeSubmoduleAddresses();
+        bytes memory stxValidatorInitData = _buildStxValidatorInitData(submoduleAddresses.eoaStatelessValidator);
+
         for (uint256 i = 0; i < contractNames.length; i++) {
-            // K1MeeValidator
-            if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("K1MeeValidator"))) {
-                deployedContractsPerChain[chainId].meeK1Validator = deployK1MeeValidator();
+            // StxValidator
+            if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("StxValidator"))) {
+                // Deploy all submodules first, then StxValidator
+                deployAllSubmodules(chainId);
+                deployedContractsPerChain[chainId].stxValidator = deployStxValidator(chainId);
             } else {
-                deployedContractsPerChain[chainId].meeK1Validator = calculateK1MeeValidatorAddress(chainId);
+                deployedSubmodulesPerChain[chainId] = DeployedSubmodules({
+                    noStxModeVerifier: submoduleAddresses.noStxModeVerifier,
+                    simpleModeVerifier: submoduleAddresses.simpleModeVerifier,
+                    permitModeVerifier: submoduleAddresses.permitModeVerifier,
+                    txModeVerifier: submoduleAddresses.txModeVerifier,
+                    safeAccountSubmodule: submoduleAddresses.safeAccountSubmodule,
+                    eoaStatelessValidator: submoduleAddresses.eoaStatelessValidator,
+                    p256StatelessValidator: submoduleAddresses.p256StatelessValidator
+                });
+                deployedContractsPerChain[chainId].stxValidator = calculateStxValidatorAddress(submoduleAddresses);
             }
             // Nexus
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("Nexus"))) {
                 deployedContractsPerChain[chainId].nexus = deployNexus(chainId);
             } else {
-                (deployedContractsPerChain[chainId].nexus, ) = calculateNexusAddress(chainId, deployedContractsPerChain[chainId].meeK1Validator);
+                (deployedContractsPerChain[chainId].nexus, ) = calculateNexusAddress(deployedContractsPerChain[chainId].stxValidator, stxValidatorInitData);
             }
             // NexusBootstrap
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("NexusBootstrap"))) {
                 deployedContractsPerChain[chainId].nexusBootstrap = deployNexusBootstrap(chainId);
             } else {
-                (deployedContractsPerChain[chainId].nexusBootstrap, ) = calculateNexusBootstrapAddress(chainId, deployedContractsPerChain[chainId].meeK1Validator);
+                (deployedContractsPerChain[chainId].nexusBootstrap, ) = calculateNexusBootstrapAddress(deployedContractsPerChain[chainId].stxValidator, stxValidatorInitData);
             }
             // NexusAccountFactory
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("NexusAccountFactory"))) {
                 deployedContractsPerChain[chainId].nexusAccountFactory = deployNexusAccountFactory(chainId);
             } else {
-                (deployedContractsPerChain[chainId].nexusAccountFactory, ) = calculateNexusAccountFactoryAddress(chainId, deployedContractsPerChain[chainId].nexus);
+                (deployedContractsPerChain[chainId].nexusAccountFactory, ) = calculateNexusAccountFactoryAddress(deployedContractsPerChain[chainId].nexus);
             }
             // NexusProxy
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("NexusProxy"))) {
@@ -309,42 +389,137 @@ contract DeployStxContracts is Script, Config {
             ) {
                 deployedContractsPerChain[chainId].composableExecutionModule = deployComposableExecutionModule();
             } else {
-                (deployedContractsPerChain[chainId].composableExecutionModule, ) = calculateComposableExecutionModuleAddress(chainId);
+                (deployedContractsPerChain[chainId].composableExecutionModule, ) = calculateComposableExecutionModuleAddress();
             }
             // ComposableStorage
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("ComposableStorage"))) {
                 deployedContractsPerChain[chainId].composableStorage = deployComposableStorage();
             } else {
-                deployedContractsPerChain[chainId].composableStorage = calculateComposableStorageAddress(chainId);
+                deployedContractsPerChain[chainId].composableStorage = calculateComposableStorageAddress();
             }
             // EtherForwarder
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("EtherForwarder"))) {
                 deployedContractsPerChain[chainId].etherForwarder = deployEtherForwarder();
             } else {
-                deployedContractsPerChain[chainId].etherForwarder = calculateEtherForwarderAddress(chainId);
+                deployedContractsPerChain[chainId].etherForwarder = calculateEtherForwarderAddress();
             }
             // Disperse
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("Disperse"))) {
                 deployedContractsPerChain[chainId].disperse = deployDisperse();
-            } 
+            }
             // NodePaymasterFactory
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("NodePaymasterFactory"))) {
                 deployedContractsPerChain[chainId].nodePaymasterFactory = deployNodePaymasterFactory();
             } else {
-                deployedContractsPerChain[chainId].nodePaymasterFactory = calculateNodePaymasterFactoryAddress(chainId);
+                deployedContractsPerChain[chainId].nodePaymasterFactory = calculateNodePaymasterFactoryAddress();
             }
         }
     }
 
-    function deployK1MeeValidator() internal returns (address) {
-        address meeK1Validator = DeterministicDeployerLib.broadcastDeploy(meeK1ValidatorBytecode, MEE_K1_VALIDATOR_SALT);
-        console.log("K1MeeValidator deployed to:", meeK1Validator);
-        return meeK1Validator;
+    /**
+     * @notice Deploy all submodules required for StxValidator (skips already deployed)
+     * @param chainId The chain ID to deploy to
+     */
+    function deployAllSubmodules(uint256 chainId) internal {
+        console.log("  Deploying StxValidator submodules...");
+
+        address expected;
+
+        // in order not to overload the script interface with the submodules addresses,
+        // we just check them here, not in the main deploy-chain.sh script
+
+
+        expected = DeterministicDeployerLib.computeAddress(noStxModeVerifierBytecode, NO_STX_MODE_VERIFIER_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(noStxModeVerifierBytecode, NO_STX_MODE_VERIFIER_SALT);
+            console.log("    NoStxModeVerifier deployed:", expected);
+        } else {
+            console.log("    NoStxModeVerifier already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].noStxModeVerifier = expected;
+
+        expected = DeterministicDeployerLib.computeAddress(simpleModeSubmoduleBytecode, SIMPLE_MODE_VERIFIER_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(simpleModeSubmoduleBytecode, SIMPLE_MODE_VERIFIER_SALT);
+            console.log("    SimpleModeSubmodule deployed:", expected);
+        } else {
+            console.log("    SimpleModeSubmodule already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].simpleModeVerifier = expected;
+
+        expected = DeterministicDeployerLib.computeAddress(permitSubmoduleBytecode, PERMIT_MODE_VERIFIER_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(permitSubmoduleBytecode, PERMIT_MODE_VERIFIER_SALT);
+            console.log("    PermitSubmodule deployed:", expected);
+        } else {
+            console.log("    PermitSubmodule already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].permitModeVerifier = expected;
+
+        expected = DeterministicDeployerLib.computeAddress(txSubmoduleBytecode, TX_MODE_VERIFIER_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(txSubmoduleBytecode, TX_MODE_VERIFIER_SALT);
+            console.log("    TxSubmodule deployed:", expected);
+        } else {
+            console.log("    TxSubmodule already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].txModeVerifier = expected;
+
+        expected = DeterministicDeployerLib.computeAddress(safeAccountSubmoduleBytecode, SAFE_ACCOUNT_SUBMODULE_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(safeAccountSubmoduleBytecode, SAFE_ACCOUNT_SUBMODULE_SALT);
+            console.log("    SafeAccountSubmodule deployed:", expected);
+        } else {
+            console.log("    SafeAccountSubmodule already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].safeAccountSubmodule = expected;
+
+        expected = DeterministicDeployerLib.computeAddress(eoaStatelessValidatorBytecode, EOA_STATELESS_VALIDATOR_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(eoaStatelessValidatorBytecode, EOA_STATELESS_VALIDATOR_SALT);
+            console.log("    EOAStatelessValidator deployed:", expected);
+        } else {
+            console.log("    EOAStatelessValidator already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].eoaStatelessValidator = expected;
+
+        expected = DeterministicDeployerLib.computeAddress(p256StatelessValidatorBytecode, P256_STATELESS_VALIDATOR_SALT);
+        if (expected.code.length == 0) {
+            expected = DeterministicDeployerLib.broadcastDeploy(p256StatelessValidatorBytecode, P256_STATELESS_VALIDATOR_SALT);
+            console.log("    P256StatelessValidator deployed:", expected);
+        } else {
+            console.log("    P256StatelessValidator already deployed:", expected);
+        }
+        deployedSubmodulesPerChain[chainId].p256StatelessValidator = expected;
+
+        console.log("  Submodules deployment check complete");
+    }
+
+    /**
+     * @notice Deploy StxValidator with submodule addresses
+     * @param chainId The chain ID to deploy to
+     * @return The deployed StxValidator address
+     */
+    function deployStxValidator(uint256 chainId) internal returns (address) {
+        SubmoduleAddresses memory submoduleAddresses = SubmoduleAddresses({
+            noStxModeVerifier: deployedSubmodulesPerChain[chainId].noStxModeVerifier,
+            simpleModeVerifier: deployedSubmodulesPerChain[chainId].simpleModeVerifier,
+            permitModeVerifier: deployedSubmodulesPerChain[chainId].permitModeVerifier,
+            txModeVerifier: deployedSubmodulesPerChain[chainId].txModeVerifier,
+            safeAccountSubmodule: deployedSubmodulesPerChain[chainId].safeAccountSubmodule,
+            eoaStatelessValidator: deployedSubmodulesPerChain[chainId].eoaStatelessValidator,
+            p256StatelessValidator: deployedSubmodulesPerChain[chainId].p256StatelessValidator
+        });
+        bytes memory args = abi.encode(submoduleAddresses);
+        address stxValidator = DeterministicDeployerLib.broadcastDeploy(stxValidatorBytecode, args, STX_VALIDATOR_SALT);
+        console.log("StxValidator deployed to:", stxValidator);
+        return stxValidator;
     }
 
     function deployNexus(uint256 chainId) internal returns (address) {
+        bytes memory stxValidatorInitData = _buildStxValidatorInitData(deployedSubmodulesPerChain[chainId].eoaStatelessValidator);
         bytes memory args = abi.encode(
-            ENTRYPOINT_ADDRESS, deployedContractsPerChain[chainId].meeK1Validator, abi.encodePacked(EEEEEE_ADDRESS)
+            ENTRYPOINT_ADDRESS, deployedContractsPerChain[chainId].stxValidator, stxValidatorInitData
         );
         address nexus = DeterministicDeployerLib.broadcastDeploy(nexusBytecode, args, NEXUS_SALT);
         console.log("Nexus deployed to:", nexus);
@@ -352,8 +527,9 @@ contract DeployStxContracts is Script, Config {
     }
 
     function deployNexusBootstrap(uint256 chainId) internal returns (address) {
+        bytes memory stxValidatorInitData = _buildStxValidatorInitData(deployedSubmodulesPerChain[chainId].eoaStatelessValidator);
         bytes memory args =
-            abi.encode(deployedContractsPerChain[chainId].meeK1Validator, abi.encodePacked(EEEEEE_ADDRESS));
+            abi.encode(deployedContractsPerChain[chainId].stxValidator, stxValidatorInitData);
         address nexusBootstrap = DeterministicDeployerLib.broadcastDeploy(nexusBootstrapBytecode, args, NEXUSBOOTSTRAP_SALT);
         console.log("NexusBootstrap deployed to:", nexusBootstrap);
         return nexusBootstrap;
@@ -363,7 +539,8 @@ contract DeployStxContracts is Script, Config {
         bytes memory args = abi.encode(deployedContractsPerChain[chainId].nexus, FACTORY_OWNER_ADDRESS);
         address nexusAccountFactory =
             DeterministicDeployerLib.broadcastDeploy(nexusAccountFactoryBytecode, args, NEXUS_ACCOUNT_FACTORY_SALT);
-        console.log("NexusAccountFactory deployed to:", nexusAccountFactory, "with implementation:", NexusAccountFactory(nexusAccountFactory).ACCOUNT_IMPLEMENTATION());
+        console.log("NexusAccountFactory deployed to:", nexusAccountFactory);
+        console.log("  Implementation:", deployedContractsPerChain[chainId].nexus);
         return nexusAccountFactory;
     }
 
@@ -372,13 +549,12 @@ contract DeployStxContracts is Script, Config {
             deployedContractsPerChain[chainId].nexusBootstrap,
             // or use the pre-deloyed address,
             abi.encodeWithSelector(
-                NexusBootstrap.initNexusWithDefaultValidator.selector, abi.encodePacked(FACTORY_OWNER_ADDRESS)
+                NexusBootstrap.initNexusWithDefaultValidator.selector, _buildStxValidatorInitData(deployedSubmodulesPerChain[chainId].eoaStatelessValidator)
             )
         );
         vm.startBroadcast();
         address nexusProxy =
             NexusAccountFactory(deployedContractsPerChain[chainId].nexusAccountFactory).createAccount(initData, NEXUS_PROXY_SALT);
-            // or use the pre-deloyed address for the NexusAccountFactory,
         vm.stopBroadcast();
         console2.log("Nexus Proxy deployed at: ", nexusProxy);
         return nexusProxy;

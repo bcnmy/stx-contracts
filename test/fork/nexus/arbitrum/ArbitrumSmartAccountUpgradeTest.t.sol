@@ -12,7 +12,6 @@ import { IBiconomySmartAccountV2 } from "../../../shared/interfaces/IBiconomySma
 /// @notice Tests the upgrade process from Biconomy Smart Account V2 to Nexus and validates the upgrade process.
 contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
     Vm.Wallet internal signer;
-    Nexus public newImplementation;
     uint256 internal signerPrivateKey;
     IEntryPoint public ENTRYPOINT_V_0_7;
     IEntryPointV_0_6 public ENTRYPOINT_V_0_6;
@@ -28,8 +27,7 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
         smartAccountV2 = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS);
         ENTRYPOINT_V_0_6 = IEntryPointV_0_6(ENTRYPOINT_ADDRESS);
         ENTRYPOINT_V_0_7 = ENTRYPOINT;
-        newImplementation =
-            new Nexus(_ENTRYPOINT, address(DEFAULT_VALIDATOR_MODULE), abi.encodePacked(address(0xeEeEeEeE)));
+
         // /!\ The private key is for testing purposes only and should not be used in production.
         signerPrivateKey = 0x2924d554c046e633f658427df4d0e7726487b1322bd16caaf24a53099f1cda85;
         signer = vm.createWallet(signerPrivateKey);
@@ -56,12 +54,12 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
         address beforeUpgradeImplementation = IBiconomySmartAccountV2(SMART_ACCOUNT_V2_ADDRESS).getImplementation();
         assertNotEq(
             beforeUpgradeImplementation,
-            address(newImplementation),
+            address(ACCOUNT_IMPLEMENTATION),
             "Implementation address does not match before upgrade."
         );
         test_UpgradeV2ToV3AndInitialize();
         address afterUpgradeImplementation = Nexus(payable(SMART_ACCOUNT_V2_ADDRESS)).getImplementation();
-        address expectedImplementation = address(newImplementation);
+        address expectedImplementation = address(ACCOUNT_IMPLEMENTATION);
         assertEq(
             afterUpgradeImplementation, expectedImplementation, "Implementation address does not match after upgrade."
         );
@@ -124,7 +122,8 @@ contract ArbitrumSmartAccountUpgradeTest is NexusTestBase, ArbitrumSettings {
 
         dest[0] = address(smartAccountV2);
         values[0] = 0;
-        calldatas[0] = abi.encodeWithSelector(IBiconomySmartAccountV2.updateImplementation.selector, newImplementation);
+        calldatas[0] =
+            abi.encodeWithSelector(IBiconomySmartAccountV2.updateImplementation.selector, ACCOUNT_IMPLEMENTATION);
 
         BootstrapConfig[] memory validators =
             NexusBootstrapLib.createArrayConfig(address(VALIDATOR_MODULE), abi.encodePacked(BOB.addr));

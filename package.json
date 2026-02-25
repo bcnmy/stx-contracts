@@ -1,6 +1,6 @@
 {
   "name": "stx-contracts",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "description": "Smart contracts that enable supertransactions on Biconomy's modular execution environment.",
   "repository": "github:bcnmy/stx-contracts",
   "author": {
@@ -10,7 +10,7 @@
   "scripts": {
     "build:via-ir": "export FOUNDRY_PROFILE='via-ir' && forge build",
     "test:via-ir": "export FOUNDRY_PROFILE='via-ir' && pnpm test",
-    "test": "forge test --match-path 'test/unit/node-paymaster/**' --isolate && forge test --no-match-path 'test/unit/node-paymaster/**'",
+    "test": "forge test --match-path 'test/unit-and-e2e/node-paymaster/**' --isolate && forge test --no-match-path 'test/unit-and-e2e/node-paymaster/**'",
     "test:nexus": "forge test --match-path 'test/*/nexus/**'",
     "test:fork": "forge test --match-path 'test/fork/**'",
     "test:node-paymaster": "forge test --match-path 'test/*/node-paymaster/**' --isolate",
@@ -39,22 +39,22 @@
   "dependencies": {
     "account-abstraction": "eth-infinitism/account-abstraction#v0.7.0",
     "@erc7579/enumerablemap4337": "erc7579/enumerablemap",
-    "@erc7579/erc7739-validator-base": "erc7579/erc7739Validator#v1.0.0",
-    "@erc7579/implementation": "erc7579/erc7579-implementation#v0.0.2",
+    "@erc7579/implementation": "github:erc7579/erc7579-implementation#main",
     "forge-std": "foundry-rs/forge-std#v1.11.0",
     "solady": "vectorized/solady#v0.1.26",
     "solidity-bytes-utils": "GNSPS/solidity-bytes-utils#v0.8.4",
     "solidity-rlp": "hamdiallam/Solidity-RLP#v2.0.8",
     "@rhinestone/module-bases": "github:rhinestonewtf/module-bases",
-    "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall"
+    "@rhinestone/flatbytes": "github:rhinestonewtf/flatbytes",
+    "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall",
+    "solarray": "github:sablier-labs/solarray"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "solhint": "^6.0.1",
     "tsx": "^4.19.2",
     "typescript": "^5.4.0",
-    "viem": "^2.22.17",
-    "solarray": "github:sablier-labs/solarray"
+    "viem": "^2.22.17"
   },
   "pnpm": {
     "overrides": {

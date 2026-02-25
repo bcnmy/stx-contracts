@@ -27,6 +27,8 @@ bytes32 constant _DOMAIN_TYPEHASH = 0xb2178a58fb1eefb359ecfdd57bb19c0bdd0f4e6eed
 uint256 constant STATIC_HEAD_LENGTH = 0x80; // introduced to re-use it in the contracts that use this library
 
 library HashLib {
+    error UnexpectedSuperTxEntry(bytes32 occurredItemHash, bytes32 expectedItemHash);
+
     using EfficientHashLib for *;
 
     function parsePackedSigDataHead(bytes calldata packedSignatureData)
@@ -65,7 +67,8 @@ library HashLib {
         }
     }
 
-    function compareAndGetFinalHash(
+    function compareAndGetFinalHashForAccount(
+        address account,
         bytes32 outerTypeHash,
         bytes32 currentItemHash,
         uint256 itemIndex,
@@ -77,8 +80,7 @@ library HashLib {
     {
         // Compare
         if (currentItemHash != itemHashes[itemIndex]) {
-            // should be treated as invalid in the caller code
-            finalHash = bytes32(0);
+            revert UnexpectedSuperTxEntry(currentItemHash, itemHashes[itemIndex]);
         } else {
             // SuperTx is a dynamic struct { EntryType1 entryA, EntryType2 entryB, ... EntryTypeN entryX }
             // It's typehash is provided from the sdk, and the items are considered to be already
@@ -105,7 +107,39 @@ library HashLib {
                 /// forge-lint:disable-next-line(asm-keccak256)
                 structHash = keccak256(abi.encodePacked(outerTypeHash, itemHashes));
             }
-            finalHash = hashTypedDataForAccount(msg.sender, structHash);
+            finalHash = hashTypedDataForAccount(account, structHash);
+        }
+    }
+
+    function compareAndGetFinalHash(
+        bytes32 outerTypeHash,
+        bytes32 currentItemHash,
+        uint256 itemIndex,
+        bytes32[] calldata itemHashes
+    )
+        internal
+        view
+        returns (bytes32 finalHash)
+    {
+        finalHash = compareAndGetFinalHashForAccount(msg.sender, outerTypeHash, currentItemHash, itemIndex, itemHashes);
+    }
+
+    function rehashWithAccountAndChainId(
+        bytes32 dataHash,
+        address account,
+        uint256 chainId
+    )
+        internal
+        pure
+        returns (bytes32 res)
+    {
+        //res = keccak256(abi.encodePacked(dataHash, account, chainId));
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, dataHash)
+            mstore(add(ptr, 0x20), shl(96, account))
+            mstore(add(ptr, 0x34), chainId)
+            res := keccak256(ptr, 0x54)
         }
     }
 

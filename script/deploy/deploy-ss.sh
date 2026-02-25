@@ -264,7 +264,7 @@ if [ ${#DEPLOYED_CONTRACTS[@]} -gt 0 ]; then
     echo ""
     log_info "Successfully deployed (${#DEPLOYED_CONTRACTS[@]} contracts):"
     for i in "${!DEPLOYED_CONTRACTS[@]}"; do
-        echo -e "  ${GREEN}${NC} ${DEPLOYED_CONTRACTS[$i]} -> ${DEPLOYED_ADDRESSES[$i]}"
+        echo -e "  ${GREEN}${NC} ${DEPLOYED_CONTRACTS[$i]} -> ${DEPLOYED_ADDRESSES[$i]}"
     done
 fi
 
@@ -280,7 +280,7 @@ if [ ${#FAILED_CONTRACTS[@]} -gt 0 ]; then
     echo ""
     log_error "Failed to deploy (${#FAILED_CONTRACTS[@]} contracts):"
     for i in "${!FAILED_CONTRACTS[@]}"; do
-        echo -e "  ${RED}${NC} ${FAILED_CONTRACTS[$i]} -> ${FAILED_ADDRESSES[$i]}"
+        echo -e "  ${RED}${NC} ${FAILED_CONTRACTS[$i]} -> ${FAILED_ADDRESSES[$i]}"
     done
     echo ""
     exit 1

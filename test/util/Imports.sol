@@ -56,7 +56,7 @@ import "contracts/interfaces/nexus/INexus.sol";
 // ==========================
 import "contracts/nexus/Nexus.sol";
 import "contracts/nexus/factory/NexusAccountFactory.sol";
-import { K1MeeValidator } from "contracts/validators/stx-validator/K1MeeValidator.sol";
+import { StxValidator } from "contracts/validators/stx-validator/StxValidator.sol";
 import "contracts/nexus/factory/Stakeable.sol";
 import "../mock/accounts/ExposedNexus.sol";
 
