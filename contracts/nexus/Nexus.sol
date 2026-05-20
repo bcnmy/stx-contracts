@@ -505,7 +505,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// Returns the account's implementation ID.
     /// @return The unique identifier for this account implementation.
     function accountId() external pure virtual returns (string memory) {
-        return "biconomy.nexus.1.3.1";
+        return "biconomy.nexus.1.3.2";
     }
 
     /// Upgrades the contract to a new implementation and calls a function on the new contract.
