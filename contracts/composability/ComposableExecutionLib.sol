@@ -25,6 +25,7 @@ library ComposableExecutionLib {
     error InvalidSetOfInputParams(string message);
     error EmptyOrSubConstraints();
     error InvalidConstraintRange();
+    error InvalidReferenceDataLength();
 
     // Process the input parameters and return the composed calldata
     function processInputs(
@@ -237,13 +238,21 @@ library ComposableExecutionLib {
     /// supported, so only leaf constraints may appear inside an OR's sub-array. SKIP unconditionally
     /// returns true and exists so signers can ignore a specific 32-byte field while still validating
     /// later fields at their fixed positions, without padding with dummy always-true predicates.
+    ///
+    /// Leaf branches (EQ, GTE, LTE, GTE_SIGNED, LTE_SIGNED) require referenceData to be exactly
+    /// 32 bytes — `bytes32(bytes)` left-aligns and zero-pads on shorter input, so an enforcement
+    /// is needed to avoid silently miscomparing non-canonical encodings (e.g. abi.encodePacked).
+    // solhint-disable-next-line code-complexity
     function _checkConstraint(bytes32 value, Constraint memory c) private pure returns (bool) {
         ConstraintType ct = c.constraintType;
         if (ct == ConstraintType.EQ) {
+            if (c.referenceData.length != 32) revert InvalidReferenceDataLength();
             return value == bytes32(c.referenceData);
         } else if (ct == ConstraintType.GTE) {
+            if (c.referenceData.length != 32) revert InvalidReferenceDataLength();
             return value >= bytes32(c.referenceData);
         } else if (ct == ConstraintType.LTE) {
+            if (c.referenceData.length != 32) revert InvalidReferenceDataLength();
             return value <= bytes32(c.referenceData);
         } else if (ct == ConstraintType.IN) {
             (bytes32 lower, bytes32 upper) = abi.decode(c.referenceData, (bytes32, bytes32));
@@ -259,9 +268,11 @@ library ComposableExecutionLib {
             // negative under two's complement. Callers must only use GTE_SIGNED / LTE_SIGNED
             // when the resolved value (RAW_BYTES input or STATIC_CALL return) lives in the
             // signed int256 domain — for values that may exceed 2**255 - 1, use unsigned GTE.
+            if (c.referenceData.length != 32) revert InvalidReferenceDataLength();
             return int256(uint256(value)) >= int256(uint256(bytes32(c.referenceData)));
         } else if (ct == ConstraintType.LTE_SIGNED) {
             // See GTE_SIGNED above: signed-domain only.
+            if (c.referenceData.length != 32) revert InvalidReferenceDataLength();
             return int256(uint256(value)) <= int256(uint256(bytes32(c.referenceData)));
         } else if (ct == ConstraintType.SKIP) {
             return true;
