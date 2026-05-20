@@ -224,7 +224,9 @@ library ComposableExecutionLib {
     }
 
     /// @dev Returns true if value satisfies constraint c. OR is rejected here: nested OR is not
-    /// supported, so only leaf constraints may appear inside an OR's sub-array.
+    /// supported, so only leaf constraints may appear inside an OR's sub-array. SKIP unconditionally
+    /// returns true and exists so signers can ignore a specific 32-byte field while still validating
+    /// later fields at their fixed positions, without padding with dummy always-true predicates.
     function _checkConstraint(bytes32 value, Constraint memory c) private pure returns (bool) {
         ConstraintType ct = c.constraintType;
         if (ct == ConstraintType.EQ) {
@@ -240,6 +242,8 @@ library ComposableExecutionLib {
             return int256(uint256(value)) >= int256(uint256(bytes32(c.referenceData)));
         } else if (ct == ConstraintType.LTE_SIGNED) {
             return int256(uint256(value)) <= int256(uint256(bytes32(c.referenceData)));
+        } else if (ct == ConstraintType.SKIP) {
+            return true;
         } else {
             revert InvalidConstraintType();
         }

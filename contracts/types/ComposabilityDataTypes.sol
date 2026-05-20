@@ -28,8 +28,11 @@ enum ConstraintType {
     IN, // In range [lower, upper] (bytes32 comparison; suitable for unsigned ranges and same-sign signed ranges)
     GTE_SIGNED, // Greater than or equal to (signed int256)
     LTE_SIGNED, // Less than or equal to (signed int256)
-    OR // At least one sub-constraint must pass; referenceData = abi.encode(Constraint[]); sub-constraints must be leaf
+    OR, // At least one sub-constraint must pass; referenceData = abi.encode(Constraint[]); sub-constraints must be leaf
     // types (no nested OR)
+    SKIP // Always passes; referenceData must be empty. Use to ignore a specific 32-byte field while still checking
+    // later
+    // ones at fixed positions
 }
 
 // Constraint for parameter validation
