@@ -41,6 +41,9 @@ CLAUDE.MD
 # Solhint
 solhint-report.txt
 
+# EntryPoint deploy calldata staging (written by deploy-chain.sh)
+script/deploy/.ep-v07-deploy-calldata.hex
+
 # Bash deploy helper logs
 script/deploy/deploy-logs/*.log
 script/deploy/deploy-logs/build/*.log
