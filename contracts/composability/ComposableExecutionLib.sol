@@ -24,6 +24,7 @@ library ComposableExecutionLib {
     error InvalidConstraintType();
     error InvalidSetOfInputParams(string message);
     error EmptyOrSubConstraints();
+    error InvalidConstraintRange();
 
     // Process the input parameters and return the composed calldata
     function processInputs(
@@ -246,6 +247,12 @@ library ComposableExecutionLib {
             return value <= bytes32(c.referenceData);
         } else if (ct == ConstraintType.IN) {
             (bytes32 lower, bytes32 upper) = abi.decode(c.referenceData, (bytes32, bytes32));
+            // Bounds are compared unsigned. Reject lower > upper so:
+            //   - same-sign signed ranges written in descending order revert instead of accepting nothing,
+            //   - mixed-sign ranges like IN(-10, 10) revert (negative encodes to a huge unsigned) instead
+            //     of being unsatisfiable,
+            //   - reversed bounds like IN(10, -10) revert instead of silently widening to "magnitude >= 10".
+            if (lower > upper) revert InvalidConstraintRange();
             return value >= lower && value <= upper;
         } else if (ct == ConstraintType.GTE_SIGNED) {
             // Reinterprets value as int256: any 32-byte word with the high bit set becomes
