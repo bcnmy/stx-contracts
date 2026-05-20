@@ -203,6 +203,15 @@ library ComposableExecutionLib {
                 Constraint[] memory subs = abi.decode(c.referenceData, (Constraint[]));
                 uint256 subsLen = subs.length;
                 if (subsLen == 0) revert EmptyOrSubConstraints();
+                // Structural pre-pass: reject nested OR before evaluating any sub. Without this,
+                // rejection would depend on whether an earlier leaf happens to match, which makes
+                // "what you sign" off-chain rendering inconsistent with on-chain behavior.
+                for (uint256 j; j < subsLen;) {
+                    if (subs[j].constraintType == ConstraintType.OR) revert InvalidConstraintType();
+                    unchecked {
+                        ++j;
+                    }
+                }
                 bool anyMet;
                 for (uint256 j; j < subsLen;) {
                     if (_checkConstraint(value, subs[j])) {
