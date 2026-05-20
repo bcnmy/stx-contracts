@@ -20,9 +20,9 @@ library ComposableExecutionLib {
     error Output_StaticCallFailed();
     error InvalidParameterEncoding(string message);
     error InvalidOutputParamFetcherType();
+    error ComposableExecutionFailed();
     error InvalidConstraintType();
     error InvalidSetOfInputParams(string message);
-    error ComposableExecutionFailed();
 
     // Process the input parameters and return the composed calldata
     function processInputs(
@@ -90,12 +90,8 @@ library ComposableExecutionLib {
                 callData.length := calldataload(u)
             }
             (bool success, bytes memory returnData) = contractAddr.staticcall(callData);
-            assembly {
-                if iszero(success) {
-                    // revert ComposableExecutionFailed()
-                    mstore(0x00, 0x6533cc8d)
-                    revert(0x1c, 0x04)
-                }
+            if (!success) {
+                revert ComposableExecutionFailed();
             }
             _validateConstraints(returnData, param.constraints);
             return returnData;
@@ -181,28 +177,69 @@ library ComposableExecutionLib {
         }
     }
 
-    /// @dev Validate the constraints => compare the value with the reference data
+    /// @dev Validate the constraints => compare each 32-byte word of rawValue against constraints[i].
+    /// Each constraints[i] is checked against the i-th 32-byte word of rawValue (AND semantics across
+    /// the array). Use ConstraintType.OR to express OR semantics within a single word position.
+    ///
+    /// AND vs OR encoding:
+    /// - AND is implicit across the top-level `Constraint[]`. Every non-OR entry has a static
+    ///   32-byte reference (EQ/GTE/LTE/GTE_SIGNED/LTE_SIGNED) or a fixed 64-byte (lower, upper)
+    ///   payload (IN) — predictable layout, predictable gas.
+    /// - OR is a single entry whose `referenceData` is a dynamic `abi.encode(Constraint[])`. It is
+    ///   decoded once here and evaluated against the *same* 32-byte word as the outer entry. The
+    ///   sub-constraints inside the OR must be leaf constraints only — nesting OR inside OR is
+    ///   intentionally rejected (see `_checkConstraint`) to keep what the user signs flat and
+    ///   easy to display.
     function _validateConstraints(bytes memory rawValue, Constraint[] calldata constraints) private pure {
-        if (constraints.length > 0) {
-            for (uint256 i; i < constraints.length; i++) {
-                Constraint memory constraint = constraints[i];
-                bytes32 returnValue;
-                assembly {
-                    returnValue := mload(add(rawValue, add(0x20, mul(i, 0x20))))
-                }
-                if (constraint.constraintType == ConstraintType.EQ) {
-                    require(returnValue == bytes32(constraint.referenceData), ConstraintNotMet(ConstraintType.EQ));
-                } else if (constraint.constraintType == ConstraintType.GTE) {
-                    require(returnValue >= bytes32(constraint.referenceData), ConstraintNotMet(ConstraintType.GTE));
-                } else if (constraint.constraintType == ConstraintType.LTE) {
-                    require(returnValue <= bytes32(constraint.referenceData), ConstraintNotMet(ConstraintType.LTE));
-                } else if (constraint.constraintType == ConstraintType.IN) {
-                    (bytes32 lowerBound, bytes32 upperBound) = abi.decode(constraint.referenceData, (bytes32, bytes32));
-                    require(returnValue >= lowerBound && returnValue <= upperBound, ConstraintNotMet(ConstraintType.IN));
-                } else {
-                    revert InvalidConstraintType();
-                }
+        uint256 len = constraints.length;
+        for (uint256 i; i < len;) {
+            Constraint memory c = constraints[i];
+            bytes32 value;
+            assembly {
+                value := mload(add(rawValue, add(0x20, mul(i, 0x20))))
             }
+            if (c.constraintType == ConstraintType.OR) {
+                Constraint[] memory subs = abi.decode(c.referenceData, (Constraint[]));
+                uint256 subsLen = subs.length;
+                bool anyMet;
+                for (uint256 j; j < subsLen;) {
+                    if (_checkConstraint(value, subs[j])) {
+                        anyMet = true;
+                        break;
+                    }
+                    unchecked {
+                        ++j;
+                    }
+                }
+                if (!anyMet) revert ConstraintNotMet(c.constraintType);
+            } else {
+                if (!_checkConstraint(value, c)) revert ConstraintNotMet(c.constraintType);
+            }
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    /// @dev Returns true if value satisfies constraint c. OR is rejected here: nested OR is not
+    /// supported, so only leaf constraints may appear inside an OR's sub-array.
+    function _checkConstraint(bytes32 value, Constraint memory c) private pure returns (bool) {
+        ConstraintType ct = c.constraintType;
+        if (ct == ConstraintType.EQ) {
+            return value == bytes32(c.referenceData);
+        } else if (ct == ConstraintType.GTE) {
+            return value >= bytes32(c.referenceData);
+        } else if (ct == ConstraintType.LTE) {
+            return value <= bytes32(c.referenceData);
+        } else if (ct == ConstraintType.IN) {
+            (bytes32 lower, bytes32 upper) = abi.decode(c.referenceData, (bytes32, bytes32));
+            return value >= lower && value <= upper;
+        } else if (ct == ConstraintType.GTE_SIGNED) {
+            return int256(uint256(value)) >= int256(uint256(bytes32(c.referenceData)));
+        } else if (ct == ConstraintType.LTE_SIGNED) {
+            return int256(uint256(value)) <= int256(uint256(bytes32(c.referenceData)));
+        } else {
+            revert InvalidConstraintType();
         }
     }
 
