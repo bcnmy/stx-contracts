@@ -88,7 +88,7 @@ contract DeployStxContracts is Script, Config {
         nexusBootstrapBytecode = vm.getCode("script/deploy/artifacts/NexusBootstrap/NexusBootstrap.json");
         nexusAccountFactoryBytecode = vm.getCode("script/deploy/artifacts/NexusAccountFactory/NexusAccountFactory.json");
         composableExecutionModuleBytecode = vm.getCode("script/deploy/artifacts/ComposableExecutionModule/ComposableExecutionModule.json");
-        composableStorageBytecode = vm.getCode("script/deploy/artifacts/ComposableStorage/ComposableStorage.json");
+        composableStorageBytecode = vm.getCode("script/deploy/artifacts/Storage/Storage.json");
         etherForwarderBytecode = vm.getCode("script/deploy/artifacts/EtherForwarder/EtherForwarder.json");
         nodePaymasterFactoryBytecode = vm.getCode("script/deploy/artifacts/NodePaymasterFactory/NodePaymasterFactory.json");
     }
@@ -194,8 +194,8 @@ contract DeployStxContracts is Script, Config {
         }
 
         // composable storage
-        expectedAddress = calculateComposableStorageAddress(chainId);
-        checkAndLogContractStatus(chainId, expectedAddress, "ComposableStorage", isDryRun);
+        expectedAddress = calculateStorageAddress(chainId);
+        checkAndLogContractStatus(chainId, expectedAddress, "Storage", isDryRun);
         if (isDryRun) {
             console2.logBytes32(keccak256(abi.encodePacked(composableStorageBytecode)));
         }
@@ -243,7 +243,7 @@ contract DeployStxContracts is Script, Config {
         return (composableExecutionModuleAddress, args);
     }
 
-    function calculateComposableStorageAddress(uint256 chainId) internal returns (address) {
+    function calculateStorageAddress(uint256 chainId) internal returns (address) {
         return DeterministicDeployerLib.computeAddress(composableStorageBytecode, COMPOSABLE_STORAGE_SALT);
     }
 
@@ -311,11 +311,11 @@ contract DeployStxContracts is Script, Config {
             } else {
                 (deployedContractsPerChain[chainId].composableExecutionModule, ) = calculateComposableExecutionModuleAddress(chainId);
             }
-            // ComposableStorage
-            if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("ComposableStorage"))) {
-                deployedContractsPerChain[chainId].composableStorage = deployComposableStorage();
+            // Storage
+            if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("Storage"))) {
+                deployedContractsPerChain[chainId].composableStorage = deployStorage();
             } else {
-                deployedContractsPerChain[chainId].composableStorage = calculateComposableStorageAddress(chainId);
+                deployedContractsPerChain[chainId].composableStorage = calculateStorageAddress(chainId);
             }
             // EtherForwarder
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("EtherForwarder"))) {
@@ -392,7 +392,7 @@ contract DeployStxContracts is Script, Config {
         return composableExecutionModule;
     }
 
-    function deployComposableStorage() internal returns (address) {
+    function deployStorage() internal returns (address) {
         address composableStorage = DeterministicDeployerLib.broadcastDeploy(composableStorageBytecode, COMPOSABLE_STORAGE_SALT);
         console.log("Composable Storage deployed to:", composableStorage);
         return composableStorage;

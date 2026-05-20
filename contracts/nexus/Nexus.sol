@@ -15,7 +15,7 @@ pragma solidity ^0.8.27;
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
-import { ComposableExecutionBase, ComposableExecution } from "../composability/ComposableExecutionBase.sol";
+import { ComposableExecutionBase, ComposableExecution } from "composability/ComposableExecutionBase.sol";
 import { Initializable } from "../lib/nexus/Initializable.sol";
 import { UUPSUpgradeable } from "solady/utils/UUPSUpgradeable.sol";
 import { INexus } from "../interfaces/nexus/INexus.sol";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "contracts/interfaces/IComposableExecution.sol";
+import "composability/interfaces/IComposableExecution.sol";
 
 contract MockAccountDelegateCaller {
     address composableModule;

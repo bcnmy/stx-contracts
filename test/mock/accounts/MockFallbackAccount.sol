@@ -9,7 +9,7 @@ import { ERC1271_SUCCESS, ERC1271_FAILED } from "contracts/types/Constants.sol";
 import { ERC2771Lib } from "../lib/ERC2771Lib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { ModeLib, ModeCode as ExecutionMode, CallType, ExecType, CALLTYPE_SINGLE } from "erc7579/lib/ModeLib.sol";
-import "contracts/interfaces/IComposableExecution.sol";
+import "composability/interfaces/IComposableExecution.sol";
 
 import { console2 } from "forge-std/console2.sol";
 

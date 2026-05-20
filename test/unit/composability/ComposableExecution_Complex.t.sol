@@ -3,9 +3,9 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
 import "./ComposabilityBase.t.sol";
-import { IComposableExecution } from "contracts/interfaces/IComposableExecution.sol";
-import "contracts/composability/ComposableExecutionLib.sol";
-import "contracts/types/ComposabilityDataTypes.sol";
+import { IComposableExecution } from "composability/interfaces/IComposableExecution.sol";
+import "composability/ComposableExecutionLib.sol";
+import "composability/types/ComposabilityDataTypes.sol";
 
 contract ComposableExecutionTestComplexCases is ComposabilityTestBase {
     function setUp() public override {
