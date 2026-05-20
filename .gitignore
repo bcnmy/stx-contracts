@@ -9,7 +9,9 @@ temp
 
 # dependencies
 node_modules/
-/lib/
+/lib/*
+# allow audited composability submodule (see .gitmodules)
+!/lib/erc8211-contracts
 
 # env
 *.env

@@ -1,0 +1,3 @@
+[submodule "lib/erc8211-contracts"]
+	path = lib/erc8211-contracts
+	url = git@github.com:bcnmy/erc8211-contracts.git
