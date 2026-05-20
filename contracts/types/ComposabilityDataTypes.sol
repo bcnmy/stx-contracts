@@ -26,6 +26,11 @@ enum ConstraintType {
     GTE, // Greater than or equal to (unsigned)
     LTE, // Less than or equal to (unsigned)
     IN, // In range [lower, upper] (bytes32 comparison; suitable for unsigned ranges and same-sign signed ranges)
+    // GTE_SIGNED / LTE_SIGNED compare via int256(uint256(value)), so any value with the
+    // high bit set is interpreted as negative under two's complement. Only use these when
+    // the resolved value is known to live in the signed int256 domain (max int256.max =
+    // 2**255 - 1). For values that may exceed 2**255 - 1, use the unsigned GTE / LTE; this
+    // applies to both RAW_BYTES inputs and STATIC_CALL return data.
     GTE_SIGNED, // Greater than or equal to (signed int256)
     LTE_SIGNED, // Less than or equal to (signed int256)
     OR, // At least one sub-constraint must pass; referenceData = abi.encode(Constraint[]); sub-constraints must be leaf

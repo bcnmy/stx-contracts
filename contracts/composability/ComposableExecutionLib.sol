@@ -239,8 +239,13 @@ library ComposableExecutionLib {
             (bytes32 lower, bytes32 upper) = abi.decode(c.referenceData, (bytes32, bytes32));
             return value >= lower && value <= upper;
         } else if (ct == ConstraintType.GTE_SIGNED) {
+            // Reinterprets value as int256: any 32-byte word with the high bit set becomes
+            // negative under two's complement. Callers must only use GTE_SIGNED / LTE_SIGNED
+            // when the resolved value (RAW_BYTES input or STATIC_CALL return) lives in the
+            // signed int256 domain — for values that may exceed 2**255 - 1, use unsigned GTE.
             return int256(uint256(value)) >= int256(uint256(bytes32(c.referenceData)));
         } else if (ct == ConstraintType.LTE_SIGNED) {
+            // See GTE_SIGNED above: signed-domain only.
             return int256(uint256(value)) <= int256(uint256(bytes32(c.referenceData)));
         } else if (ct == ConstraintType.SKIP) {
             return true;
