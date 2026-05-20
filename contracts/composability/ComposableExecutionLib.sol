@@ -26,6 +26,7 @@ library ComposableExecutionLib {
     error EmptyOrSubConstraints();
     error InvalidConstraintRange();
     error InvalidReferenceDataLength();
+    error InsufficientRawValue();
 
     // Process the input parameters and return the composed calldata
     function processInputs(
@@ -99,6 +100,9 @@ library ComposableExecutionLib {
             _validateConstraints(returnData, param.constraints);
             return returnData;
         } else if (param.fetcherType == InputParamFetcherType.BALANCE) {
+            // Balance is exactly one 32-byte word by construction; more than one constraint
+            // would index past the encoded value and is rejected up front.
+            if (param.constraints.length > 1) revert InvalidSetOfInputParams("BALANCE supports at most 1 constraint");
             address tokenAddr;
             address account;
             bytes calldata paramData = param.paramData;
@@ -195,6 +199,11 @@ library ComposableExecutionLib {
     ///   easy to display.
     function _validateConstraints(bytes memory rawValue, Constraint[] calldata constraints) private pure {
         uint256 len = constraints.length;
+        // Without this, the assembly mload below reads past rawValue's payload into adjacent
+        // memory (the freshly-allocated Constraint struct's constraintType word), so empty
+        // staticcall returndata or BALANCE encoded as a single word could silently satisfy
+        // zero-threshold predicates like GTE(0) or GTE_SIGNED(0).
+        if (rawValue.length < len * 32) revert InsufficientRawValue();
         for (uint256 i; i < len;) {
             Constraint memory c = constraints[i];
             bytes32 value;
