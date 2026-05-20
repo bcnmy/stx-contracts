@@ -23,6 +23,7 @@ library ComposableExecutionLib {
     error ComposableExecutionFailed();
     error InvalidConstraintType();
     error InvalidSetOfInputParams(string message);
+    error EmptyOrSubConstraints();
 
     // Process the input parameters and return the composed calldata
     function processInputs(
@@ -201,6 +202,7 @@ library ComposableExecutionLib {
             if (c.constraintType == ConstraintType.OR) {
                 Constraint[] memory subs = abi.decode(c.referenceData, (Constraint[]));
                 uint256 subsLen = subs.length;
+                if (subsLen == 0) revert EmptyOrSubConstraints();
                 bool anyMet;
                 for (uint256 j; j < subsLen;) {
                     if (_checkConstraint(value, subs[j])) {
