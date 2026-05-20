@@ -16,7 +16,7 @@
   src = "contracts"
   test = "test"
   cache_path  = "cache_forge"
-  libs = ["node_modules"]
+  libs = ["node_modules", "lib"]
   gas_reports_ignore = ["MockToken"]
   fs_permissions = [{ access = "read", path = "script/deploy/artifacts"}, { access = "read", path = "script/deploy"}]
 
@@ -42,17 +42,21 @@
   ignore = [
     # Test files
     "test/*/*.t.sol",
-    "test/*.t.sol", 
+    "test/*.t.sol",
     "test/**/*.t.sol",
-    
+
     # Mock contracts
     "test/mock/*.sol",
     "contracts/mock/*.sol",
     "**/mock/*.sol",
-    
+
     # Specific file patterns that are often problematic
     "**/*Mock*.sol",
     "**/*Test*.sol",
+
+    # Audited composability submodule — pinned to bcnmy/erc8211-contracts@17a81c4.
+    # Linting the audited source here would diverge from the audit target.
+    "lib/erc8211-contracts/**/*.sol",
   ]
   severity = ["high", "med", "gas"]
 
