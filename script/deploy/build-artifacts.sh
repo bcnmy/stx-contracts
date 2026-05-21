@@ -46,7 +46,10 @@ if [ $proceed = "y" ]; then
     cp ../../out/NexusAccountFactory.sol/NexusAccountFactory.json ./artifacts/NexusAccountFactory/.
     cp ../../out/NexusProxy.sol/NexusProxy.json ./artifacts/NexusProxy/.
     cp ../../out/ComposableExecutionModule.sol/ComposableExecutionModule.json ./artifacts/ComposableExecutionModule/.
-    cp ../../out/Storage.sol/Storage.json ./artifacts/Storage/.
+    # The audited composability Storage shares a basename with contracts/nexus/base/Storage.sol,
+    # so foundry disambiguates by placing it under out/contracts/Storage.sol/ (out/Storage.sol/
+    # contains the Nexus base Storage, which is a different contract). Copy the audited one.
+    cp ../../out/contracts/Storage.sol/Storage.json ./artifacts/Storage/.
     cp ../../out/EtherForwarder.sol/EtherForwarder.json ./artifacts/EtherForwarder/.
     cp ../../out/NodePaymasterFactory.sol/NodePaymasterFactory.json ./artifacts/NodePaymasterFactory/.
     
