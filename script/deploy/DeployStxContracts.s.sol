@@ -13,30 +13,34 @@ import { INexus } from "contracts/interfaces/nexus/INexus.sol";
 import { CreateX } from "script/deploy/util/CreateX.sol";
 
 contract DeployStxContracts is Script, Config {
-    /* ===== salts (v2.2.2 — mined 2026-05-21 against audited submodule bytecode) ===== */
-    bytes32 constant MEE_K1_VALIDATOR_SALT = 0x73b6f3a871adadfdd77197f97e128729c7f411fd6dffdd99ca510685b9df98eb;
-    // => 0x0000B1c06173Ea2917015795e2af3050CaB3d4D3
+    /* ===== salts (v2.2.2 — re-mined 2026-05-22 against optimizer_runs=200 bytecode) =====
+       v2.2.1 used optimizer_runs=999 and Nexus runtime was 22,728 bytes. v2.2.2's bigger
+       composability (signed/OR/SKIP/IN_SIGNED + L-xx checks) pushed Nexus at runs=999 to
+       25,534 bytes — over the EIP-170 24,576 limit. Dropping to runs=200 brings Nexus to
+       23,192 bytes (~1.4 KB margin), at modest runtime-gas cost. Source code unchanged.   */
+    bytes32 constant MEE_K1_VALIDATOR_SALT = 0xf059ced6e0c5cbd2a2bbd11a35f5bf0894ea08a14dd1795ed48bad89a1469588;
+    // => 0x0000B1C0790E5a28293276C320d2B95D651dBaD6
 
-    bytes32 constant NEXUS_SALT = 0x6003fc4601177fef204bbc509a530575242580ddfabecc95087583e365a5d34a;
-    // => 0x0000b1c087C4BEaCfbA068A73581BCc0ce494F1E
+    bytes32 constant NEXUS_SALT = 0x8f0afffd20b7f8b5fe8c0dc9ea42960d339ea2ed31014d4822a3998a79b45c2e;
+    // => 0x0000b1C0B95DA04652C1919667D1DCC14f46f62B
 
-    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x172a1b450f0ceba52cc05a0fd8166b99ac7a7c3f1f971551b52fb2552ecca920;
-    // => 0x0000b1C0C679857010E2254ce8419F331a1Cb35d
+    bytes32 constant NEXUSBOOTSTRAP_SALT = 0xf0941310b5eb1a6350d4f9c2b9193f7a98c05c259bbd0ea7edb61a420f837c79;
+    // => 0x0000B1c0A80cb7DD166a15e7390b8A4Ced4500C6
 
-    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x41a433b0bc384f64be5618575acc2789024e3e98bbf3f656fa41c1cc9f1a1e09;
-    // => 0x0000b1c090E36E4F5C96a5037e1345bCe6599fa7
+    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0xd05a6ffc545ebe837cf52ea3caa33cbc47ec4905659d11bba156d2e93faec325;
+    // => 0x0000B1c0dCFd64dfe8FeC844923B653DD0dfdB05
 
-    bytes32 constant COMPOSABLE_EXECUTION_MODULE_SALT = 0x8c3006d49ec628ae96dea46a942a5ce2ae7fc63b2dae6bba1a469e959ae05642;
-    // => 0x00008211fE178Db30F18b196acC8745dB9E8E205
+    bytes32 constant COMPOSABLE_EXECUTION_MODULE_SALT = 0x64ea08acff9368ae140d4b12d6621d3121622b6bfff172b953a4cd3ff348ede7;
+    // => 0x0000821108B5C9F3fe17E40811bE5b66DaF8f0e7
 
-    bytes32 constant COMPOSABLE_STORAGE_SALT = 0x6a094e387b6fe21164a79a6597da7d402b8e626d9c6fb3dbf4ca5c8deb2a9b7a;
-    // => 0x00008211cB688bb5A76579a55a84fC0DCbc929E1
+    bytes32 constant COMPOSABLE_STORAGE_SALT = 0xfbaf6361172ceedb08b7ab10a9ce59dda982976f15b71954f59785fae4677a13;
+    // => 0x00008211dea1Aca67ac55fc44AE3bF88CF41281d
 
-    bytes32 constant ETH_FORWARDER_SALT = 0x4f028e248bbb6b8bd00c6e3020f99d013c893262c5c0128686030366b3338d25;
-    // => 0x0000B1c0d37EEedF4CC9E7Ca9C03532CA553bE76
+    bytes32 constant ETH_FORWARDER_SALT = 0x09cd78e99ece8a4d99f1677000330fa40f60d54ecc1c42bd83132ffef5a05a96;
+    // => 0x0000B1C0Fc7015Effa85892426FAEd8211B2d62E
 
-    bytes32 constant NODE_PMF_SALT = 0xbf456ea48f986e75d6cebb72d89628e859e95b58d2b1acc9a83618d972f8ff88;
-    // => 0x0000B1C0dd9BE05f524FAb8A1d51164F9dd913F7
+    bytes32 constant NODE_PMF_SALT = 0x48548619fa4f0a60bf1ec3114122049764aca330b3704eebb08a77b19785a670;
+    // => 0x0000B1C059753ae6d1C135605377cE6487385960
 
     bytes32 public constant DISPERSE_SALT = 0xfd73487f4e6544007a3ce4000000000000000000000000000000000000000000;
     bytes public constant DISPERSE_INITCODE =
