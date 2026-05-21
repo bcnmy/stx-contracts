@@ -215,6 +215,19 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @notice Executes a composable execution
     /// See more about composability here: https://docs.biconomy.io/composability
     /// @param executions The composable executions to execute
+    /// @dev IHook visibility caveat: `withHook` invokes preCheck once at this entry
+    /// with the raw composable spec (msg.data), before processInputs resolves
+    /// InputParam fetchers. When a sub-execution uses InputParamFetcherType.STATIC_CALL
+    /// or BALANCE, its (target, value, callData) is computed after preCheck has already
+    /// run, so the hook cannot inspect the resolved per-sub-call payload here — only
+    /// the descriptor that produces it. Hooks that need to authorize the resolved call
+    /// shape must either (a) reason about the descriptor (e.g. by validating the
+    /// STATIC_CALL target / signature / bounds, given that constraints enforce the
+    /// resolved value falls within a known range), or (b) route the sub-executions
+    /// through IERC7579Account.executeFromExecutor (as
+    /// ComposableExecutionModule._executeExecutionCall does), which re-enters
+    /// `withHook` for every sub-call and surfaces the resolved (target, value, data)
+    /// to the hook at that point.
     function executeComposable(ComposableExecution[] calldata executions)
         external
         payable
