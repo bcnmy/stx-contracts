@@ -670,8 +670,13 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     /// @dev EIP712 domain name and version.
+    /// Versioning convention: this domain version moves in lockstep with `accountId()` because both
+    /// identify the Nexus implementation. v2.2.2 bumps both to "1.3.2" — Nexus's compiled bytecode
+    /// changes when the parent ComposableExecutionBase is re-sourced from the audited
+    /// erc8211-contracts submodule (which carries the L-01..L-07 fixes + follow-ups), and that
+    /// flows through Nexus's externally-observable executeComposable behavior.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
-        version = "1.3.1";
+        version = "1.3.2";
     }
 }
