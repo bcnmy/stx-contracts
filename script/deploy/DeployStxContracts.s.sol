@@ -11,6 +11,10 @@ import { NexusBootstrap } from "contracts/nexus/utils/NexusBootstrap.sol";
 import { NexusAccountFactory } from "contracts/nexus/factory/NexusAccountFactory.sol";
 import { INexus } from "contracts/interfaces/nexus/INexus.sol";
 import { CreateX } from "script/deploy/util/CreateX.sol";
+// Import for forge verification only — without this, forge has no source→bytecode mapping for
+// ComposableExecutionModule (it is only loaded via vm.getCode from the pre-built artifact)
+// and silently skips its verify step on chain explorers.
+import { ComposableExecutionModule } from "composability/ComposableExecutionModule.sol";
 
 contract DeployStxContracts is Script, Config {
     /* ===== salts (v2.2.2 — re-mined 2026-05-22 against optimizer_runs=200 bytecode) =====
