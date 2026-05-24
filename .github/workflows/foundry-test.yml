@@ -42,7 +42,11 @@ jobs:
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
     
+    # Fork tests under test/fork/** pin to historical blocks (e.g. Arbitrum
+    # 320_365_545) on public RPCs that don't retain deep state — they fail
+    # intermittently with "state recreation l2 gas depth limit exceeded".
+    # Run via `pnpm test:fork` locally or on a schedule with a paid RPC.
     - name: Run Forge tests
-      run: pnpm test
+      run: pnpm test:ci
       env:
         FOUNDRY_PROFILE: ci
