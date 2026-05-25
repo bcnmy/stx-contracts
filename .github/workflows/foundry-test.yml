@@ -18,6 +18,10 @@ jobs:
       with:
         # Fetch full history for better diff analysis
         fetch-depth: 0
+        # v2.2.2 onward sources composability from lib/erc8211-contracts/
+        # via git submodule. Without this, every composability/* import
+        # fails to resolve at compile time.
+        submodules: recursive
     
     - name: Install Foundry
       uses: foundry-rs/foundry-toolchain@v1
@@ -38,7 +42,11 @@ jobs:
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
     
+    # Fork tests under test/fork/** pin to historical blocks (e.g. Arbitrum
+    # 320_365_545) on public RPCs that don't retain deep state — they fail
+    # intermittently with "state recreation l2 gas depth limit exceeded".
+    # Run via `pnpm test:fork` locally or on a schedule with a paid RPC.
     - name: Run Forge tests
-      run: pnpm test
+      run: pnpm test:ci
       env:
         FOUNDRY_PROFILE: ci

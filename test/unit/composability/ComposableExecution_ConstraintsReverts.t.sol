@@ -3,9 +3,9 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
 import "./ComposabilityBase.t.sol";
-import { IComposableExecution } from "contracts/interfaces/IComposableExecution.sol";
-import "contracts/composability/ComposableExecutionLib.sol";
-import "contracts/types/ComposabilityDataTypes.sol";
+import { IComposableExecution } from "composability/interfaces/IComposableExecution.sol";
+import "composability/ComposableExecutionLib.sol";
+import "composability/types/ComposabilityDataTypes.sol";
 
 contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
     error FallbackFailed(bytes result);
@@ -389,7 +389,7 @@ contract ComposableExecutionTestConstraintsAndReverts is ComposabilityTestBase {
         inputParams[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A))),
+            paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_A))),
             constraints: emptyConstraints
         });
 

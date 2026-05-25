@@ -7,8 +7,8 @@ import { IValidator, IFallback } from "erc7579/interfaces/IERC7579Module.sol";
 import { IStatelessValidator } from "node_modules/@rhinestone/module-bases/src/interfaces/IStatelessValidator.sol";
 import { ERC1271_SUCCESS, ERC1271_FAILED } from "contracts/types/Constants.sol";
 import { ERC2771Lib } from "../lib/ERC2771Lib.sol";
-import { ComposableExecutionBase } from "contracts/composability/ComposableExecutionBase.sol";
-import { ComposableExecution } from "contracts/types/ComposabilityDataTypes.sol";
+import { ComposableExecutionBase } from "composability/ComposableExecutionBase.sol";
+import { ComposableExecution } from "composability/types/ComposabilityDataTypes.sol";
 
 import { console2 } from "forge-std/console2.sol";
 

@@ -11,8 +11,8 @@
 # Nexus : Nexus smart account implementation
 # NexusBootstrap : Bootstrap utility for initializing Nexus accounts 
 # NexusAccountFactory : Factory contract for deploying Nexus smart accounts
-# ComposableExecutionModule : Module enabling composable execution of multiple operations
-# ComposableStorage : Storage contract for composable execution module
+# ComposableExecutionModule : Module enabling composable execution of multiple operations (sourced from audited erc8211-contracts submodule)
+# Storage : Storage contract for composable execution module (sourced from audited erc8211-contracts submodule)
 # EtherForwarder : Forwarder contract for ETH transfers
 # NodePaymasterFactory : Factory contract for deploying Node Paymasters
 # Disperse : Utility contract for batch token/ETH transfers
@@ -671,3 +671,71 @@ chain_id = 531050204
 
 [531050204.string]
 name = "Sophon ZK Testnet"
+
+# ===============
+# MOCA
+# ===============
+
+### Moca Mainnet (2288)
+[2288]
+endpoint_url = "${RPC_2288}"
+
+[2288.bool]
+is_testnet = false
+verify = true
+via_blockscout = true
+
+[2288.uint]
+chain_id = 2288
+
+[2288.string]
+name = "Mocachain Mainnet"
+
+### Moca Testnet (222888)
+[222888]
+endpoint_url = "${RPC_222888}"
+
+[222888.bool]
+is_testnet = true
+verify = true
+via_blockscout = true
+
+[222888.uint]
+chain_id = 222888
+
+[222888.string]
+name = "Mocachain Testnet"
+
+# ===============
+# MEGAETH
+# ===============
+
+### Megaeth Mainnet (4326)
+[4326]
+endpoint_url = "${RPC_4326}"
+
+[4326.bool]
+is_testnet = false
+verify = true
+
+[4326.uint]
+chain_id = 4326
+gas_estimate_multiply = 5000
+
+[4326.string]
+name = "Megaeth Mainnet"
+
+### Megaeth Testnet (6343)
+[6343]
+endpoint_url = "${RPC_6343}"
+
+[6343.bool]
+is_testnet = true
+verify = true
+
+[6343.uint]
+chain_id = 6343
+gas_estimate_multiply = 12000
+
+[6343.string]
+name = "Megaeth Testnet"

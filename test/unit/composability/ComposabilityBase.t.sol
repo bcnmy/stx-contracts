@@ -4,17 +4,17 @@ pragma solidity ^0.8.23;
 import { BaseTest } from "../../Base.t.sol";
 import { MockFallbackAccount } from "../../mock/accounts/MockFallbackAccount.sol";
 import { MockAccountNonRevert } from "../../mock/accounts/MockAccountNonRevert.sol";
-import { ComposableExecutionModule } from "contracts/composability/ComposableExecutionModule.sol";
+import { ComposableExecutionModule } from "composability/ComposableExecutionModule.sol";
 import { MockAccountDelegateCaller } from "../../mock/accounts/MockAccountDelegateCaller.sol";
 import { MockAccountCaller } from "../../mock/accounts/MockAccountCaller.sol";
 import { MockAccount } from "../../mock/accounts/MockAccount.sol";
-import { ComposableStorage } from "contracts/composability/ComposableStorage.sol";
+import { Storage } from "composability/Storage.sol";
 import {
     InputParam,
     Constraint,
     InputParamType,
     InputParamFetcherType
-} from "contracts/types/ComposabilityDataTypes.sol";
+} from "composability/types/ComposabilityDataTypes.sol";
 import { MockERC20Balance } from "test/mock/tokens/MockERC20Balance.sol";
 import "../../mock/DummyContract.sol";
 
@@ -29,7 +29,7 @@ contract ComposabilityTestBase is BaseTest {
 
     event MockAccountReceive(uint256 amount);
 
-    ComposableStorage public storageContract;
+    Storage public storageContract;
     DummyContract public dummyContract;
 
     bytes32 public constant SLOT_A = keccak256("SLOT_A");
@@ -66,7 +66,7 @@ contract ComposabilityTestBase is BaseTest {
         vm.deal(address(ENTRYPOINT_V07_ADDRESS), 100 ether);
 
         // Deploy contracts
-        storageContract = new ComposableStorage();
+        storageContract = new Storage();
         dummyContract = new DummyContract();
     }
 

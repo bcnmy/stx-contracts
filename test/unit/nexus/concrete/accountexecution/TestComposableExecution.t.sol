@@ -2,7 +2,7 @@
 pragma solidity ^0.8.27;
 
 import "../../../../shared/TestAccountExecution_Base.t.sol";
-import { ComposableStorage } from "contracts/composability/ComposableStorage.sol";
+import { Storage } from "composability/Storage.sol";
 import {
     ComposableExecution,
     InputParam,
@@ -12,14 +12,14 @@ import {
     InputParamFetcherType,
     OutputParamFetcherType,
     InputParamType
-} from "contracts/types/ComposabilityDataTypes.sol";
-import { ComposableExecutionBase } from "contracts/composability/ComposableExecutionBase.sol";
+} from "composability/types/ComposabilityDataTypes.sol";
+import { ComposableExecutionBase } from "composability/ComposableExecutionBase.sol";
 import "test/mock/DummyContract.sol"; // to also import events and structs
 
 contract ComposableExecutionTest is TestAccountExecution_Base {
     event MockAccountReceive(uint256 amount);
 
-    ComposableStorage public storageContract;
+    Storage public storageContract;
     DummyContract public dummyContract;
 
     address public eoa = address(0x11ce);
@@ -33,7 +33,7 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
 
     function setUp() public virtual override {
         setUpTestAccountExecution_Base();
-        storageContract = new ComposableStorage();
+        storageContract = new Storage();
         dummyContract = new DummyContract();
         vm.deal(eoa, 100 ether);
         vm.deal(address(BOB_ACCOUNT), 100 ether);
@@ -112,17 +112,13 @@ contract ComposableExecutionTest is TestAccountExecution_Base {
         inputParams_execution2[0] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(
-                storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))
-            ),
+            paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_A_0))),
             constraints: constraints_input2_1
         });
         inputParams_execution2[1] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(
-                storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_B_0))
-            ),
+            paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_B_0))),
             constraints: emptyConstraints
         });
         inputParams_execution2[2] = InputParam({

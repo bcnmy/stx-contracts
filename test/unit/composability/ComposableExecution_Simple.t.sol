@@ -3,9 +3,9 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
 import "./ComposabilityBase.t.sol";
-import { IComposableExecution } from "contracts/interfaces/IComposableExecution.sol";
-import "contracts/composability/ComposableExecutionLib.sol";
-import "contracts/types/ComposabilityDataTypes.sol";
+import { IComposableExecution } from "composability/interfaces/IComposableExecution.sol";
+import "composability/ComposableExecutionLib.sol";
+import "composability/types/ComposabilityDataTypes.sol";
 
 contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
     function setUp() public override {
@@ -131,9 +131,7 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
         inputParamsB[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(
-                storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))
-            ),
+            paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_A_0))),
             constraints: emptyConstraints
         });
 
@@ -290,17 +288,13 @@ contract ComposableExecutionTestSimpleCases is ComposabilityTestBase {
         inputParams_execution2[2] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(
-                storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_A_0))
-            ),
+            paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_A_0))),
             constraints: emptyConstraints
         });
         inputParams_execution2[3] = InputParam({
             paramType: InputParamType.CALL_DATA,
             fetcherType: InputParamFetcherType.STATIC_CALL,
-            paramData: abi.encode(
-                storageContract, abi.encodeCall(ComposableStorage.readStorage, (namespace, SLOT_B_0))
-            ),
+            paramData: abi.encode(storageContract, abi.encodeCall(Storage.readStorage, (namespace, SLOT_B_0))),
             constraints: emptyConstraints
         });
         OutputParam[] memory outputParams_execution2 = new OutputParam[](0);

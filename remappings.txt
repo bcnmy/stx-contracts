@@ -11,3 +11,5 @@ rlp-reader/=node_modules/solidity-rlp/contracts/
 murky-trees/=node_modules/murky/src/
 solarray/=node_modules/solarray/src/
 excessively-safe-call/=node_modules/excessively-safe-call/src/
+composability/=lib/erc8211-contracts/contracts/
+src/=node_modules/@erc7579/implementation/src/

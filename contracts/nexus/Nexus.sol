@@ -15,7 +15,7 @@ pragma solidity ^0.8.27;
 import { BaseAccount } from "./base/BaseAccount.sol";
 import { ModuleManager } from "./base/ModuleManager.sol";
 import { ExecutionHelper } from "./base/ExecutionHelper.sol";
-import { ComposableExecutionBase, ComposableExecution } from "../composability/ComposableExecutionBase.sol";
+import { ComposableExecutionBase, ComposableExecution } from "composability/ComposableExecutionBase.sol";
 import { Initializable } from "../lib/nexus/Initializable.sol";
 import { UUPSUpgradeable } from "solady/utils/UUPSUpgradeable.sol";
 import { INexus } from "../interfaces/nexus/INexus.sol";
@@ -215,6 +215,19 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// @notice Executes a composable execution
     /// See more about composability here: https://docs.biconomy.io/composability
     /// @param executions The composable executions to execute
+    /// @dev IHook visibility caveat: `withHook` invokes preCheck once at this entry
+    /// with the raw composable spec (msg.data), before processInputs resolves
+    /// InputParam fetchers. When a sub-execution uses InputParamFetcherType.STATIC_CALL
+    /// or BALANCE, its (target, value, callData) is computed after preCheck has already
+    /// run, so the hook cannot inspect the resolved per-sub-call payload here — only
+    /// the descriptor that produces it. Hooks that need to authorize the resolved call
+    /// shape must either (a) reason about the descriptor (e.g. by validating the
+    /// STATIC_CALL target / signature / bounds, given that constraints enforce the
+    /// resolved value falls within a known range), or (b) route the sub-executions
+    /// through IERC7579Account.executeFromExecutor (as
+    /// ComposableExecutionModule._executeExecutionCall does), which re-enters
+    /// `withHook` for every sub-call and surfaces the resolved (target, value, data)
+    /// to the hook at that point.
     function executeComposable(ComposableExecution[] calldata executions)
         external
         payable
@@ -505,7 +518,7 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     /// Returns the account's implementation ID.
     /// @return The unique identifier for this account implementation.
     function accountId() external pure virtual returns (string memory) {
-        return "biconomy.nexus.1.3.1";
+        return "biconomy.nexus.1.3.2";
     }
 
     /// Upgrades the contract to a new implementation and calls a function on the new contract.
@@ -657,8 +670,13 @@ contract Nexus is INexus, BaseAccount, ExecutionHelper, ModuleManager, UUPSUpgra
     }
 
     /// @dev EIP712 domain name and version.
+    /// Versioning convention: this domain version moves in lockstep with `accountId()` because both
+    /// identify the Nexus implementation. v2.2.2 bumps both to "1.3.2" — Nexus's compiled bytecode
+    /// changes when the parent ComposableExecutionBase is re-sourced from the audited
+    /// erc8211-contracts submodule (which carries the L-01..L-07 fixes + follow-ups), and that
+    /// flows through Nexus's externally-observable executeComposable behavior.
     function _domainNameAndVersion() internal pure override returns (string memory name, string memory version) {
         name = "Nexus";
-        version = "1.3.1";
+        version = "1.3.2";
     }
 }

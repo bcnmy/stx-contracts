@@ -72,6 +72,11 @@ VERIFY_BOOL=$(awk -v id="$CHAIN_ID" '/^\['"$CHAIN_ID"'\.bool\]/{flag=1;next} /^\
 VERIFY_FLAG=""
 if [ "$VERIFY_BOOL" = "true" ]; then
     VERIFY_FLAG="--verify"
+    # check if via_blockscout is set to true in the config.toml file
+    VIA_BLOCKSCOUT=$(awk -v id="$CHAIN_ID" '/^\['"$CHAIN_ID"'\.bool\]/{flag=1;next} /^\[/{flag=0} flag && /^via_blockscout =/{gsub(/"/, "", $3); print $3}' config.toml)
+    if [ "$VIA_BLOCKSCOUT" = "true" ]; then
+        VERIFY_FLAG="--verify --verifier blockscout"
+    fi
 fi
 
 ### ===== GAS SUFFIX ============
@@ -149,7 +154,7 @@ if [ $EP_V07_SIZE -eq 0 ]; then
         log_error "EP_V07_DEPLOY_TX_DATA is not set in .env"
         exit 1
     fi
-    cast send 0x4e59b44847b379578588920ca78fbf26c0b4956c $EP_V07_DEPLOY_TX_DATA --rpc-url $RPC_VAR --private-key $PRIVATE_KEY $GAS_SUFFIX_SEND
+    cast send 0x4e59b44847b379578588920ca78fbf26c0b4956c --data $EP_V07_DEPLOY_TX_DATA --rpc-url $RPC_VAR --private-key $PRIVATE_KEY $GAS_SUFFIX_SEND
     EP_V07_SIZE=$(cast codesize --rpc-url $RPC_VAR 0x0000000071727De22E5E9d8BAf0edAc6f37da032)
     if [ $EP_V07_SIZE -eq 0 ]; then
         printf "EP v0.7 deployment failed\n"

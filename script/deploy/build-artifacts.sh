@@ -36,7 +36,7 @@ if [ $proceed = "y" ]; then
     mkdir -p ./artifacts/NexusAccountFactory
     mkdir -p ./artifacts/NexusProxy
     mkdir -p ./artifacts/ComposableExecutionModule
-    mkdir -p ./artifacts/ComposableStorage
+    mkdir -p ./artifacts/Storage
     mkdir -p ./artifacts/EtherForwarder
     mkdir -p ./artifacts/NodePaymasterFactory
     
@@ -46,7 +46,10 @@ if [ $proceed = "y" ]; then
     cp ../../out/NexusAccountFactory.sol/NexusAccountFactory.json ./artifacts/NexusAccountFactory/.
     cp ../../out/NexusProxy.sol/NexusProxy.json ./artifacts/NexusProxy/.
     cp ../../out/ComposableExecutionModule.sol/ComposableExecutionModule.json ./artifacts/ComposableExecutionModule/.
-    cp ../../out/ComposableStorage.sol/ComposableStorage.json ./artifacts/ComposableStorage/.
+    # The audited composability Storage shares a basename with contracts/nexus/base/Storage.sol,
+    # so foundry disambiguates by placing it under out/contracts/Storage.sol/ (out/Storage.sol/
+    # contains the Nexus base Storage, which is a different contract). Copy the audited one.
+    cp ../../out/contracts/Storage.sol/Storage.json ./artifacts/Storage/.
     cp ../../out/EtherForwarder.sol/EtherForwarder.json ./artifacts/EtherForwarder/.
     cp ../../out/NodePaymasterFactory.sol/NodePaymasterFactory.json ./artifacts/NodePaymasterFactory/.
     
@@ -60,7 +63,10 @@ if [ $proceed = "y" ]; then
     forge verify-contract --show-standard-json-input $(cast address-zero) NexusAccountFactory > ./artifacts/NexusAccountFactory/verify.json
     forge verify-contract --show-standard-json-input $(cast address-zero) NexusProxy > ./artifacts/NexusProxy/verify.json
     forge verify-contract --show-standard-json-input $(cast address-zero) ComposableExecutionModule > ./artifacts/ComposableExecutionModule/verify.json
-    forge verify-contract --show-standard-json-input $(cast address-zero) ComposableStorage > ./artifacts/ComposableStorage/verify.json
+    # Storage is sourced from the audited erc8211-contracts submodule — fully-qualified path is required
+    # because there are multiple `Storage` contracts in the dependency tree (the submodule's audited one
+    # and unrelated `Storage` libraries from other deps).
+    forge verify-contract --show-standard-json-input $(cast address-zero) "lib/erc8211-contracts/contracts/Storage.sol:Storage" > ./artifacts/Storage/verify.json
     forge verify-contract --show-standard-json-input $(cast address-zero) EtherForwarder > ./artifacts/EtherForwarder/verify.json
     forge verify-contract --show-standard-json-input $(cast address-zero) NodePaymasterFactory > ./artifacts/NodePaymasterFactory/verify.json
     

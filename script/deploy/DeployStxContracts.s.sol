@@ -11,33 +11,40 @@ import { NexusBootstrap } from "contracts/nexus/utils/NexusBootstrap.sol";
 import { NexusAccountFactory } from "contracts/nexus/factory/NexusAccountFactory.sol";
 import { INexus } from "contracts/interfaces/nexus/INexus.sol";
 import { CreateX } from "script/deploy/util/CreateX.sol";
+// Import for forge verification only — without this, forge has no source→bytecode mapping for
+// ComposableExecutionModule (it is only loaded via vm.getCode from the pre-built artifact)
+// and silently skips its verify step on chain explorers.
+import { ComposableExecutionModule } from "composability/ComposableExecutionModule.sol";
 
 contract DeployStxContracts is Script, Config {
-    /* ===== salts ===== */
-    bytes32 constant MEE_K1_VALIDATOR_SALT = 0x0000000000000000000000000000000000000000370009c6e5487202d5362d82; //=>
-    // 0x0000000002d3cC5642A748B6783F32C032616E03;
+    /* ===== salts (v2.2.2 — re-mined 2026-05-22 against optimizer_runs=200 bytecode) =====
+       v2.2.1 used optimizer_runs=999 and Nexus runtime was 22,728 bytes. v2.2.2's bigger
+       composability (signed/OR/SKIP/IN_SIGNED + L-xx checks) pushed Nexus at runs=999 to
+       25,534 bytes — over the EIP-170 24,576 limit. Dropping to runs=200 brings Nexus to
+       23,192 bytes (~1.4 KB margin), at modest runtime-gas cost. Source code unchanged.   */
+    bytes32 constant MEE_K1_VALIDATOR_SALT = 0xf059ced6e0c5cbd2a2bbd11a35f5bf0894ea08a14dd1795ed48bad89a1469588;
+    // => 0x0000B1C0790E5a28293276C320d2B95D651dBaD6
 
-    bytes32 constant NEXUS_SALT = 0x000000000000000000000000000000000000000073a42ee9e159d8001cbebd2d; // =>
-    // 0x0000000020fe2F30453074aD916eDeB653eC7E9D;
+    bytes32 constant NEXUS_SALT = 0x8f0afffd20b7f8b5fe8c0dc9ea42960d339ea2ed31014d4822a3998a79b45c2e;
+    // => 0x0000b1C0B95DA04652C1919667D1DCC14f46f62B
 
-    bytes32 constant NEXUSBOOTSTRAP_SALT = 0x0000000000000000000000000000000000000000c959a6b05366e70294aeb6ac; // =>
-    // 0x000000007BfEdA33ac982cb38eAaEf5D7bCC954c
+    bytes32 constant NEXUSBOOTSTRAP_SALT = 0xf0941310b5eb1a6350d4f9c2b9193f7a98c05c259bbd0ea7edb61a420f837c79;
+    // => 0x0000B1c0A80cb7DD166a15e7390b8A4Ced4500C6
 
-    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x00000000000000000000000000000000000000001090265e9bbd0800e4822798; //
-    // => 0x000000002c9A405a196f2dc766F2476B731693c3;
+    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0xd05a6ffc545ebe837cf52ea3caa33cbc47ec4905659d11bba156d2e93faec325;
+    // => 0x0000B1c0dCFd64dfe8FeC844923B653DD0dfdB05
 
-    bytes32 constant COMPOSABLE_EXECUTION_MODULE_SALT =
-        0x00000000000000000000000000000000000000008d04585764673a01ecb09ecd; // =>
-    // 0x00000000f61636C0CA71d21a004318502283aB2d
+    bytes32 constant COMPOSABLE_EXECUTION_MODULE_SALT = 0x64ea08acff9368ae140d4b12d6621d3121622b6bfff172b953a4cd3ff348ede7;
+    // => 0x0000821108B5C9F3fe17E40811bE5b66DaF8f0e7
 
-    bytes32 constant COMPOSABLE_STORAGE_SALT = 0x000000000000000000000000000000000000000070fef65fd06ba40009ce0acc; // =>
-    // 0x0000000078994c6ef6A4596BE53A728b255352c2;
+    bytes32 constant COMPOSABLE_STORAGE_SALT = 0xfbaf6361172ceedb08b7ab10a9ce59dda982976f15b71954f59785fae4677a13;
+    // => 0x00008211dea1Aca67ac55fc44AE3bF88CF41281d
 
-    bytes32 constant ETH_FORWARDER_SALT = 0x00000000000000000000000000000000000000002f5763a1f79af7033892e88a; //=>
-    // 0x000000C48Cdf2b46bEc062483dBD27046dfE3b8d;
+    bytes32 constant ETH_FORWARDER_SALT = 0x09cd78e99ece8a4d99f1677000330fa40f60d54ecc1c42bd83132ffef5a05a96;
+    // => 0x0000B1C0Fc7015Effa85892426FAEd8211B2d62E
 
-    bytes32 constant NODE_PMF_SALT = 0x0000000000000000000000000000000000000000a59717b95fe60f015cd48181; // =>
-    // 0x000000003c7824c9842b71F0cD390b1805A7EF90
+    bytes32 constant NODE_PMF_SALT = 0x48548619fa4f0a60bf1ec3114122049764aca330b3704eebb08a77b19785a670;
+    // => 0x0000B1C059753ae6d1C135605377cE6487385960
 
     bytes32 public constant DISPERSE_SALT = 0xfd73487f4e6544007a3ce4000000000000000000000000000000000000000000;
     bytes public constant DISPERSE_INITCODE =
@@ -88,7 +95,7 @@ contract DeployStxContracts is Script, Config {
         nexusBootstrapBytecode = vm.getCode("script/deploy/artifacts/NexusBootstrap/NexusBootstrap.json");
         nexusAccountFactoryBytecode = vm.getCode("script/deploy/artifacts/NexusAccountFactory/NexusAccountFactory.json");
         composableExecutionModuleBytecode = vm.getCode("script/deploy/artifacts/ComposableExecutionModule/ComposableExecutionModule.json");
-        composableStorageBytecode = vm.getCode("script/deploy/artifacts/ComposableStorage/ComposableStorage.json");
+        composableStorageBytecode = vm.getCode("script/deploy/artifacts/Storage/Storage.json");
         etherForwarderBytecode = vm.getCode("script/deploy/artifacts/EtherForwarder/EtherForwarder.json");
         nodePaymasterFactoryBytecode = vm.getCode("script/deploy/artifacts/NodePaymasterFactory/NodePaymasterFactory.json");
     }
@@ -194,8 +201,8 @@ contract DeployStxContracts is Script, Config {
         }
 
         // composable storage
-        expectedAddress = calculateComposableStorageAddress(chainId);
-        checkAndLogContractStatus(chainId, expectedAddress, "ComposableStorage", isDryRun);
+        expectedAddress = calculateStorageAddress(chainId);
+        checkAndLogContractStatus(chainId, expectedAddress, "Storage", isDryRun);
         if (isDryRun) {
             console2.logBytes32(keccak256(abi.encodePacked(composableStorageBytecode)));
         }
@@ -243,7 +250,7 @@ contract DeployStxContracts is Script, Config {
         return (composableExecutionModuleAddress, args);
     }
 
-    function calculateComposableStorageAddress(uint256 chainId) internal returns (address) {
+    function calculateStorageAddress(uint256 chainId) internal returns (address) {
         return DeterministicDeployerLib.computeAddress(composableStorageBytecode, COMPOSABLE_STORAGE_SALT);
     }
 
@@ -311,11 +318,11 @@ contract DeployStxContracts is Script, Config {
             } else {
                 (deployedContractsPerChain[chainId].composableExecutionModule, ) = calculateComposableExecutionModuleAddress(chainId);
             }
-            // ComposableStorage
-            if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("ComposableStorage"))) {
-                deployedContractsPerChain[chainId].composableStorage = deployComposableStorage();
+            // Storage
+            if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("Storage"))) {
+                deployedContractsPerChain[chainId].composableStorage = deployStorage();
             } else {
-                deployedContractsPerChain[chainId].composableStorage = calculateComposableStorageAddress(chainId);
+                deployedContractsPerChain[chainId].composableStorage = calculateStorageAddress(chainId);
             }
             // EtherForwarder
             if (keccak256(abi.encodePacked(contractNames[i])) == keccak256(abi.encodePacked("EtherForwarder"))) {
@@ -392,7 +399,7 @@ contract DeployStxContracts is Script, Config {
         return composableExecutionModule;
     }
 
-    function deployComposableStorage() internal returns (address) {
+    function deployStorage() internal returns (address) {
         address composableStorage = DeterministicDeployerLib.broadcastDeploy(composableStorageBytecode, COMPOSABLE_STORAGE_SALT);
         console.log("Composable Storage deployed to:", composableStorage);
         return composableStorage;

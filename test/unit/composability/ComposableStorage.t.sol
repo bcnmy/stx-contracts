@@ -2,13 +2,13 @@
 pragma solidity ^0.8.27;
 
 import { Test } from "forge-std/Test.sol";
-import { ComposableStorage } from "contracts/composability/ComposableStorage.sol";
+import { Storage } from "composability/Storage.sol";
 
-contract ComposableStorageTest is Test {
-    ComposableStorage public composableStorage;
+contract StorageTest is Test {
+    Storage public composableStorage;
 
     function setUp() public {
-        composableStorage = new ComposableStorage();
+        composableStorage = new Storage();
     }
 
     function test_getNamespace() public {

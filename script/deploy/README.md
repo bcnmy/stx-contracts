@@ -212,8 +212,8 @@ The deployment scripts deploy the following contracts:
 | **NexusBootstrap** | Bootstrap utility for initializing Nexus accounts | Deterministic (CREATE2) |
 | **NexusAccountFactory** | Factory for deploying Nexus smart accounts | Deterministic (CREATE2) |
 | **NexusProxy** | Proxy instance for testing (optional) | Factory-deployed |
-| **ComposableExecutionModule** | ERC-7579 module for composable execution | Deterministic (CREATE2) |
-| **ComposableStorage** | Storage contract for composable execution | Deterministic (CREATE2) |
+| **ComposableExecutionModule** | ERC-7579 module for composable execution (from audited erc8211-contracts submodule) | Deterministic (CREATE2) |
+| **Storage** | Storage contract for composable execution (from audited erc8211-contracts submodule) | Deterministic (CREATE2) |
 | **EtherForwarder** | Utility for batch ETH transfers | Deterministic (CREATE2) |
 | **NodePaymasterFactory** | Factory for deploying Node Paymasters | Deterministic (CREATE2) |
 | **Disperse** | Utility for batch token/ETH transfers | CreateX (CREATE2) |
