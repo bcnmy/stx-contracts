@@ -25,14 +25,19 @@ contract DeployStxContracts is Script, Config {
     bytes32 constant MEE_K1_VALIDATOR_SALT = 0xf059ced6e0c5cbd2a2bbd11a35f5bf0894ea08a14dd1795ed48bad89a1469588;
     // => 0x0000B1C0790E5a28293276C320d2B95D651dBaD6
 
-    bytes32 constant NEXUS_SALT = 0x8f0afffd20b7f8b5fe8c0dc9ea42960d339ea2ed31014d4822a3998a79b45c2e;
-    // => 0x0000b1C0B95DA04652C1919667D1DCC14f46f62B
+    /* v2.2.3 re-mined salts: Nexus 1.3.3 changes the implementation bytecode, and
+       NexusAccountFactory takes the implementation as a constructor immutable, so both
+       addresses change. NexusBootstrap, the MEE K1 validator, the composability contracts,
+       the ETH forwarder and the node paymaster factory are byte-identical to v2.2.2 and keep
+       their existing salts and addresses. */
+    bytes32 constant NEXUS_SALT = 0xff89169bb2ab59523c93302b9a5be9226c4dbe04f137fc31c1b0828bcf0f00b0;
+    // => 0x0000B1c01cB3b5770D8806f0D214d50131a08a5B (Nexus 1.3.3)
 
     bytes32 constant NEXUSBOOTSTRAP_SALT = 0xf0941310b5eb1a6350d4f9c2b9193f7a98c05c259bbd0ea7edb61a420f837c79;
     // => 0x0000B1c0A80cb7DD166a15e7390b8A4Ced4500C6
 
-    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0xd05a6ffc545ebe837cf52ea3caa33cbc47ec4905659d11bba156d2e93faec325;
-    // => 0x0000B1c0dCFd64dfe8FeC844923B653DD0dfdB05
+    bytes32 constant NEXUS_ACCOUNT_FACTORY_SALT = 0x6ff328afedc498e549a9ffc64dcb7da83e1424554e74e92115d0a7d8b07fda0c;
+    // => 0x0000b1C08f1418dA76B5E99c1Bf5718486cf8c53 (bound to Nexus 1.3.3)
 
     bytes32 constant COMPOSABLE_EXECUTION_MODULE_SALT = 0x64ea08acff9368ae140d4b12d6621d3121622b6bfff172b953a4cd3ff348ede7;
     // => 0x0000821108B5C9F3fe17E40811bE5b66DaF8f0e7
